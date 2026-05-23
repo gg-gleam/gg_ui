@@ -1,0 +1,9 @@
+*.beam
+*.ez
+/build
+erl_crash.dump
+
+# JS toolchain
+node_modules/
+dist/
+.vite/

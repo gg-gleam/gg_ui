@@ -1,0 +1,14 @@
+name = "gg_ui"
+version = "0.1.0"
+description = "A headless-first UI kit for Lustre (Base UI + shadcn in spirit)."
+licences = ["MIT"]
+
+# Universal: no `target` lock. Headless modules compile on every target; the
+# Floating UI FFI layer carries Erlang fallbacks (see README → Universal & FFI).
+
+[dependencies]
+gleam_stdlib = ">= 1.0.0 and < 2.0.0"
+lustre = ">= 5.7.0 and < 6.0.0"
+
+[dev_dependencies]
+gleeunit = ">= 1.0.0 and < 2.0.0"
