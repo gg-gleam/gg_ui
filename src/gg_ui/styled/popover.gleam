@@ -40,7 +40,7 @@ pub fn panel(
     on_toggle,
     [
       attribute.class(
-        "min-w-[12rem] rounded-md border border-border bg-popover p-4 "
+        "min-w-48 rounded-md border border-border bg-popover p-4 "
         <> "text-popover-foreground shadow-md outline-none",
       ),
     ],
