@@ -42,18 +42,24 @@ pub fn anchor_style(anchor_id: String) -> Attribute(msg) {
 
 /// Goes on the floating element: tethers it to the anchor, places it on the
 /// requested side/alignment, and lets the browser flip it on collision.
+///
+/// Important: don't add `inset: auto` here. `position-area` places the element
+/// by computing the inset properties to `anchor()` values; an explicit `inset`
+/// declaration cancels that. The UA stylesheet's `[popover] { inset: 0; … }`
+/// is already overridden by `position-area` at inline-style specificity.
 pub fn positioned_style(
   anchor_id: String,
   placement: Placement,
 ) -> Attribute(msg) {
   attribute.styles([
     #("position", "fixed"),
+    // Override UA's `[popover] { margin: auto; }` (which would otherwise
+    // recentre us inside the position-area cell) and add a small gap on the
+    // facing side only.
+    #("margin", gap_margin(placement.side)),
     #("position-anchor", anchor_name(anchor_id)),
     #("position-area", position_area(placement)),
     #("position-try-fallbacks", "flip-block, flip-inline"),
-    #("position-visibility", "anchors-visible"),
-    #("inset", "auto"),
-    gap(placement.side),
   ])
 }
 
@@ -76,13 +82,15 @@ fn position_area(placement: Placement) -> String {
   }
 }
 
-/// A small gap between anchor and floating element, on the facing side only.
-fn gap(side: Side) -> #(String, String) {
+/// A full `margin` shorthand: zero on three sides (overriding the UA's
+/// `[popover] { margin: auto }`) and a small gap on the side facing the anchor.
+fn gap_margin(side: Side) -> String {
   let size = "0.375rem"
   case side {
-    Top -> #("margin-bottom", size)
-    Bottom -> #("margin-top", size)
-    Left -> #("margin-right", size)
-    Right -> #("margin-left", size)
+    // top right bottom left
+    Top -> "0 0 " <> size <> " 0"
+    Bottom -> size <> " 0 0 0"
+    Left -> "0 " <> size <> " 0 0"
+    Right -> "0 0 0 " <> size
   }
 }
