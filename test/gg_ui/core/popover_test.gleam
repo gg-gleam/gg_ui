@@ -1,4 +1,4 @@
-import gg_ui/popover
+import gg_ui/core/popover
 
 pub fn init_is_closed_with_derived_ids_test() {
   let state = popover.init("demo")
@@ -20,10 +20,4 @@ pub fn open_then_dismiss_closes_test() {
   assert popover.is_open(state) == True
   let state = popover.update(state, popover.DismissRequested)
   assert popover.is_open(state) == False
-}
-
-pub fn placement_to_string_test() {
-  assert popover.placement_to_string(popover.Bottom) == "bottom"
-  assert popover.placement_to_string(popover.BottomStart) == "bottom-start"
-  assert popover.placement_to_string(popover.Right) == "right"
 }
