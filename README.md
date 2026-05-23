@@ -46,7 +46,9 @@ src/gg_ui/
   styled/
     popover.gleam          # shadcn-styled trigger + panel
   theme.css                # design tokens (shadcn model, Tailwind v4, light/dark)
-playground/                # Vite dev playground (mounts the styled components)
+  stories/                 # Gleam-side mount functions for Storybook
+    popover.gleam
+.storybook/                # Storybook 10 config + Lustre mount helper
 test/                      # gleeunit tests for the pure modules
 ```
 
@@ -109,12 +111,18 @@ never run because Lustre effects execute client-side. Biome formats/lints the
 
 ```sh
 pnpm install
-pnpm dev         # Vite dev playground
-pnpm build       # production bundle
+pnpm dev         # Storybook on :6006
+pnpm build       # static Storybook -> ./storybook-static
 pnpm typecheck   # tsc --noEmit
 pnpm lint        # biome check
 gleam test       # pure-module tests
 ```
+
+Stories live next to their component as `*.stories.ts`. Each one renders
+through `.storybook/lustre-mount.ts`, which spins up a fresh `<div>` and hands
+its selector to a `mount_*` function in `src/stories/<component>.gleam` — a
+small Lustre app per variant. Storybook reuses our `vite.config.ts` (via
+`@storybook/html-vite`) so `.gleam` imports + Tailwind work inside stories.
 
 ## Consuming gg_ui (preview)
 
