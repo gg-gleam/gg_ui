@@ -16,17 +16,59 @@ jobs:
         with:
           otp-version: "28"
           gleam-version: "1.16.0"
-          rebar3-version: "3"
-          # elixir-version: "1"
-      - run: gleam deps download
-      - run: gleam test
-      - run: gleam format --check src test
+
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: "pnpm"
+
+      - name: Check Gleam formatting
+        run: pnpm format:check
+
+      # Library packages are universal — they must pass on JS *and* the BEAM
+      # (see AGENTS.md rule 3 "Both targets, or it doesn't ship"). Test both:
+      # the only cross-target bug we've hit (class ordering) surfaced solely on
+      # one target. No Elixir toolchain needed — there are no mix deps.
+      - name: Test gg_base_ui (both targets, incl. birdie snapshots)
+        working-directory: packages/gg_base_ui
+        run: |
+          gleam deps download
+          gleam test --target erlang
+          gleam test --target javascript
+
+      - name: Test gg_ui (both targets, incl. birdie snapshots)
+        working-directory: packages/gg_ui
+        run: |
+          gleam deps download
+          gleam test --target erlang
+          gleam test --target javascript
+
       - run: pnpm install --frozen-lockfile
+
+      - uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      # On a cache hit the browser binary is restored but the apt system libs
+      # aren't, so install just those; otherwise download the browser too.
+      # Playwright is a dep of the @gg_ui/storybook app, so invoke it through the
+      # workspace filter (not bare `pnpm exec`, which resolves from the root where
+      # playwright isn't a dependency). Headless vitest needs the headless shell too.
+      - name: Install Playwright Chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm --filter @gg_ui/storybook exec playwright install --with-deps chromium chromium-headless-shell
+
+      - name: Install Playwright system deps (cache hit)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm --filter @gg_ui/storybook exec playwright install-deps chromium
+
       - run: pnpm typecheck
       - run: pnpm lint
+
+      - name: Storybook story tests (real Chromium)
+        run: pnpm test:stories
+
       - run: pnpm build

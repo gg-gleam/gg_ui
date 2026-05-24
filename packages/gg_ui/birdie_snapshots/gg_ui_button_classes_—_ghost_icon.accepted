@@ -1,0 +1,7 @@
+---
+version: 1.5.5
+title: gg_ui button classes — ghost / icon
+file: ./test/button_test.gleam
+test_name: classes_ghost_icon_test
+---
+cn-button cn-button-variant-ghost cn-button-size-icon

@@ -1,0 +1,12 @@
+name = "gg_base_ui"
+version = "0.1.0"
+description = "Headless behavior + a11y primitives for Lustre — the Base UI of gg_ui. Imported, never ejected. No Tailwind, no stylesheet."
+licences = ["MIT"]
+
+[dependencies]
+gleam_stdlib = ">= 1.0.0 and < 2.0.0"
+lustre = ">= 5.7.0 and < 6.0.0"
+
+[dev_dependencies]
+gleeunit = ">= 1.0.0 and < 2.0.0"
+birdie = ">= 1.0.0 and < 2.0.0"

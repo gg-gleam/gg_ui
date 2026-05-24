@@ -1,0 +1,19 @@
+/*
+ * motion — the MOTION layer index: one import per component's motion recipe.
+ * Orthogonal to shape and color; imported once by the CSS entry. A fragment;
+ * no tailwind import.
+ *
+ * Policy — native-first, like the rest of the kit:
+ *  - Prefer the platform when it expresses the effect cleanly. Top-layer
+ *    enter/exit is native CSS (`:popover-open` + `@starting-style` +
+ *    `transition-behavior: allow-discrete`); see motion/popover.css, which
+ *    reproduces shadcn's popover animation (fade + zoom-95 + slide, 100ms)
+ *    natively — no plugin, no JS — and does so *better* (real exit animation,
+ *    where tw-animate-css needs a JS-held `data-closed` state).
+ *  - Reach for shadcn's `tw-animate-css` plugin only when a component's motion is
+ *    genuinely keyframe-shaped or JS-mounted and native CSS would be awkward
+ *    (e.g. accordion height, a spinner, a toast you already drive in JS). Then —
+ *    and only then — install it and `@import` it in the entry. Don't add it
+ *    pre-emptively; this kit ships none of it today.
+ */
+@import "./motion/popover.css";

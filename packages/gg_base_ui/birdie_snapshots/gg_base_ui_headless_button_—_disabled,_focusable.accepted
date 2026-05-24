@@ -1,0 +1,9 @@
+---
+version: 1.5.5
+title: gg_base_ui headless button — disabled, focusable
+file: ./test/button_test.gleam
+test_name: disabled_focusable_render_test
+---
+<button aria-disabled="true" type="button">
+  Disabled but focusable
+</button>

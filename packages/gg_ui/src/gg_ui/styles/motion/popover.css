@@ -1,0 +1,84 @@
+/*
+ * popover · motion — the popover's slice of the MOTION layer (imported by
+ * ../motion.css). Reproduces shadcn's popover animation — fade + zoom-95 + an
+ * 8px directional slide toward the trigger, at 100ms — but natively, driven by
+ * the popover top-layer lifecycle: `:popover-open` for the open state,
+ * `@starting-style` for the entry-from state, and `transition-behavior:
+ * allow-discrete` on `display`/`overlay` so it animates out before leaving the
+ * top layer. A fragment: no `@import "tailwindcss"`, no `@apply`.
+ *
+ * Values mirror shadcn's recipe exactly:
+ *   duration-100      → 100ms
+ *   fade-in/out-0     → opacity 0 ↔ 1
+ *   zoom-in/out-95    → scale(0.95)
+ *   slide-in-from-<s>-2 → 0.5rem (8px) directional, ENTER only (shadcn has no
+ *                         slide-out) — keyed on the resolved `data-side`.
+ */
+
+:root {
+  --motion-duration-popover: 100ms;
+  --motion-ease: ease;
+}
+
+/* Positioner = the `[popover]` element: owns the top-layer lifecycle + the fade.
+   No transform here — it would become the containing block for the
+   position:fixed arrow and break its viewport anchoring. */
+.cn-popover-positioner {
+  opacity: 0;
+  transition-property: opacity, display, overlay;
+  transition-duration: var(--motion-duration-popover);
+  transition-timing-function: var(--motion-ease);
+  transition-behavior: allow-discrete;
+}
+
+.cn-popover-positioner:popover-open {
+  opacity: 1;
+
+  @starting-style {
+    opacity: 0;
+  }
+}
+
+/* Card = the visible box: zoom (+ enter slide). Safe to transform — the arrow is
+   the card's sibling, not its descendant. The closed/exit state is zoom-only
+   (shadcn has no slide-out); the enter slide lives in @starting-style, keyed on
+   the resolved side. */
+.cn-popover-positioner > .cn-popover {
+  transform: scale(0.95);
+  transition: transform var(--motion-duration-popover) var(--motion-ease);
+}
+
+.cn-popover-positioner:popover-open > .cn-popover {
+  transform: none;
+}
+
+@starting-style {
+  .cn-popover-positioner[data-side="bottom"]:popover-open > .cn-popover {
+    transform: scale(0.95) translateY(-0.5rem);
+  }
+
+  .cn-popover-positioner[data-side="top"]:popover-open > .cn-popover {
+    transform: scale(0.95) translateY(0.5rem);
+  }
+
+  .cn-popover-positioner[data-side="left"]:popover-open > .cn-popover {
+    transform: scale(0.95) translateX(0.5rem);
+  }
+
+  .cn-popover-positioner[data-side="right"]:popover-open > .cn-popover {
+    transform: scale(0.95) translateX(-0.5rem);
+  }
+}
+
+/* Respect reduced-motion: keep the fade, drop the movement, near-instant. */
+@media (prefers-reduced-motion: reduce) {
+  .cn-popover-positioner {
+    transition-duration: 1ms;
+  }
+
+  .cn-popover-positioner > .cn-popover,
+  .cn-popover-positioner:popover-open > .cn-popover {
+    transform: none;
+    transition-duration: 1ms;
+  }
+}
