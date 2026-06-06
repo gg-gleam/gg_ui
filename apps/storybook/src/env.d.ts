@@ -30,6 +30,20 @@ declare module "*.gleam" {
   export const mount_scroll_collision: MountWithPlacementAndArrow
   export const mount_imperative: MountWithPlacement
 
+  // tooltip stories
+  // Basic additionally exposes the trigger's variant/size + the open delay (ms).
+  export const mount_tooltip_basic: (
+    selector: string,
+    side: string,
+    align: string,
+    arrow: boolean,
+    variant: string,
+    size: string,
+    delay: number,
+  ) => void
+  export const mount_sides: (selector: string) => void
+  export const mount_icon: (selector: string, side: string) => void
+
   // button stories
   type MountStatic = (selector: string) => void
   export const mount_variants: MountStatic

@@ -2,3 +2,4 @@
  * A fragment; no tailwind import (the entry provides Tailwind). */
 @import "./nova/button.css";
 @import "./nova/popover.css";
+@import "./nova/tooltip.css";

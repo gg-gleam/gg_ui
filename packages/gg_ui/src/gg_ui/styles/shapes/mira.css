@@ -2,3 +2,4 @@
  * A fragment; no tailwind import (the entry provides Tailwind). */
 @import "./mira/button.css";
 @import "./mira/popover.css";
+@import "./mira/tooltip.css";

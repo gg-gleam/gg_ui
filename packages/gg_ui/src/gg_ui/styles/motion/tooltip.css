@@ -1,0 +1,114 @@
+/*
+ * tooltip · motion — the tooltip's slice of the MOTION layer (imported by
+ * ../motion.css). Reproduces shadcn's tooltip animation — fade + zoom-95 + an
+ * 8px directional slide toward the trigger — but natively, driven by the
+ * `popover="hint"` top-layer lifecycle: `:popover-open` for the open state,
+ * `@starting-style` for the entry-from state, and `transition-behavior:
+ * allow-discrete` on `display`/`overlay` so it animates out before leaving the
+ * top layer. A fragment: no `@import "tailwindcss"`, no `@apply`.
+ *
+ * Values mirror shadcn's recipe exactly:
+ *   fade-in/out-0       → opacity 0 ↔ 1
+ *   zoom-in/out-95      → scale(0.95)
+ *   slide-in-from-<s>-2 → 0.5rem (8px) directional, ENTER only (shadcn has no
+ *                         slide-out) — keyed on the resolved `data-side`.
+ *
+ * Arrow rides WITH the box. shadcn nests the arrow inside TooltipContent, so the
+ * whole thing — tail included — fades/zooms/slides as one element. Our arrow is a
+ * `position: fixed` sibling of the pill (it can't live inside it: it anchors to
+ * the trigger and must escape the pill's box to overlap its edge). The fade is
+ * already shared (it's the positioner's group opacity, and the arrow is a
+ * descendant), but the zoom + slide are a `transform`, which isn't inherited — so
+ * we apply the SAME transform to the arrow directly. A transform on the arrow
+ * *itself* is safe: anchor positioning resolves at layout, the transform is a
+ * paint-time offset; only an *ancestor's* transform would break the fixed/anchor
+ * containing block (which is why the positioner stays transform-free). Pill and
+ * tail thus enter and leave in lockstep — no desynced "pop".
+ *
+ * shadcn uses the *same* motion for popover and tooltip (identical recipe; in
+ * new-york-v4 neither sets an explicit `duration-*`, so both inherit the one
+ * tw-animate-css default). We honour that parity by reusing the popover's
+ * duration token — the kit standardizes top-layer motion at one snappy value,
+ * so a tooltip never animates at a different speed than a popover. (That house
+ * value, 100ms, is a touch faster than stock tw-animate-css's 150ms default.)
+ */
+
+:root {
+  /* Inherit the shared popover duration so the two stay in lockstep; the
+     fallback only applies if the popover motion fragment isn't loaded. */
+  --motion-duration-tooltip: var(--motion-duration-popover, 100ms);
+}
+
+/* Positioner = the `[popover]` element: owns the top-layer lifecycle + the fade.
+   No transform here — it would become the containing block for the
+   position:fixed arrow and break its viewport anchoring. */
+.cn-tooltip-positioner {
+  opacity: 0;
+  transition-property: opacity, display, overlay;
+  transition-duration: var(--motion-duration-tooltip);
+  transition-timing-function: var(--motion-ease, ease);
+  transition-behavior: allow-discrete;
+}
+
+.cn-tooltip-positioner:popover-open {
+  opacity: 1;
+
+  @starting-style {
+    opacity: 0;
+  }
+}
+
+/* Pill + arrow = the visible box: zoom (+ enter slide), animated TOGETHER so the
+   tail never lags the box. The closed/exit state is zoom-only (shadcn has no
+   slide-out); the enter slide lives in @starting-style, keyed on the resolved
+   side. The arrow gets its own copy of the transform (see the header note). */
+.cn-tooltip-positioner > .cn-tooltip,
+.cn-tooltip-positioner > .cn-tooltip-arrow-icon {
+  transform: scale(0.95);
+  transition: transform var(--motion-duration-tooltip) var(--motion-ease, ease);
+}
+
+.cn-tooltip-positioner:popover-open > .cn-tooltip,
+.cn-tooltip-positioner:popover-open > .cn-tooltip-arrow-icon {
+  transform: none;
+}
+
+@starting-style {
+  .cn-tooltip-positioner[data-side="bottom"]:popover-open > .cn-tooltip,
+  .cn-tooltip-positioner[data-side="bottom"]:popover-open
+    > .cn-tooltip-arrow-icon {
+    transform: scale(0.95) translateY(-0.5rem);
+  }
+
+  .cn-tooltip-positioner[data-side="top"]:popover-open > .cn-tooltip,
+  .cn-tooltip-positioner[data-side="top"]:popover-open > .cn-tooltip-arrow-icon {
+    transform: scale(0.95) translateY(0.5rem);
+  }
+
+  .cn-tooltip-positioner[data-side="left"]:popover-open > .cn-tooltip,
+  .cn-tooltip-positioner[data-side="left"]:popover-open
+    > .cn-tooltip-arrow-icon {
+    transform: scale(0.95) translateX(0.5rem);
+  }
+
+  .cn-tooltip-positioner[data-side="right"]:popover-open > .cn-tooltip,
+  .cn-tooltip-positioner[data-side="right"]:popover-open
+    > .cn-tooltip-arrow-icon {
+    transform: scale(0.95) translateX(-0.5rem);
+  }
+}
+
+/* Respect reduced-motion: keep the fade, drop the movement, near-instant. */
+@media (prefers-reduced-motion: reduce) {
+  .cn-tooltip-positioner {
+    transition-duration: 1ms;
+  }
+
+  .cn-tooltip-positioner > .cn-tooltip,
+  .cn-tooltip-positioner > .cn-tooltip-arrow-icon,
+  .cn-tooltip-positioner:popover-open > .cn-tooltip,
+  .cn-tooltip-positioner:popover-open > .cn-tooltip-arrow-icon {
+    transform: none;
+    transition-duration: 1ms;
+  }
+}
