@@ -1,0 +1,37 @@
+/*
+ * Story scaffolding — the shared scroll-canvas surface (`helpers/scroll_canvas`)
+ * for the popover (and tooltip) collision demos. Defined as Tailwind `@utility`
+ * classes (so they sort into the utilities layer and are emitted on-demand from
+ * usage — `@source "./helpers"` in the entry makes the helper's usage visible).
+ *
+ * Real CSS rather than inline arbitrary utilities (`[background-image:…]`): the
+ * grid is a multi-gradient `background-image` with viewport-unit sizing, which
+ * is fragile to express as `[...]` utilities (token splitting, scanner misses)
+ * and silently dropped the grid more than once. Lines use the live `--border`
+ * token so the grid stays visible in light *and* dark.
+ */
+
+@utility story-canvas {
+  position: fixed;
+  inset: 0;
+  overflow: auto;
+}
+
+@utility story-canvas-grid {
+  position: relative;
+  /* 2.6× the viewport each way → ~0.8 viewport of scroll room around the
+   * centered trigger, enough for the popup to flip off any edge. */
+  width: 260vw;
+  height: 260vh;
+  background-image:
+    linear-gradient(to right, var(--border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+@utility story-canvas-trigger {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  translate: -50% -50%;
+}

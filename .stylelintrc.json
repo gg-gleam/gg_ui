@@ -1,0 +1,35 @@
+{
+  "extends": ["stylelint-config-recommended"],
+  "ignoreFiles": [
+    "**/storybook-static/**",
+    "**/coverage/**",
+    "**/build/**",
+    "**/dist/**",
+    "**/node_modules/**"
+  ],
+  "rules": {
+    "rule-empty-line-before": [
+      "always",
+      { "except": ["first-nested"], "ignore": ["after-comment"] }
+    ],
+    "at-rule-no-unknown": [
+      true,
+      {
+        "ignoreAtRules": [
+          "theme",
+          "apply",
+          "custom-variant",
+          "source",
+          "utility",
+          "variant",
+          "tailwind",
+          "plugin",
+          "config",
+          "reference"
+        ]
+      }
+    ],
+    "no-descending-specificity": null,
+    "comment-empty-line-before": null
+  }
+}

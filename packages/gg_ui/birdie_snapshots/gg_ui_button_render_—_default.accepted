@@ -1,0 +1,9 @@
+---
+version: 1.5.5
+title: gg_ui button render — default
+file: ./test/button_test.gleam
+test_name: render_default_test
+---
+<button class="cn-button cn-button-variant-default cn-button-size-default" data-slot="button" type="button">
+  Click me
+</button>

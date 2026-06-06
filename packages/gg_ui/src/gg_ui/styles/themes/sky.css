@@ -1,0 +1,14 @@
+/* Sky — accent theme (the "Theme" axis). Overrides the primary-family tokens
+ * (--primary, --primary-foreground) on top of any base color. Values
+ * from shadcn themes.ts. A fragment; no tailwind import. */
+.theme-sky {
+  --primary: oklch(0.5 0.134 242.749);
+  --primary-foreground: oklch(0.977 0.013 236.62);
+}
+
+.dark .theme-sky,
+.theme-sky.dark {
+  --link: color-mix(in oklab, var(--primary), var(--foreground) 55%);
+  --primary: oklch(0.443 0.11 240.79);
+  --primary-foreground: oklch(0.977 0.013 236.62);
+}

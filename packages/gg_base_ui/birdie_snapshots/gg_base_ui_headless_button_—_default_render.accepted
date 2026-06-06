@@ -1,0 +1,9 @@
+---
+version: 1.5.5
+title: gg_base_ui headless button — default render
+file: ./test/button_test.gleam
+test_name: default_render_test
+---
+<button type="button">
+  Click me
+</button>

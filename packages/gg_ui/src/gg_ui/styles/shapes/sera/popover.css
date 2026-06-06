@@ -1,0 +1,29 @@
+/* sera · popover — shape recipe, gg_ui native-first/animation-free anatomy.
+ * A fragment; no tailwind import. */
+.style-sera {
+  .cn-popover {
+    @apply w-72 rounded-none border border-border bg-popover p-4 text-sm text-popover-foreground shadow-md;
+  }
+
+  .cn-popover-positioner {
+    @apply z-50 overflow-visible border-0 bg-transparent p-0 outline-none;
+  }
+
+  .cn-popover-header {
+    @apply flex flex-col gap-1.5;
+  }
+
+  .cn-popover-title {
+    @apply text-sm font-medium leading-none;
+  }
+
+  .cn-popover-description {
+    @apply text-sm text-muted-foreground;
+  }
+
+  .cn-popover-arrow-icon {
+    @apply z-10 fill-popover stroke-border stroke-1;
+    --arrow-offset: 2px;
+    --arrow-shadow: drop-shadow(0 3px 2px rgb(0 0 0 / 0.08));
+  }
+}

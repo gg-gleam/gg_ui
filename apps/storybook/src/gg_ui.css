@@ -1,0 +1,77 @@
+/*
+ * Storybook CSS entry — the *consumer* side of the fragment/entry split.
+ * The library packages ship only fragments (no `@import "tailwindcss"`); this
+ * file is one entry that assembles them:
+ *   - Tailwind v4 itself.
+ *   - tokens.css — the `@theme inline` mapping so utilities like `bg-primary` exist.
+ *   - base_colors — the BASE COLOR axis (neutral palettes; `--background`,
+ *     `--foreground`, …, plus a default neutral `--primary`).
+ *   - themes — the THEME axis (accents; override `--primary` on top of the base
+ *     color). Imported AFTER base_colors so the accent's `--primary` wins.
+ *   - shapes — the STYLE axis (`.cn-*` recipes via `@apply`).
+ *   - motion — the shared transition layer.
+ *   - Then the Tailwind directives (`@custom-variant`, `@source`).
+ *
+ * Axes are classes on the root: `style-<shape>` + `base-color-<color>` +
+ * (optional) `theme-<accent>` + `dark` — matching shadcn's Style / Base Color /
+ * Theme vocabulary.
+ */
+
+@import "tailwindcss";
+
+/* Token mapping (shared). */
+@import "../../../packages/gg_ui/src/gg_ui/styles/tokens.css";
+
+/* Base colors — neutral palettes (light + dark values). */
+@import "../../../packages/gg_ui/src/gg_ui/styles/base_colors/neutral.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/base_colors/stone.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/base_colors/zinc.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/base_colors/mauve.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/base_colors/olive.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/base_colors/mist.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/base_colors/taupe.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/base_colors/lucy.css";
+
+/* Themes — accent / primary overrides (after base colors so they win). */
+@import "../../../packages/gg_ui/src/gg_ui/styles/themes/amber.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/themes/blue.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/themes/cyan.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/themes/emerald.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/themes/fuchsia.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/themes/green.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/themes/indigo.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/themes/lime.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/themes/orange.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/themes/pink.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/themes/purple.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/themes/red.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/themes/rose.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/themes/sky.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/themes/teal.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/themes/violet.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/themes/yellow.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/themes/lucy.css";
+
+@import "../../../packages/gg_ui/src/gg_ui/styles/shapes/arrow.css";
+
+/* Shapes — every style. */
+@import "../../../packages/gg_ui/src/gg_ui/styles/shapes/nova.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/shapes/vega.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/shapes/luma.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/shapes/sera.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/shapes/lyra.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/shapes/mira.css";
+@import "../../../packages/gg_ui/src/gg_ui/styles/shapes/maia.css";
+
+/* Motion — shared transition layer. */
+@import "../../../packages/gg_ui/src/gg_ui/styles/motion.css";
+
+/* Story scaffolding — shared scroll-canvas surface (see the file's header). */
+@import "./css/story-canvas.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Scan story sources, shared story helpers, and the styled package. */
+@source "./stories";
+@source "./helpers";
+@source "../../../packages/gg_ui/src";

@@ -1,0 +1,14 @@
+/* Green — accent theme (the "Theme" axis). Overrides the primary-family tokens
+ * (--primary, --primary-foreground) on top of any base color. Values
+ * from shadcn themes.ts. A fragment; no tailwind import. */
+.theme-green {
+  --primary: oklch(0.527 0.154 150.069);
+  --primary-foreground: oklch(0.982 0.018 155.826);
+}
+
+.dark .theme-green,
+.theme-green.dark {
+  --link: color-mix(in oklab, var(--primary), var(--foreground) 55%);
+  --primary: oklch(0.448 0.119 151.328);
+  --primary-foreground: oklch(0.982 0.018 155.826);
+}

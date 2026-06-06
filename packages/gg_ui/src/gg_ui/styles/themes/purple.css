@@ -1,0 +1,14 @@
+/* Purple — accent theme (the "Theme" axis). Overrides the primary-family tokens
+ * (--primary, --primary-foreground) on top of any base color. Values
+ * from shadcn themes.ts. A fragment; no tailwind import. */
+.theme-purple {
+  --primary: oklch(0.496 0.265 301.924);
+  --primary-foreground: oklch(0.977 0.014 308.299);
+}
+
+.dark .theme-purple,
+.theme-purple.dark {
+  --link: color-mix(in oklab, var(--primary), var(--foreground) 55%);
+  --primary: oklch(0.438 0.218 303.724);
+  --primary-foreground: oklch(0.977 0.014 308.299);
+}

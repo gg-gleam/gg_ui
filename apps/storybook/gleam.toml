@@ -1,0 +1,16 @@
+name = "gg_ui_storybook"
+version = "0.1.0"
+description = "Storybook host for gg_ui. Path-depends the library packages; this is not the published library (that's packages/gg_ui)."
+licences = ["MIT"]
+
+# Storybook host app. JS target like the packages it path-deps, so `gleam build`
+# here never compiles the Erlang-only mix deps (tails/jason) and needs no Elixir
+# toolchain. The repo root is a pure pnpm-workspace orchestrator; this app is the
+# Gleam build entry (`cd apps/storybook && gleam build` compiles the graph).
+target = "javascript"
+
+[dependencies]
+gleam_stdlib = ">= 1.0.0 and < 2.0.0"
+lustre = ">= 5.7.0 and < 6.0.0"
+gg_base_ui = { path = "../../packages/gg_base_ui" }
+gg_ui = { path = "../../packages/gg_ui" }

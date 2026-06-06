@@ -1,0 +1,25 @@
+/* Lucy — accent theme (the "Theme" axis), the Gleam signature Faff Pink
+ * (#ffaff3 → oklch(0.851 0.127 332)). Brand guide: https://gleam.run/branding/
+ * Overrides the primary-family tokens on top of any base color. A fragment; no
+ * tailwind import.
+ *
+ * The pastel Faff Pink is the FILL in BOTH modes (with a dark-aubergine
+ * foreground — 8.34:1 on the fill). It can't double as link TEXT on a light
+ * surface (1.66:1 on white), so the `link` variant gets its own --link:
+ *   - LIGHT: a vivid deeper pink of the same hue (oklch(0.55 0.21 332), 5.46:1
+ *            on white) — like the lime/yellow themes, the fill stays vivid and
+ *            only the link is adjusted (no muting; explicit, not color-mix).
+ *   - DARK:  --link = --primary, because pastel Faff Pink IS legible as text on
+ *            the Underwater Blue surface (8.22:1). */
+.theme-lucy {
+  --primary: oklch(0.851 0.127 332);
+  --primary-foreground: oklch(0.3 0.035 331);
+  --link: oklch(0.55 0.21 332);
+}
+
+.dark .theme-lucy,
+.theme-lucy.dark {
+  --primary: oklch(0.851 0.127 332);
+  --primary-foreground: oklch(0.3 0.035 331);
+  --link: var(--primary);
+}

@@ -1,0 +1,14 @@
+/* Teal — accent theme (the "Theme" axis). Overrides the primary-family tokens
+ * (--primary, --primary-foreground) on top of any base color. Values
+ * from shadcn themes.ts. A fragment; no tailwind import. */
+.theme-teal {
+  --primary: oklch(0.511 0.096 186.391);
+  --primary-foreground: oklch(0.984 0.014 180.72);
+}
+
+.dark .theme-teal,
+.theme-teal.dark {
+  --link: color-mix(in oklab, var(--primary), var(--foreground) 55%);
+  --primary: oklch(0.437 0.078 188.216);
+  --primary-foreground: oklch(0.984 0.014 180.72);
+}

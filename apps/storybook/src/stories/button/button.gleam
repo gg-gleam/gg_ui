@@ -1,0 +1,222 @@
+//// Story mounts for the base-nova `Button`. Like the popover stories, each
+//// `mount_*` starts a fresh Lustre runtime on the canvas Storybook hands us.
+//// `Playground` is driven by the `variant` / `size` / `disabled` controls; the
+//// galleries render the full set at once, and `AsLink` shows the `classes`
+//// recipe applied to an `<a>` (the Lustre stand-in for Base UI's `render`).
+
+import gg_ui/ui/button.{
+  type Size, type Variant, Default, Destructive, Ghost, Icon, IconLg, IconSm,
+  IconXs, Lg, Link, Medium, Outline, Secondary, Sm, Xs,
+}
+import gleam/list
+import lustre
+import lustre/attribute.{type Attribute}
+import lustre/effect.{type Effect}
+import lustre/element.{type Element}
+import lustre/element/html
+import lustre/element/svg
+import lustre/event
+
+type Model {
+  Model
+}
+
+type Msg {
+  Noop
+}
+
+fn update(model: Model, _msg: Msg) -> #(Model, Effect(Msg)) {
+  #(model, effect.none())
+}
+
+fn mount(selector: String, view_fn: fn(Model) -> Element(Msg)) -> Nil {
+  let app =
+    lustre.application(fn(_) { #(Model, effect.none()) }, update, view_fn)
+  let assert Ok(_) = lustre.start(app, selector, Nil)
+  Nil
+}
+
+// --- mounts --------------------------------------------------------------
+
+pub fn mount_playground(
+  selector: String,
+  variant: String,
+  size: String,
+  disabled: Bool,
+) -> Nil {
+  mount(selector, fn(_model) {
+    view_playground(parse_variant(variant), parse_size(size), disabled)
+  })
+}
+
+pub fn mount_variants(selector: String) -> Nil {
+  mount(selector, fn(_model) { view_variants() })
+}
+
+pub fn mount_sizes(selector: String) -> Nil {
+  mount(selector, fn(_model) { view_sizes() })
+}
+
+pub fn mount_with_icon(selector: String) -> Nil {
+  mount(selector, fn(_model) { view_with_icon() })
+}
+
+pub fn mount_as_link(selector: String) -> Nil {
+  mount(selector, fn(_model) { view_as_link() })
+}
+
+// --- args ----------------------------------------------------------------
+
+fn parse_variant(variant: String) -> Variant {
+  case variant {
+    "destructive" -> Destructive
+    "outline" -> Outline
+    "secondary" -> Secondary
+    "ghost" -> Ghost
+    "link" -> Link
+    _ -> Default
+  }
+}
+
+fn parse_size(size: String) -> Size {
+  case size {
+    "xs" -> Xs
+    "sm" -> Sm
+    "lg" -> Lg
+    "icon" -> Icon
+    "icon-xs" -> IconXs
+    "icon-sm" -> IconSm
+    "icon-lg" -> IconLg
+    _ -> Medium
+  }
+}
+
+// --- views ---------------------------------------------------------------
+
+fn view_playground(
+  variant: Variant,
+  size: Size,
+  disabled: Bool,
+) -> Element(Msg) {
+  // Icon-only buttons have no text node, so they need an explicit accessible
+  // name (aria-label); the icon itself is decorative (aria-hidden, set in
+  // `plus_icon`). Buttons with visible text don't.
+  let #(label, name_attrs) = case size {
+    Icon | IconXs | IconSm | IconLg -> #([plus_icon([])], [
+      aria_label("Add item"),
+    ])
+    _ -> #([html.text("Button")], [])
+  }
+  let attrs = case disabled {
+    True -> [attribute.disabled(True), event.on_click(Noop)]
+    False -> [event.on_click(Noop)]
+  }
+  center([
+    button.button(variant, size, list.flatten([attrs, name_attrs]), label),
+  ])
+}
+
+fn view_variants() -> Element(Msg) {
+  row([
+    button.button(Default, Medium, [], [html.text("Default")]),
+    button.button(Secondary, Medium, [], [html.text("Secondary")]),
+    button.button(Destructive, Medium, [], [html.text("Destructive")]),
+    button.button(Outline, Medium, [], [html.text("Outline")]),
+    button.button(Ghost, Medium, [], [html.text("Ghost")]),
+    button.button(Link, Medium, [], [html.text("Link")]),
+  ])
+}
+
+fn view_sizes() -> Element(Msg) {
+  row([
+    button.button(Default, Xs, [], [html.text("Extra small")]),
+    button.button(Default, Sm, [], [html.text("Small")]),
+    button.button(Default, Medium, [], [html.text("Default")]),
+    button.button(Default, Lg, [], [html.text("Large")]),
+    button.button(Outline, IconXs, [aria_label("Add item")], [plus_icon([])]),
+    button.button(Outline, IconSm, [aria_label("Add item")], [plus_icon([])]),
+    button.button(Outline, Icon, [aria_label("Add item")], [plus_icon([])]),
+    button.button(Outline, IconLg, [aria_label("Add item")], [plus_icon([])]),
+  ])
+}
+
+fn view_with_icon() -> Element(Msg) {
+  row([
+    button.button(Default, Medium, [], [
+      plus_icon([attribute.attribute("data-icon", "inline-start")]),
+      html.text("Add item"),
+    ]),
+    button.button(Outline, Medium, [], [
+      html.text("Add item"),
+      plus_icon([attribute.attribute("data-icon", "inline-end")]),
+    ]),
+  ])
+}
+
+fn view_as_link() -> Element(Msg) {
+  center([
+    button.link(
+      Link,
+      Medium,
+      [
+        attribute.href("https://ui.shadcn.com/"),
+        attribute.target("_blank"),
+      ],
+      [
+        html.text("Inspired by Shadcn UI's Button"),
+      ],
+    ),
+  ])
+}
+
+// --- helpers -------------------------------------------------------------
+
+fn aria_label(value: String) -> Attribute(Msg) {
+  attribute.attribute("aria-label", value)
+}
+
+fn center(children: List(Element(Msg))) -> Element(Msg) {
+  html.div(
+    [
+      attribute.class(
+        "flex min-h-24 items-center justify-center text-foreground",
+      ),
+    ],
+    children,
+  )
+}
+
+fn row(children: List(Element(Msg))) -> Element(Msg) {
+  html.div(
+    [
+      attribute.class(
+        "flex min-h-24 flex-wrap items-center justify-center gap-3 "
+        <> "text-foreground",
+      ),
+    ],
+    children,
+  )
+}
+
+/// A plain inline plus icon. The button base class sizes any unsized `<svg>`.
+/// Decorative: `aria-hidden` so AT relies on the button's text / aria-label.
+fn plus_icon(extra: List(Attribute(Msg))) -> Element(Msg) {
+  svg.svg(
+    list.flatten([
+      [
+        attribute.attribute("aria-hidden", "true"),
+        attribute.attribute("viewBox", "0 0 24 24"),
+        attribute.attribute("fill", "none"),
+        attribute.attribute("stroke", "currentColor"),
+        attribute.attribute("stroke-width", "2"),
+        attribute.attribute("stroke-linecap", "round"),
+        attribute.attribute("stroke-linejoin", "round"),
+      ],
+      extra,
+    ]),
+    [
+      svg.path([attribute.attribute("d", "M5 12h14")]),
+      svg.path([attribute.attribute("d", "M12 5v14")]),
+    ],
+  )
+}

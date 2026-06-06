@@ -1,0 +1,15 @@
+/* Yellow — accent theme (the "Theme" axis). Overrides the primary-family tokens
+ * (--primary, --primary-foreground) on top of any base color. Values
+ * from shadcn themes.ts. A fragment; no tailwind import. */
+.theme-yellow {
+  --link: color-mix(in oklab, var(--primary), var(--foreground) 55%);
+  --primary: oklch(0.852 0.199 91.936);
+  --primary-foreground: oklch(0.421 0.095 57.708);
+}
+
+.dark .theme-yellow,
+.theme-yellow.dark {
+  --link: var(--primary);
+  --primary: oklch(0.795 0.184 86.047);
+  --primary-foreground: oklch(0.421 0.095 57.708);
+}

@@ -1,0 +1,9 @@
+---
+version: 1.5.5
+title: gg_base_ui headless button — disabled
+file: ./test/button_test.gleam
+test_name: disabled_render_test
+---
+<button disabled type="button">
+  Disabled
+</button>

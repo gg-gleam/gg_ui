@@ -1,0 +1,14 @@
+/* Fuchsia — accent theme (the "Theme" axis). Overrides the primary-family tokens
+ * (--primary, --primary-foreground) on top of any base color. Values
+ * from shadcn themes.ts. A fragment; no tailwind import. */
+.theme-fuchsia {
+  --primary: oklch(0.518 0.253 323.949);
+  --primary-foreground: oklch(0.977 0.017 320.058);
+}
+
+.dark .theme-fuchsia,
+.theme-fuchsia.dark {
+  --link: color-mix(in oklab, var(--primary), var(--foreground) 55%);
+  --primary: oklch(0.452 0.211 324.591);
+  --primary-foreground: oklch(0.977 0.017 320.058);
+}

@@ -1,0 +1,77 @@
+/* Lucy — base color (the COLOR axis), built from the Gleam brand palette
+ * (https://gleam.run/branding/). Light mode wears a faint aubergine cast
+ * (Unexpected Aubergine, hue ~331 — Faff Pink's family); dark mode is anchored
+ * on Underwater Blue (#292d3e → oklch(0.301 0.031 274)) as the page surface, the
+ * signature Gleam dark look. Carries a neutral default --primary; theme-lucy
+ * layers Faff Pink on top. A fragment; no tailwind import. */
+.base-color-lucy {
+  --background: oklch(0.995 0.003 331);
+  --foreground: oklch(0.26 0.03 320);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.26 0.03 320);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.26 0.03 320);
+  --primary: oklch(0.3 0.035 326);
+  --primary-foreground: oklch(0.985 0.005 330);
+  --secondary: oklch(0.96 0.008 331);
+  --secondary-foreground: oklch(0.3 0.035 326);
+  --muted: oklch(0.96 0.008 331);
+  --muted-foreground: oklch(0.52 0.03 322);
+  --accent: oklch(0.96 0.008 331);
+  --accent-foreground: oklch(0.3 0.035 326);
+  --destructive: oklch(0.514 0.225 27.325);
+  --destructive-foreground: oklch(0.97 0.01 17);
+  --border: oklch(0.92 0.01 328);
+  --input: oklch(0.92 0.01 328);
+  --ring: oklch(0.71 0.03 326);
+  --chart-1: oklch(0.851 0.127 332);
+  --chart-2: oklch(0.301 0.031 274);
+  --chart-3: oklch(0.412 0.04 331);
+  --chart-4: oklch(0.78 0.1 208);
+  --chart-5: oklch(0.86 0.1 97);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0.004 331);
+  --sidebar-foreground: oklch(0.26 0.03 320);
+  --sidebar-primary: oklch(0.3 0.035 326);
+  --sidebar-primary-foreground: oklch(0.985 0.005 330);
+  --sidebar-accent: oklch(0.96 0.008 331);
+  --sidebar-accent-foreground: oklch(0.3 0.035 326);
+  --sidebar-border: oklch(0.92 0.01 328);
+  --sidebar-ring: oklch(0.71 0.03 326);
+}
+
+.dark .base-color-lucy,
+.base-color-lucy.dark {
+  --background: oklch(0.301 0.031 274);
+  --foreground: oklch(0.97 0.005 280);
+  --card: oklch(0.345 0.032 274);
+  --card-foreground: oklch(0.97 0.005 280);
+  --popover: oklch(0.345 0.032 274);
+  --popover-foreground: oklch(0.97 0.005 280);
+  --primary: oklch(0.928 0.006 286);
+  --primary-foreground: oklch(0.301 0.031 274);
+  --secondary: oklch(0.38 0.033 274);
+  --secondary-foreground: oklch(0.97 0.005 280);
+  --muted: oklch(0.38 0.033 274);
+  --muted-foreground: oklch(0.74 0.025 280);
+  --accent: oklch(0.38 0.033 274);
+  --accent-foreground: oklch(0.97 0.005 280);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.58 0.22 27);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.58 0.04 280);
+  --chart-1: oklch(0.851 0.127 332);
+  --chart-2: oklch(0.301 0.031 274);
+  --chart-3: oklch(0.412 0.04 331);
+  --chart-4: oklch(0.78 0.1 208);
+  --chart-5: oklch(0.86 0.1 97);
+  --sidebar: oklch(0.345 0.032 274);
+  --sidebar-foreground: oklch(0.97 0.005 280);
+  --sidebar-primary: oklch(0.851 0.127 332);
+  --sidebar-primary-foreground: oklch(0.301 0.031 274);
+  --sidebar-accent: oklch(0.38 0.033 274);
+  --sidebar-accent-foreground: oklch(0.97 0.005 280);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.58 0.04 280);
+}

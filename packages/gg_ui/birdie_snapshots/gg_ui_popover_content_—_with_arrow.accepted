@@ -1,0 +1,17 @@
+---
+version: 1.5.5
+title: gg_ui popover content — with arrow
+file: ./test/popover_test.gleam
+test_name: content_with_arrow_test
+---
+<div aria-describedby="demo-description" aria-labelledby="demo-title" class="cn-popover-positioner" data-align="center" data-side="bottom" id="demo-content" popover="auto" role="dialog" style="position-anchor:--gg-demo-anchor;position-area:block-end;inset:auto;position-try-fallbacks:flip-block, flip-inline, flip-block flip-inline, flip-start, flip-block flip-start, flip-inline flip-start, flip-block flip-inline flip-start;margin-inline:0;margin-block:8px;">
+  <div class="cn-popover">
+    <h2 class="cn-popover-title" id="demo-title">
+      Title
+    </h2>
+  </div>
+  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="cn-popover-arrow-icon" data-arrow overflow="visible" style="position:fixed;pointer-events:none;position-anchor:--gg-demo-anchor;">
+    <path data-arrow-part="fill" stroke="none"></path>
+    <path data-arrow-part="stroke" fill="none" stroke-linejoin="round"></path>
+  </svg>
+</div>

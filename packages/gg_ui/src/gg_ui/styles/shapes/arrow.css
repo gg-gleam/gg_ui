@@ -1,0 +1,110 @@
+/* arrow — shared geometry primitive for the decorative caret (popover today,
+ * tooltip/menu later). UNSCOPED on purpose: the caret shape is identical across
+ * every style, so it is NOT wrapped in `.style-*` — it lives beside the per-style
+ * indexes but applies in all of them. The per-component *skin* (fill / stroke /
+ * z) stays in each component recipe (e.g. `.cn-popover-arrow-icon`).
+ *
+ * Single source of truth for the geometry. It replaces the old twin tables in
+ * `gg_base_ui/arrow/arrow.gleam` (first paint) and `arrow_ffi.ts` (flip) — the
+ * `d` CSS property sets each `<path>`'s shape from the stylesheet, so the same
+ * data lives once, here. The headless `<svg>` ships no `width`/`height`/`viewBox`
+ * /`d`; CSS supplies them all (no viewBox → 1 user unit = 1px, matching the
+ * 0–14 / 0–7 coords).
+ *
+ * Keyed on the resolved side, which the FFI observer writes onto the popup
+ * ([data-side]) and which is present at first paint too. So a `position-try`
+ * flip needs only that one attribute flipped — CSS swaps `d`, size, placement,
+ * and the offset margin together; the observer never touches the arrow. The
+ * `[data-arrow]` marker is the component-agnostic hook the headless primitive
+ * stamps on its `<svg>`. A fragment: no tailwind import.
+ *
+ * Per-style override (if a sharp-cornered style ever wants a sharp tip) is still
+ * possible by source order: `.style-sera [data-side] [data-arrow-part] { d: … }`.
+ *
+ * `--arrow-offset` is the trigger-ward nudge that overlaps the caret base past
+ * the popup edge so its fill covers the border seam; the component sets the
+ * value (popover: 2px), the shared rule applies it on the trigger-facing side.
+ */
+
+/* Optional caret shadow. `box-shadow` follows the rectangular border-box and
+ * can't wrap the triangle, so a protruding caret casts none — Base UI itself
+ * leaves the arrow shadowless and only matches its border. `filter: drop-shadow`
+ * tracks the shape's alpha instead, so the tail casts the same downward shadow
+ * as the card and reads as one floating surface. Off by default (`none`); a
+ * component opts in by setting `--arrow-shadow` (popover does, in its recipe).
+ * The cast is always downward (light from top) — correct on every side. */
+[data-arrow] {
+  filter: var(--arrow-shadow, none);
+}
+
+/* bottom — popup below the trigger; caret points up. */
+[data-side="bottom"] [data-arrow] {
+  width: 14px;
+  height: 7px;
+  position-area: block-end center;
+  align-self: start;
+  justify-self: center;
+  margin-block-start: var(--arrow-offset, 0px);
+}
+
+[data-side="bottom"] [data-arrow] [data-arrow-part="fill"] {
+  d: path("M0,7 L5,2 Q7,0 9,2 L14,7 Z");
+}
+
+[data-side="bottom"] [data-arrow] [data-arrow-part="stroke"] {
+  d: path("M0,7 L5,2 Q7,0 9,2 L14,7");
+}
+
+/* top — popup above the trigger; caret points down. */
+[data-side="top"] [data-arrow] {
+  width: 14px;
+  height: 7px;
+  position-area: block-start center;
+  align-self: end;
+  justify-self: center;
+  margin-block-end: var(--arrow-offset, 0px);
+}
+
+[data-side="top"] [data-arrow] [data-arrow-part="fill"] {
+  d: path("M0,0 L5,5 Q7,7 9,5 L14,0 Z");
+}
+
+[data-side="top"] [data-arrow] [data-arrow-part="stroke"] {
+  d: path("M0,0 L5,5 Q7,7 9,5 L14,0");
+}
+
+/* right — popup to the trigger's right; caret points left. */
+[data-side="right"] [data-arrow] {
+  width: 7px;
+  height: 14px;
+  position-area: inline-end center;
+  align-self: center;
+  justify-self: start;
+  margin-inline-start: var(--arrow-offset, 0px);
+}
+
+[data-side="right"] [data-arrow] [data-arrow-part="fill"] {
+  d: path("M7,0 L2,5 Q0,7 2,9 L7,14 Z");
+}
+
+[data-side="right"] [data-arrow] [data-arrow-part="stroke"] {
+  d: path("M7,0 L2,5 Q0,7 2,9 L7,14");
+}
+
+/* left — popup to the trigger's left; caret points right. */
+[data-side="left"] [data-arrow] {
+  width: 7px;
+  height: 14px;
+  position-area: inline-start center;
+  align-self: center;
+  justify-self: end;
+  margin-inline-end: var(--arrow-offset, 0px);
+}
+
+[data-side="left"] [data-arrow] [data-arrow-part="fill"] {
+  d: path("M0,0 L5,5 Q7,7 5,9 L0,14 Z");
+}
+
+[data-side="left"] [data-arrow] [data-arrow-part="stroke"] {
+  d: path("M0,0 L5,5 Q7,7 5,9 L0,14");
+}

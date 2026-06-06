@@ -1,0 +1,9 @@
+---
+version: 1.5.5
+title: gg_ui popover trigger — destructive / lg
+file: ./test/popover_test.gleam
+test_name: trigger_destructive_lg_test
+---
+<button aria-expanded="false" aria-haspopup="dialog" class="cn-button cn-button-variant-destructive cn-button-size-lg" command="toggle-popover" commandfor="demo-content" data-slot="button" id="demo-anchor" style="anchor-name:--gg-demo-anchor;" type="button">
+  Open
+</button>

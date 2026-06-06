@@ -1,13 +1,12 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.4.15/schema.json",
-  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
   "files": {
-    "includes": [
-      "src/**/*.ts",
-      ".storybook/**/*.ts",
-      "*.ts",
-      "*.json"
-    ]
+    "includes": ["apps/**/*.ts", "packages/**/*.ts", "*.ts", "*.json"]
   },
   "formatter": {
     "enabled": true,
@@ -16,9 +15,14 @@
   },
   "linter": {
     "enabled": true,
-    "rules": { "recommended": true }
+    "rules": {
+      "recommended": true
+    }
   },
   "javascript": {
-    "formatter": { "quoteStyle": "double" }
+    "formatter": {
+      "quoteStyle": "double",
+      "semicolons": "asNeeded"
+    }
   }
 }

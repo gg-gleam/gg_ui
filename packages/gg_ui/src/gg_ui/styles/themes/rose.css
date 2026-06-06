@@ -1,0 +1,14 @@
+/* Rose — accent theme (the "Theme" axis). Overrides the primary-family tokens
+ * (--primary, --primary-foreground) on top of any base color. Values
+ * from shadcn themes.ts. A fragment; no tailwind import. */
+.theme-rose {
+  --primary: oklch(0.514 0.222 16.935);
+  --primary-foreground: oklch(0.969 0.015 12.422);
+}
+
+.dark .theme-rose,
+.theme-rose.dark {
+  --link: color-mix(in oklab, var(--primary), var(--foreground) 55%);
+  --primary: oklch(0.455 0.188 13.697);
+  --primary-foreground: oklch(0.969 0.015 12.422);
+}

@@ -1,0 +1,14 @@
+/* Blue — accent theme (the "Theme" axis). Overrides the primary-family tokens
+ * (--primary, --primary-foreground) on top of any base color. Values
+ * from shadcn themes.ts. A fragment; no tailwind import. */
+.theme-blue {
+  --primary: oklch(0.488 0.243 264.376);
+  --primary-foreground: oklch(0.97 0.014 254.604);
+}
+
+.dark .theme-blue,
+.theme-blue.dark {
+  --link: color-mix(in oklab, var(--primary), var(--foreground) 55%);
+  --primary: oklch(0.424 0.199 265.638);
+  --primary-foreground: oklch(0.97 0.014 254.604);
+}

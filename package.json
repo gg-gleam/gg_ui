@@ -4,25 +4,22 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "storybook dev -p 6006",
-    "build": "storybook build",
-    "typecheck": "tsc --noEmit",
-    "lint": "biome check .",
-    "format": "biome format --write ."
-  },
-  "dependencies": {
-    "@tailwindcss/vite": "^4.1.17",
-    "tailwindcss": "^4.1.17"
+    "dev": "pnpm --filter @gg_ui/storybook dev",
+    "build": "pnpm --filter @gg_ui/storybook build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "stylelint \"{apps,packages}/**/*.css\" && biome check .",
+    "format": "pnpm format:gleam && stylelint --fix \"{apps,packages}/**/*.css\" && biome format --write .",
+    "format:gleam": "gleam format apps/storybook/src packages/gg_base_ui/src packages/gg_base_ui/test packages/gg_ui/src packages/gg_ui/test",
+    "format:check": "gleam format --check apps/storybook/src packages/gg_base_ui/src packages/gg_base_ui/test packages/gg_ui/src packages/gg_ui/test",
+    "test": "pnpm test:gleam && pnpm test:stories",
+    "test:gleam": "(cd packages/gg_base_ui && gleam test) && (cd packages/gg_ui && gleam test)",
+    "test:stories": "pnpm --filter @gg_ui/storybook test:stories",
+    "test:stories:coverage": "pnpm --filter @gg_ui/storybook coverage"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.0",
-    "@storybook/html-vite": "^10.4.1",
-    "storybook": "^10.4.1",
-    "typescript": "^5.7.0",
-    "vite": "npm:rolldown-vite@7.2.2",
-    "vite-plugin-gleam": "^0.1.8"
+    "stylelint": "^17.12.0",
+    "stylelint-config-recommended": "^18.0.0"
   },
-  "overrides": {
-    "vite": "npm:rolldown-vite@7.2.2"
-  }
+  "packageManager": "pnpm@10.30.3"
 }
