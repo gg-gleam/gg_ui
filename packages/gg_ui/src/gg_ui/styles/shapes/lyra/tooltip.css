@@ -1,0 +1,17 @@
+/* lyra · tooltip — shape recipe, gg_ui native-first/animation-free anatomy. The
+ * dark hint pill (shadcn's TooltipContent: bg-foreground / text-background) plus
+ * the transparent positioner and the caret skin. A fragment; no tailwind import. */
+.style-lyra {
+  .cn-tooltip {
+    @apply w-fit rounded-none bg-foreground px-3 py-1.5 text-xs text-balance text-background;
+  }
+
+  .cn-tooltip-positioner {
+    @apply z-50 overflow-visible border-0 bg-transparent p-0 outline-none;
+  }
+
+  .cn-tooltip-arrow-icon {
+    @apply z-10 fill-foreground stroke-foreground stroke-1;
+    --arrow-offset: 5px;
+  }
+}

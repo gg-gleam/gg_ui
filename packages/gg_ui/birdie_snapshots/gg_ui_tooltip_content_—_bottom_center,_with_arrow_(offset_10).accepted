@@ -1,0 +1,15 @@
+---
+version: 1.5.5
+title: gg_ui tooltip content — bottom/center, with arrow (offset 10)
+file: ./test/tooltip_test.gleam
+test_name: content_with_arrow_test
+---
+<div class="cn-tooltip-positioner" data-align="center" data-side="bottom" id="demo-content" popover="hint" role="tooltip" style="position-anchor:--gg-demo-anchor;position-area:block-end;inset:auto;position-try-fallbacks:flip-block, flip-inline, flip-block flip-inline, flip-start, flip-block flip-start, flip-inline flip-start, flip-block flip-inline flip-start;margin-inline:0;margin-block:10px;">
+  <div class="cn-tooltip">
+    Add to library
+  </div>
+  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="cn-tooltip-arrow-icon" data-arrow overflow="visible" style="position:fixed;pointer-events:none;position-anchor:--gg-demo-anchor;">
+    <path data-arrow-part="fill" stroke="none"></path>
+    <path data-arrow-part="stroke" fill="none" stroke-linejoin="round"></path>
+  </svg>
+</div>

@@ -228,6 +228,35 @@ themselves stay put; the registry just points elsewhere).
 
 ## Open questions (for when we implement)
 
+- **Motion layer ship story — TODO, no registry type yet.** Motion is the one
+  styling axis with no `type` in the table above, and it must get one before the
+  CLI ships. This is a real **divergence from shadcn**: shadcn's animation is
+  inline `tw-animate-css` utilities living *in the component's className*, so it
+  ejects automatically with the `.tsx` and the user wires nothing. Ours is a
+  **native-CSS fragment** (`styles/motion/<component>.css`, keyed on the same
+  `cn-*` selectors the component emits) that lives *outside* the component — and
+  deliberately so (native `@starting-style` / `:popover-open` / `allow-discrete`
+  can't be expressed as utilities, and they give real *exit* animation, which
+  `tw-animate-css` can't without a JS `data-state`). The consequence: `gg-ui add
+  tooltip` copies the component but **not** its motion, so an ejected component
+  would render with no animation unless the CLI also applies the motion.
+  **Goal: zero plumbing** — adding a component yields its motion automatically,
+  exactly the way shadcn applies tokens/themes onto the user's stylesheet. Two
+  vehicles, both already in the schema (pick one when we implement):
+    1. **The `css` field** (`registry-item.json`'s "raw CSS the CLI appends to
+       globals") — fold a component's motion CSS into its `registry:ui` item's
+       `css`, so `add` inlines it into the user's globals. Motion travels *with*
+       the component it belongs to — closest to shadcn's "it just comes with the
+       component" feel.
+    2. **An `@import`ed fragment** — treat motion like `registry:style` /
+       `registry:theme`: ship `styles/motion/<component>.css` and have `add`
+       append an `@import` to the user's CSS entry (mirrors how `apply` wires
+       style/theme overlays in [`cli.md`](cli.md)).
+  Also decide where the shared `:root` motion tokens (`--motion-duration-popover`,
+  `--motion-ease`, the tooltip's inherited `--motion-duration-tooltip`) ship —
+  most likely once, via the base preset. Tracked from the CLI side in
+  [`cli.md`](cli.md) "Open questions".
+
 - **Multiple registries.** shadcn's CLI supports third-party registries
   (`@your-org/registry`). We'll inherit that for free if we fork. Worth
   defining what a "Gleam-flavoured" third-party registry looks like — same

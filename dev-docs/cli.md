@@ -209,7 +209,10 @@ The registry items can be installed by hand:
    alias-relative imports per [`config.md`](config.md). Never copy the
    headless layer.
 4. `@import` any `registry:theme` / `registry:style` fragments into your CSS
-   entry (the one that imports Tailwind first).
+   entry (the one that imports Tailwind first), **plus `styles/motion.css`** (or
+   the per-component motion fragment) — motion isn't carried by the component, so
+   without this the ejected component renders with no animation. See "Open
+   questions" for why this is a manual step today.
 
 We'll document this manual flow in the consumer README once we have a
 first non-trivial consumer (the companies selector). It's the same
@@ -235,6 +238,21 @@ operates on the registry data layer — it doesn't need to *be* Gleam.
 
 ## Open questions
 
+- **Wiring motion into the user's CSS — TODO.** `add` copies the component, and
+  `init` / `apply` already `@import` `registry:style` and `registry:theme`
+  overlays into the user's CSS. The **motion layer** (native CSS under
+  `styles/motion/*`) has *no* wiring yet — so today an ejected component would
+  render without its animation. shadcn never hits this: its animation is inline
+  `tw-animate-css` utilities in the component, so it travels with the `.tsx`.
+  Ours is a separate native-CSS fragment (by design — see the rationale in
+  [`registry.md`](registry.md)), so `gg-ui add <component>` must **auto-apply
+  that component's motion with zero user plumbing** — either by appending the
+  item's `css` field to the user's globals, or by `@import`ing the motion
+  fragment the same way `apply` handles overlays. The shared `:root` motion
+  tokens should ride along once (probably via the base preset). Design lives in
+  [`registry.md`](registry.md) "Open questions"; this is the consumer/CLI side of
+  it. Until decided, the "Until then" manual flow above carries the interim step:
+  also `@import` `styles/motion.css` (or the per-component motion fragment).
 - **Per-target install knobs.** A future component might be JS-only (uses
   FFI). Should `gleam add` flag the target? Probably handled at
   `gg_ui_registry` level (a `targets: ["javascript"]` field on the item)

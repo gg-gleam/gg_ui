@@ -94,7 +94,11 @@ function updateResolvedSide(popup: HTMLElement): void {
 function findTriggerFor(popup: HTMLElement): HTMLElement | null {
   const id = popup.id
   if (!id) return null
-  const selector = `button[commandfor="${CSS.escape(id)}"]`
+  // A popup is opened either by an Invoker Command (popover → `commandfor`) or by
+  // an Interest Invoker (tooltip → `interestfor`); match whichever points here so
+  // the arrow resolves its side for both components.
+  const ref = CSS.escape(id)
+  const selector = `[commandfor="${ref}"], [interestfor="${ref}"]`
   const el = document.querySelector(selector)
   return el instanceof HTMLElement ? el : null
 }
