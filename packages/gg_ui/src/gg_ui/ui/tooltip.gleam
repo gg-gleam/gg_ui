@@ -195,7 +195,6 @@ fn arrow_element(anatomy: Anatomy) -> Element(msg) {
 pub type Options {
   Options(
     id: Option(String),
-    text: String,
     variant: button.Variant,
     size: button.Size,
     side: Side,
@@ -206,14 +205,13 @@ pub type Options {
   )
 }
 
-/// The terse tooltip's defaults: an outline/medium trigger labelled `"Hover"`, an
-/// auto-generated id, opening **top / center** (the conventional placement), no
-/// arrow, and Base UI's 600ms / 0ms delays. Spread it with record-update to
-/// change a field — `Options(..tooltip.options(), text: "Save")`.
+/// The terse tooltip's defaults: an outline/medium trigger, an auto-generated id,
+/// opening **top / center** (the conventional placement), no arrow, and Base
+/// UI's 600ms / 0ms delays. Spread it with record-update to change a field —
+/// `Options(..tooltip.options(), side: Bottom)`.
 pub fn options() -> Options {
   Options(
     id: None,
-    text: "Hover",
     variant: button.Outline,
     size: button.Medium,
     side: Top,
@@ -227,16 +225,19 @@ pub fn options() -> Options {
 /// Terse tooltip — the whole thing in one call, mechanics hidden. The shadcn
 /// `<Tooltip>` equivalent.
 ///
-/// The trigger is the styled button described by `options` (`text` / `variant` /
-/// `size`); `content` is the tip itself (usually a single `html.text`). Pass
-/// `tooltip.options()` for all-defaults, or spread it to override only what you
-/// need — e.g. `Options(..tooltip.options(), text: "Save", side: Bottom)`.
+/// The trigger is the styled button described by `options` (`variant` / `size`);
+/// `label` is its **content** — any elements, so it's `[html.text("Save")]` for a
+/// text button, an icon, or both (e.g. an icon + a `sr-only` span to keep an
+/// icon-only button named). `content` is the tip itself. Pass `tooltip.options()`
+/// for all-defaults, or spread it to override only what you need — e.g.
+/// `Options(..tooltip.options(), side: Bottom)`.
 ///
-/// Want a trigger that *isn't* the styled button (an icon button, a link)? Use
-/// `tooltip_with_trigger` and pass your own.
+/// Want a trigger that *isn't* the styled button at all (a link, a bare element)?
+/// Use `tooltip_with_trigger` and pass your own.
 ///
 /// Render-once by design (the browser owns open state via interest).
 pub fn tooltip(
+  label label: List(Element(msg)),
   options options: Options,
   content content: List(Element(msg)),
 ) -> Element(msg) {
@@ -248,7 +249,7 @@ pub fn tooltip(
         size: options.size,
         delay: options.delay,
         close_delay: options.close_delay,
-        children: [html.text(options.text)],
+        children: label,
       )
     },
     options:,

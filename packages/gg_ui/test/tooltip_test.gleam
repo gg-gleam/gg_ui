@@ -88,6 +88,7 @@ pub fn content_with_arrow_test() {
 
 pub fn terse_defaults_test() {
   tooltip.tooltip(
+    label: [html.text("Hover")],
     options: tooltip.Options(..tooltip.options(), id: Some("demo")),
     content: [html.text("Add to library")],
   )

@@ -117,13 +117,8 @@ fn view_basic(
 fn view_terse(side: Side, align: Align, arrow: Bool) -> Element(msg) {
   html.div([attribute.class("text-foreground")], [
     tooltip.tooltip(
-      options: tooltip.Options(
-        ..tooltip.options(),
-        text: "Hover me",
-        side:,
-        align:,
-        arrow:,
-      ),
+      label: [html.text("Hover me")],
+      options: tooltip.Options(..tooltip.options(), side:, align:, arrow:),
       content: [html.text("Add to library")],
     ),
   ])
@@ -157,41 +152,22 @@ fn one_side(side: Side, label: String) -> Element(msg) {
 
 fn view_icon(side: Side, set: IconSet, variant: IconVariant) -> Element(msg) {
   html.div([attribute.class("text-foreground")], [
-    // Terse `tooltip_with_trigger` with a bring-your-own trigger: just the icon,
-    // no button box. We merge the tooltip's behavior attributes onto a bare
-    // `<button>` (not `button.classes`, which would draw the outline/rounded
-    // box). The glyph is decorative (gg_icon.svg sets aria-hidden), so the
-    // icon-only button needs its own accessible name via `aria-label`; resting
-    // `text-muted-foreground` brightens on hover/focus, the only affordance left
-    // without a box.
-    tooltip.tooltip_with_trigger(
-      trigger: fn(tip) {
-        html.button(
-          [
-            attribute.attribute("aria-label", "More information"),
-            attribute.class(
-              "inline-flex items-center justify-center rounded-sm "
-              <> "text-muted-foreground transition-colors hover:text-foreground "
-              <> "focus-visible:text-foreground focus-visible:outline-2 "
-              <> "focus-visible:outline-ring focus-visible:outline-offset-2",
-            ),
-            ..tooltip.trigger_attributes(
-              tip,
-              delay: tooltip.default_delay,
-              close_delay: tooltip.default_close_delay,
-            )
-          ],
-          // A bigger glyph from the typed scale (Lg), so it reads at a glance and
-          // its `size-` token also suppresses any container auto-size.
-          [
-            demo_icons.render(set, variant, demo_icons.Info, [
-              icon.size(icon.Lg),
-            ]),
-          ],
-        )
-      },
+    // Terse `tooltip.tooltip` now that its trigger takes HTML children, not just
+    // text: pass the icon (a bigger Lg glyph, whose `size-` token also overrides
+    // the button's auto-size) plus a visually-hidden `sr-only` label so the
+    // icon-only button still has an accessible name (the a11y addon runs as
+    // `error`). A `Ghost` icon button keeps it light — transparent at rest, only
+    // a subtle hover surface. (For a truly surfaceless trigger, reach for
+    // `tooltip_with_trigger` and a bare element.)
+    tooltip.tooltip(
+      label: [
+        demo_icons.render(set, variant, demo_icons.Info, [icon.size(icon.Lg)]),
+        html.span([attribute.class("sr-only")], [html.text("More information")]),
+      ],
       options: tooltip.Options(
         ..tooltip.options(),
+        variant: button.Ghost,
+        size: button.IconSm,
         side:,
         align: Center,
         arrow: True,
