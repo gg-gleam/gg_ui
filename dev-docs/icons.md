@@ -216,7 +216,8 @@ write/replace `pub fn <snake_name>` in the **shard module for its first letter**
 `add`/`update` rewrite just the one affected shard. Naming: **snake_case Gleam
 function names** (`chevron_down`), kebab upstream name in the module doc-comment.
 
-**Each set ships a generated manifest** (`manifest.json` or a Gleam const) the
+**Each set ships a generated manifest** — `icons.json` (named to *not* collide
+with Gleam's own `manifest.toml` dependency lockfile) — that the
 CLI/transformer/registry consume: `{ variants: [...], default: "outline",
 icons: { outline: { chevron_down: "c", star: "s", … }, filled: { … } } }` — i.e.
 per variant, every icon name mapped to its **shard**. That's the allow-list *and*
