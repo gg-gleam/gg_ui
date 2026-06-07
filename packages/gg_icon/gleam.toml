@@ -2,6 +2,7 @@ name = "gg_icon"
 version = "0.1.0"
 description = "Set-agnostic icon interface for Lustre — the shared contract every gg_icons_* set builds on (size scale, the svg wrapper, the authoring placeholder). No Tailwind, no concrete icon set."
 licences = ["MIT"]
+links = [{ title = "Repository", href = "https://github.com/gg-gleam/gg_ui" }]
 
 [dependencies]
 gleam_stdlib = ">= 1.0.0 and < 2.0.0"

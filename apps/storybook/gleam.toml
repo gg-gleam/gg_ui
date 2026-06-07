@@ -14,10 +14,7 @@ gleam_stdlib = ">= 1.0.0 and < 2.0.0"
 lustre = ">= 5.7.0 and < 6.0.0"
 gg_base_ui = { path = "../../packages/gg_base_ui" }
 gg_ui = { path = "../../packages/gg_ui" }
-# Icon interface (monorepo) + the concrete sets (sibling repos under
-# gg_family/gg_icons). Storybook is the one place allowed to import concrete
-# sets — it path-deps them for the demo catalog (see stories/icons).
-gg_icon = { path = "../../packages/gg_icon" }
-gg_icons_lucide = { path = "../../../gg_icons/lucide" }
-gg_icons_tabler = { path = "../../../gg_icons/tabler" }
-gg_icons_heroicons = { path = "../../../gg_icons/heroicons" }
+gg_icon = ">= 0.1.0 and < 1.0.0"
+gg_icons_lucide = { git = "https://github.com/gg-gleam/gg_icons_lucide.git", ref = "main" }
+gg_icons_tabler = { git = "https://github.com/gg-gleam/gg_icons_tabler.git", ref = "main" }
+gg_icons_heroicons = { git = "https://github.com/gg-gleam/gg_icons_heroicons.git", ref = "main" }
