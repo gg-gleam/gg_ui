@@ -1,3 +1,4 @@
+import gg_icon/icon
 import gg_ui/positioning.{
   type Align, type Side, Bottom, Center, End, Left, Right, Start, Top,
 }
@@ -173,7 +174,10 @@ fn view_icon(side: Side, set: IconSet, variant: IconVariant) -> Element(msg) {
           close_delay: tooltip.default_close_delay,
         )
       ],
-      [demo_icons.render(set, variant, demo_icons.Info, [])],
+      // A bigger glyph from the typed scale (Lg), so it reads at a glance and
+      // its `size-` token also suppresses the button's `:not([class*='size-'])`
+      // auto-size.
+      [demo_icons.render(set, variant, demo_icons.Info, [icon.size(icon.Lg)])],
     ),
     tooltip.content(tip, side:, align: Center, arrow: True, children: [
       html.text("More information"),

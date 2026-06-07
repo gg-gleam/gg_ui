@@ -31,11 +31,13 @@ fn view_gallery(set: IconSet, variant: IconVariant) -> Element(msg) {
   )
 }
 
-/// One square tile. The tile *is* the tooltip trigger — its name is the tip, so
-/// the grid stays a clean wall of glyphs. Built with `tooltip_with_trigger` +
-/// `trigger_attributes` (the trigger isn't the styled button): the icon-only
-/// `<button>` carries an `aria-label` so it has an accessible name (the a11y
-/// addon runs as `error`), and the icon stays decorative.
+/// One cell — just the icon, no box. The icon *is* the tooltip trigger, so its
+/// name reveals on hover/focus and the grid stays a clean wall of glyphs. Built
+/// with `tooltip_with_trigger` + `trigger_attributes` (not the styled button):
+/// the icon-only `<button>` carries an `aria-label` so it has an accessible name
+/// (the a11y addon runs as `error`), and the icon stays decorative. Resting
+/// `text-muted-foreground` brightens on hover/focus — the only affordance, since
+/// there's no surrounding box.
 fn cell(set: IconSet, variant: IconVariant, which: DemoIcon) -> Element(msg) {
   let name = demo_icons.label(which)
   tooltip.tooltip_with_trigger(
@@ -46,11 +48,10 @@ fn cell(set: IconSet, variant: IconVariant, which: DemoIcon) -> Element(msg) {
             attribute.type_("button"),
             attribute.attribute("aria-label", name),
             attribute.class(
-              "flex aspect-square items-center justify-center rounded-md "
-              <> "border border-border transition-colors "
-              <> "hover:bg-accent hover:text-accent-foreground "
-              <> "focus-visible:border-ring focus-visible:ring-3 "
-              <> "focus-visible:ring-ring/50 focus-visible:outline-none",
+              "flex items-center justify-center rounded-sm p-3 "
+              <> "text-muted-foreground transition-colors hover:text-foreground "
+              <> "focus-visible:text-foreground focus-visible:outline-2 "
+              <> "focus-visible:outline-ring",
             ),
           ],
           tooltip.trigger_attributes(
