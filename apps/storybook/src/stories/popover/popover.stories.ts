@@ -167,10 +167,24 @@ function popup(canvasElement: HTMLElement): HTMLElement {
 
 /** Outline trigger + a header with title and description. */
 export const Basic: Story = {
-  render: ({ side, align, arrow, variant, size }) =>
-    mountLustre((selector) =>
-      mount_basic(selector, side, align, arrow, variant, size),
-    ),
+  render: ({ side, align, arrow, variant, size }, { globals }) => {
+    const { iconSet, iconVariant } = globals as {
+      iconSet: string
+      iconVariant: string
+    }
+    return mountLustre((selector) =>
+      mount_basic(
+        selector,
+        side,
+        align,
+        arrow,
+        variant,
+        size,
+        iconSet,
+        iconVariant,
+      ),
+    )
+  },
   // Declarative open: clicking the Invoker Command button
   // (`command="toggle-popover"`) opens the popup and the browser flips the
   // trigger's `aria-expanded` natively — no JS observer involved. Then Escape
@@ -256,8 +270,15 @@ export const TerseApi: Story = {
  * widgets use when typing or focus should open the popup.
  */
 export const Imperative: Story = {
-  render: ({ side, align }) =>
-    mountLustre((selector) => mount_imperative(selector, side, align)),
+  render: ({ side, align }, { globals }) => {
+    const { iconSet, iconVariant } = globals as {
+      iconSet: string
+      iconVariant: string
+    }
+    return mountLustre((selector) =>
+      mount_imperative(selector, side, align, iconSet, iconVariant),
+    )
+  },
   // Each external button dispatches a Gleam msg whose effect calls the matching
   // FFI command — `showPopover` / `hidePopover` / `togglePopover`. Exercise all
   // three: open, close, then toggle (open) and toggle (close).
@@ -300,10 +321,24 @@ export const Imperative: Story = {
 export const WithArrow: Story = {
   args: { side: "top", arrow: true },
   parameters: { controls: { disable: true } },
-  render: ({ side, align, arrow, variant, size }) =>
-    mountLustre((selector) =>
-      mount_basic(selector, side, align, arrow, variant, size),
-    ),
+  render: ({ side, align, arrow, variant, size }, { globals }) => {
+    const { iconSet, iconVariant } = globals as {
+      iconSet: string
+      iconVariant: string
+    }
+    return mountLustre((selector) =>
+      mount_basic(
+        selector,
+        side,
+        align,
+        arrow,
+        variant,
+        size,
+        iconSet,
+        iconVariant,
+      ),
+    )
+  },
   play: testOnly(async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     const trigger = await canvas.findByRole("button", {
@@ -340,10 +375,22 @@ export const ScrollCollision: Story = {
   // collision playground, not a fixed showcase. The `play` below runs against
   // the default `args`, so enabling controls doesn't affect the test.
   parameters: { layout: "fullscreen" },
-  render: ({ side, align, arrow }) =>
-    mountLustre((selector) =>
-      mount_scroll_collision(selector, side, align, arrow),
-    ),
+  render: ({ side, align, arrow }, { globals }) => {
+    const { iconSet, iconVariant } = globals as {
+      iconSet: string
+      iconVariant: string
+    }
+    return mountLustre((selector) =>
+      mount_scroll_collision(
+        selector,
+        side,
+        align,
+        arrow,
+        iconSet,
+        iconVariant,
+      ),
+    )
+  },
   play: testOnly(async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     const trigger = await canvas.findByRole("button", {

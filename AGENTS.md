@@ -75,9 +75,13 @@ shadcn. When they disagree on behavior, Base UI wins.*
 
 ## Project map
 
-A monorepo: two Gleam library packages under `packages/`, consumer apps under
+A monorepo: Gleam library packages under `packages/`, consumer apps under
 `apps/` (Storybook today; a docs site later), and the repo root as a pure
-pnpm-workspace orchestrator (no Gleam package of its own).
+pnpm-workspace orchestrator (no Gleam package of its own). The **icon system**
+splits core-vs-data: the core (`gg_icon` + `gg_icon_gen`) lives here in
+`packages/`; the big, community-extensible icon **sets** (`gg_icons_lucide`, …)
+are separate repos that depend on the published `gg_icon`. See
+[`dev-docs/icons.md`](dev-docs/icons.md).
 
 ```
 packages/
@@ -86,7 +90,7 @@ packages/
       button/  popover/      #   Native-first; relative `./*_ffi.ts` only where the
       positioning/  arrow/   #   platform needs glue (positioning/arrow are shared).
       helpers/id_gen/        #   the `useId` analogue (popover depends on it)
-  gg_ui/                     # LAYER 2 — thin styled kit. Depends on gg_base_ui.
+  gg_ui/                     # LAYER 2 — thin styled kit. Depends on gg_base_ui (+ gg_icon once it embeds icons).
     src/gg_ui/
       ui/button.gleam        #   Emit `cn-*` class names (gva+cn), never raw Tailwind.
       ui/popover.gleam       #   Native-first preserved. (ui/ is what the CLI ejects.)
@@ -97,6 +101,10 @@ packages/
         themes/<name>.css        # THEME axis (accents) → `.theme-<name>` (17 colors)
         shapes/<style>/{button,popover}.css (+ <style>.css index)  # STYLE axis → `.style-<name>`
         motion/<comp>.css (+ motion.css index)   # shared MOTION layer (native)
+  gg_icon/                   # ICON INTERFACE — set-agnostic Hex pkg: Size, the icon.svg()
+    src/gg_icon/icon.gleam   #   wrapper, placeholder (fallback box). Tailwind-free, no set.
+  gg_icon_gen/               # ICON GENERATOR engine (dev tool, own Hex pkg): SVG→Gleam +
+    src/gg_icon_gen/         #   shard + emit + icons.json. Sets dev-dep it; never shipped.
 apps/
   storybook/                 # Storybook host APP (own gleam.toml `gg_ui_storybook` + package.json
     src/gg_ui.css            #   `@gg_ui/storybook`; path-deps both packages). CSS ENTRY here:

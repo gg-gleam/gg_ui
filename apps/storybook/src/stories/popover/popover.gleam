@@ -11,6 +11,7 @@ import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
+import stories/icons/demo_icons.{type DemoIcon, type IconSet, type IconVariant}
 
 // --- uncontrolled mounts -------------------------------------------------
 //
@@ -25,6 +26,8 @@ pub fn mount_basic(
   arrow: Bool,
   variant: String,
   size: String,
+  icon_set: String,
+  icon_variant: String,
 ) -> Nil {
   mount_static(
     selector,
@@ -34,6 +37,8 @@ pub fn mount_basic(
       arrow,
       parse_variant(variant),
       parse_size(size),
+      demo_icons.parse_set(icon_set),
+      demo_icons.parse_variant(icon_variant),
     ),
   )
 }
@@ -49,9 +54,13 @@ pub fn mount_scroll_collision(
   side: String,
   align: String,
   arrow: Bool,
+  icon_set: String,
+  icon_variant: String,
 ) -> Nil {
   let side = parse_side(side)
   let align = parse_align(align)
+  let set = demo_icons.parse_set(icon_set)
+  let icon_variant = demo_icons.parse_variant(icon_variant)
   // Mint the anatomy once (the `useId` call-once rule) and keep it stable across
   // the app. Unlike the other uncontrolled mounts, this one is a
   // `lustre.application` so `init` can center the trigger and then open the popup
@@ -70,7 +79,9 @@ pub fn mount_scroll_collision(
           Centered -> #(model, popover.show(pop))
         }
       },
-      fn(_model) { view_scroll_collision(pop, side, align, arrow) },
+      fn(_model) {
+        view_scroll_collision(pop, side, align, arrow, set, icon_variant)
+      },
     )
   let assert Ok(_) = lustre.start(app, selector, Nil)
   Nil
@@ -84,9 +95,17 @@ fn mount_static(selector: String, view: Element(Nil)) -> Nil {
 
 // --- imperative mount ----------------------------------------------------
 
-pub fn mount_imperative(selector: String, side: String, align: String) -> Nil {
+pub fn mount_imperative(
+  selector: String,
+  side: String,
+  align: String,
+  icon_set: String,
+  icon_variant: String,
+) -> Nil {
   let side = parse_side(side)
   let align = parse_align(align)
+  let set = demo_icons.parse_set(icon_set)
+  let icon_variant = demo_icons.parse_variant(icon_variant)
   let app =
     lustre.application(
       // No anatomy in the model: the ids are deterministic
@@ -95,7 +114,7 @@ pub fn mount_imperative(selector: String, side: String, align: String) -> Nil {
       // the native `toggle` event via the `on_toggle` observe capability.
       fn(_) { #(ImperativeModel(open: False), effect.none()) },
       update_imperative,
-      fn(model) { view_imperative(model, side, align) },
+      fn(model) { view_imperative(model, side, align, set, icon_variant) },
     )
   let assert Ok(_) = lustre.start(app, selector, Nil)
   Nil
@@ -239,12 +258,15 @@ fn view_basic(
   arrow: Bool,
   variant: button.Variant,
   size: button.Size,
+  set: IconSet,
+  icon_variant: IconVariant,
 ) -> Element(msg) {
   // Static `lustre.element` view: built exactly once, never re-rendered, so a
   // generated anatomy here is minted once and safe (see `id_gen` call-once).
   let pop = popover.anatomy()
   html.div([attribute.class("text-foreground")], [
     popover.trigger(pop, variant:, size:, children: [
+      leading_icon(set, icon_variant, demo_icons.Settings),
       html.text("Open Popover"),
     ]),
     popover.content(
@@ -283,6 +305,8 @@ fn view_scroll_collision(
   side: Side,
   align: Align,
   arrow: Bool,
+  set: IconSet,
+  icon_variant: IconVariant,
 ) -> Element(msg) {
   scroll_canvas.scroll_canvas(
     trigger: popover.trigger(
@@ -290,6 +314,7 @@ fn view_scroll_collision(
       variant: button.Outline,
       size: button.Medium,
       children: [
+        leading_icon(set, icon_variant, demo_icons.Settings),
         html.text("Open popover"),
       ],
     ),
@@ -313,7 +338,10 @@ fn view_scroll_collision(
           ]),
         ]),
         html.div([attribute.class("mt-3 flex justify-end")], [
-          popover.close(pop, [html.text("Close")]),
+          popover.close(pop, [
+            leading_icon(set, icon_variant, demo_icons.Close),
+            html.text("Close"),
+          ]),
         ]),
       ],
     ),
@@ -332,6 +360,8 @@ fn view_imperative(
   model: ImperativeModel,
   side: Side,
   align: Align,
+  set: IconSet,
+  icon_variant: IconVariant,
 ) -> Element(ImperativeMsg) {
   // Rebuild the same deterministic handle `update` uses — no anatomy in the
   // model.
@@ -349,6 +379,7 @@ fn view_imperative(
         variant: button.Outline,
         size: button.Medium,
         children: [
+          leading_icon(set, icon_variant, demo_icons.Settings),
           html.text("Trigger"),
         ],
       ),
@@ -380,6 +411,20 @@ fn view_imperative(
       ),
     ],
   )
+}
+
+/// A decorative leading glyph for a trigger/close button: a real catalog icon
+/// tagged `data-icon="inline-start"` (the button recipe's inline-icon spacing),
+/// kept `aria-hidden` by `gg_icon.svg` so the button's text owns the name.
+/// Generic over `msg`, so it drops into both the static and imperative views.
+fn leading_icon(
+  set: IconSet,
+  variant: IconVariant,
+  which: DemoIcon,
+) -> Element(msg) {
+  demo_icons.render(set, variant, which, [
+    attribute.attribute("data-icon", "inline-start"),
+  ])
 }
 
 /// A plain (non-trigger) button that dispatches one of the command messages —

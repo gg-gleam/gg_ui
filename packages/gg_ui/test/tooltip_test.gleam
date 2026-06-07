@@ -3,6 +3,7 @@ import gg_ui/positioning
 import gg_ui/ui/button
 import gg_ui/ui/tooltip
 import gleam/option.{Some}
+import lustre/attribute
 import lustre/element
 import lustre/element/html
 
@@ -26,6 +27,7 @@ pub fn trigger_outline_medium_test() {
     size: button.Medium,
     delay: tooltip.default_delay,
     close_delay: tooltip.default_close_delay,
+    attrs: [],
     children: [html.text("Hover")],
   )
   |> element.to_readable_string
@@ -41,10 +43,33 @@ pub fn trigger_custom_delay_test() {
     size: button.IconSm,
     delay: 0,
     close_delay: 150,
+    attrs: [],
     children: [html.text("?")],
   )
   |> element.to_readable_string
   |> birdie.snap(title: "gg_ui tooltip trigger — ghost / icon-sm, 0/150 delay")
+}
+
+// The `attrs` passthrough (Base UI's `render`-prop ergonomics): caller
+// attributes/events land on the styled button alongside the trigger's wiring.
+// Here a native `onclick` and a `data-*` flow through; the behavior attributes
+// (anchor id, `interestfor`, `aria-describedby`, anchor-name `style`) are still
+// emitted, applied last so they win any conflict.
+pub fn trigger_attrs_passthrough_test() {
+  tooltip.trigger(
+    handle(),
+    variant: button.Outline,
+    size: button.Medium,
+    delay: tooltip.default_delay,
+    close_delay: tooltip.default_close_delay,
+    attrs: [
+      attribute.attribute("onclick", "window.alert('hi')"),
+      attribute.attribute("data-action", "save"),
+    ],
+    children: [html.text("Hover")],
+  )
+  |> element.to_readable_string
+  |> birdie.snap(title: "gg_ui tooltip trigger — attrs passthrough (onclick)")
 }
 
 // --- content: hint markup + side offset ----------------------------------
@@ -88,6 +113,7 @@ pub fn content_with_arrow_test() {
 
 pub fn terse_defaults_test() {
   tooltip.tooltip(
+    label: [html.text("Hover")],
     options: tooltip.Options(..tooltip.options(), id: Some("demo")),
     content: [html.text("Add to library")],
   )

@@ -1,0 +1,36 @@
+/*
+ * Icon sizing recipe — the CSS side of gg_icon's `Size` scale.
+ *
+ * gg_icon emits `class="cn-icon"` on every icon's `<svg>` and `icon.size(Sm|Md|
+ * Lg)` adds `cn-icon-size-<s>`. This fragment is the recipe for those names. It
+ * is UNIVERSAL (not under `.style-*`): sizing is orthogonal to the shape / base
+ * color / theme axes, exactly like motion.
+ *
+ * Two deliberate properties, both mirroring shadcn:
+ *   1. The size class names carry the `size-` token, so an explicit size
+ *      DEFEATS a container's `[&_svg:not([class*='size-'])]` default (button
+ *      recipes use that). A bare `.cn-icon` (no size- token) still yields to it.
+ *   2. `.cn-icon`'s own default sits at class specificity (0,1,0); a container's
+ *      `… svg:not([class*='size-'])` default is higher (0,2,1) and still wins,
+ *      so an icon dropped into a small button shrinks with the button. The
+ *      default only governs a STANDALONE icon (no container, no explicit size).
+ *
+ * Source order matters within this file: base first, sizes after, so a chosen
+ * size beats the default at equal specificity.
+ */
+
+.cn-icon {
+  @apply inline-block size-4 shrink-0;
+}
+
+.cn-icon-size-sm {
+  @apply size-3.5;
+}
+
+.cn-icon-size-md {
+  @apply size-4;
+}
+
+.cn-icon-size-lg {
+  @apply size-5;
+}
