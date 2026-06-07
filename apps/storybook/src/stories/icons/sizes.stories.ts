@@ -19,7 +19,10 @@ export default meta
 
 type Story = StoryObj
 
-export const Scale: Story = {
+// Single story named to match the title's last segment ("Sizes"), so Storybook
+// hoists it to a flat leaf under ICONS — no extra "Sizes" folder — exactly like
+// Icons/Gallery.
+export const Sizes: Story = {
   render: (_args, { globals }) => {
     const { iconSet, iconVariant } = globals as {
       iconSet: string
