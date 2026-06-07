@@ -91,12 +91,6 @@ declare module "*.gleam" {
   export const mount_with_icon: MountWithIcons // button (decorative glyphs)
   export const mount_gallery: MountWithIcons // icons/gallery
   export const mount_size_scale: MountWithIcons // icons/sizes — the full scale
-  export const mount_size_playground: (
-    selector: string,
-    size: string,
-    iconSet: string,
-    iconVariant: string,
-  ) => void
 }
 
 declare module "*.css"
