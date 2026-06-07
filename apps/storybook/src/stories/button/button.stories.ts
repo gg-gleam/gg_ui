@@ -52,10 +52,22 @@ export const Sizes: Story = {
   render: () => mountLustre(mount_sizes),
 }
 
-/** Icons sit inline with the label; the base class auto-sizes the `<svg>`. */
+/**
+ * Icons sit inline with the label; the base class auto-sizes the `<svg>`. The
+ * glyphs come from the demo catalog and follow the **Icon set** / **Icon
+ * variant** toolbar globals — flip them to switch lucide ↔ tabler live.
+ */
 export const WithIcon: Story = {
   parameters: { controls: { disable: true } },
-  render: () => mountLustre(mount_with_icon),
+  render: (_args, { globals }) => {
+    const { iconSet, iconVariant } = globals as {
+      iconSet: string
+      iconVariant: string
+    }
+    return mountLustre((selector) =>
+      mount_with_icon(selector, iconSet, iconVariant),
+    )
+  },
 }
 
 /** The `classes` recipe applied to an `<a>` — the render / asChild pattern. */

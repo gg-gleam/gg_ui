@@ -48,7 +48,6 @@ declare module "*.gleam" {
   type MountStatic = (selector: string) => void
   export const mount_variants: MountStatic
   export const mount_sizes: MountStatic
-  export const mount_with_icon: MountStatic
   export const mount_as_link: MountStatic
   export const mount_playground: (
     selector: string,
@@ -56,6 +55,15 @@ declare module "*.gleam" {
     size: string,
     disabled: boolean,
   ) => void
+
+  // icon-aware stories — thread the `iconSet` / `iconVariant` toolbar globals.
+  type MountWithIcons = (
+    selector: string,
+    iconSet: string,
+    iconVariant: string,
+  ) => void
+  export const mount_with_icon: MountWithIcons // button (decorative glyphs)
+  export const mount_gallery: MountWithIcons // icons/gallery
 }
 
 declare module "*.css"

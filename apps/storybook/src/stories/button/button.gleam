@@ -16,6 +16,7 @@ import lustre/element.{type Element}
 import lustre/element/html
 import lustre/element/svg
 import lustre/event
+import stories/icons/demo_icons.{type IconSet, type IconVariant}
 
 type Model {
   Model
@@ -57,8 +58,10 @@ pub fn mount_sizes(selector: String) -> Nil {
   mount(selector, fn(_model) { view_sizes() })
 }
 
-pub fn mount_with_icon(selector: String) -> Nil {
-  mount(selector, fn(_model) { view_with_icon() })
+pub fn mount_with_icon(selector: String, set: String, variant: String) -> Nil {
+  mount(selector, fn(_model) {
+    view_with_icon(parse_icon_set(set), parse_icon_variant(variant))
+  })
 }
 
 pub fn mount_as_link(selector: String) -> Nil {
@@ -88,6 +91,20 @@ fn parse_size(size: String) -> Size {
     "icon-sm" -> IconSm
     "icon-lg" -> IconLg
     _ -> Medium
+  }
+}
+
+fn parse_icon_set(set: String) -> IconSet {
+  case set {
+    "tabler" -> demo_icons.Tabler
+    _ -> demo_icons.Lucide
+  }
+}
+
+fn parse_icon_variant(variant: String) -> IconVariant {
+  case variant {
+    "filled" -> demo_icons.Filled
+    _ -> demo_icons.Outline
   }
 }
 
@@ -140,15 +157,24 @@ fn view_sizes() -> Element(Msg) {
   ])
 }
 
-fn view_with_icon() -> Element(Msg) {
+/// Threads the toolbar's `Icon set` / `Icon variant` globals into real icons
+/// from the demo catalog (the icons.md "decorative story icons thread the
+/// globals" path). Flipping the toolbar re-runs the story and the glyphs switch
+/// set/variant live. The button base recipe sizes the `<svg>` (it carries no
+/// `size-` token), so the icon tracks the button — no explicit `icon.size`.
+fn view_with_icon(set: IconSet, variant: IconVariant) -> Element(Msg) {
   row([
     button.button(Default, Medium, [], [
-      plus_icon([attribute.attribute("data-icon", "inline-start")]),
+      demo_icons.render(set, variant, demo_icons.Plus, [
+        attribute.attribute("data-icon", "inline-start"),
+      ]),
       html.text("Add item"),
     ]),
     button.button(Outline, Medium, [], [
-      html.text("Add item"),
-      plus_icon([attribute.attribute("data-icon", "inline-end")]),
+      html.text("Continue"),
+      demo_icons.render(set, variant, demo_icons.ArrowRight, [
+        attribute.attribute("data-icon", "inline-end"),
+      ]),
     ]),
   ])
 }

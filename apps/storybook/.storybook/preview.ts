@@ -90,6 +90,36 @@ const preview: Preview = {
         dynamicTitle: true,
       },
     },
+    // ICON SET / VARIANT — drive the demo-catalog stories (gallery, button
+    // WithIcon). Unlike shape/color these aren't root classes: stories read them
+    // from `globals` and forward them into their `mount_*`, which calls the typed
+    // `demo_icons.render(set, variant, …)`. lucide is single-variant and ignores
+    // `iconVariant`; a tabler stroke-only glyph under Filled falls back to
+    // outline (see demo_icons `fillable`).
+    iconSet: {
+      description: "Icon set for demo-catalog stories",
+      toolbar: {
+        title: "Icon set",
+        icon: "star",
+        items: [
+          { value: "lucide", title: "Lucide" },
+          { value: "tabler", title: "Tabler" },
+        ],
+        dynamicTitle: true,
+      },
+    },
+    iconVariant: {
+      description: "Icon variant (tabler: outline / filled; lucide ignores)",
+      toolbar: {
+        title: "Icon variant",
+        icon: "mirror",
+        items: [
+          { value: "outline", title: "Outline" },
+          { value: "filled", title: "Filled" },
+        ],
+        dynamicTitle: true,
+      },
+    },
     // Manual trigger for a story's interaction test (`play`). Storybook auto-runs
     // `play` on every render, which flickers stateful components (popover opening
     // then closing) while you browse. Stories gate their play behind this global
@@ -115,6 +145,8 @@ const preview: Preview = {
     baseColor: "neutral",
     theme: "none",
     mode: "light",
+    iconSet: "lucide",
+    iconVariant: "outline",
     runPlay: "off",
   },
 
