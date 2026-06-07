@@ -1,0 +1,12 @@
+name = "gg_icon_gen"
+version = "0.1.0"
+description = "The shared icon-set generator engine for gg_icon. A dev tool: parses upstream SVGs, shards by first letter, and emits baked Gleam icon modules + icons.json against the gg_icon interface. Each gg_icons_* set dev-depends on it; never shipped to consumers."
+licences = ["MIT"]
+
+[dependencies]
+gleam_stdlib = ">= 1.0.0 and < 2.0.0"
+simplifile = ">= 2.0.0 and < 3.0.0"
+argv = ">= 1.0.0 and < 2.0.0"
+
+[dev_dependencies]
+gleeunit = ">= 1.0.0 and < 2.0.0"
