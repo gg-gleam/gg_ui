@@ -100,35 +100,51 @@ contract; a typed named scale is an optional ergonomic on top, and **its class
 names must contain the `size-` token** so they defeat the existing
 `:not([class*='size-'])` container default.
 
-## Our architecture — owned, per-set Hex packages
+## Our architecture — core in the monorepo, sets as their own repos
 
 JS has a different maintainer per icon library on npm. Gleam/Lustre is smaller —
-that's the **opportunity**: one unified way to consume any icon set. Each set is
-its **own repo / Hex package** under the `gg-gleam` org, independent of `gg_ui`
-but conforming to a shared interface so every set is consumed identically.
+that's the **opportunity**: one unified way to consume any icon set. The split is
+**core vs. data**:
+
+- **Core** (`gg_icon` interface + `gg_icon_gen` engine) lives in the **gg_ui
+  monorepo** under `packages/`, beside `gg_base_ui` and `gg_ui` — small, tightly
+  coupled to the kit, co-released, each still an **independently published Hex
+  package** (exactly how `gg_base_ui`/`gg_ui` already coexist). `gg_ui` path-deps
+  `gg_icon` like it path-deps `gg_base_ui`.
+- **Data** (`gg_icons_lucide`, `gg_icons_tabler`, …) stays in **separate repos**
+  under the `gg-gleam` org — thousands of generated files, and
+  community-extensible (anyone can publish a `gg_icons_<set>`). Keeping generated
+  geometry out of the core monorepo is the whole point.
 
 ```
-gg_icon                         INTERFACE pkg (pure Gleam): Size, icon.svg() wrapper,
-  src/gg_icon/icon.gleam        Library/Variant contract + placeholder (fallback box).
-   ▲          ▲
-gg_ui        gg_icons_lucide    SET pkgs: <variant>/<shard>.gleam modules + a pure-
-   ▲          gg_icons_tabler    Gleam generator. Geometry baked in. Depend on gg_icon.
-gg_base_ui
-
-gg_ui registry ──references──▶ gg_icons_lucide / gg_icons_tabler      (METADATA only,
-                                                                       not a Gleam import)
+gg_ui monorepo (packages/)              separate per-set repos
+  gg_base_ui                              gg_icons_lucide   <variant>/<shard>.gleam
+  gg_ui ──path-dep──▶ gg_icon             gg_icons_tabler   modules (geometry baked in)
+  gg_icon   INTERFACE: Size, icon.svg(),       │  │
+            placeholder (fallback box)         │  │ depend on (Hex)
+  gg_icon_gen  ENGINE (dev tool) ◀─dev-dep─────┘  │
+  apps/storybook                                  │
+                                                  ▼
+  gg_ui registry ──references──▶ gg_icons_*   (METADATA only, not a Gleam import)
 ```
 
-| GitHub repo                 | Hex / Gleam package  | Local path                        |
-| --------------------------- | -------------------- | --------------------------------- |
-| `gg-gleam/gg-icons-lucide`    | `gg_icons_lucide`    | `gg_family/gg_icons/lucide`      |
-| `gg-gleam/gg-icons-tabler`    | `gg_icons_tabler`    | `gg_family/gg_icons/tabler`      |
+| Package | Kind | Where |
+| --- | --- | --- |
+| `gg_icon` | interface (Hex) | `gg_ui/packages/gg_icon` |
+| `gg_icon_gen` | generator engine (Hex, dev tool) | `gg_ui/packages/gg_icon_gen` |
+| `gg_icons_lucide` | set (Hex), repo `gg-gleam/gg_icons_lucide` | `gg_family/gg_icons/lucide` |
+| `gg_icons_tabler` | set (Hex), repo `gg-gleam/gg_icons_tabler` | `gg_family/gg_icons/tabler` |
 
-**No dependency cycle.** A set package imports `gg_icon`; `gg_ui` imports
-`gg_icon`; `gg_ui` the *package* never imports a set. The `gg_ui` **registry**
-*references* set packages, but the registry is JSON metadata, not a Gleam import.
-Acyclic. Anyone can add a new set later — a new `gg_icons_<set>` that depends on
-`gg_icon` and ships a generator is automatically registry-compatible.
+Set repos depend on the **published** `gg_icon` (+ dev-dep `gg_icon_gen`); for
+local dev before publish they path-dep into the monorepo
+(`gg_icon = { path = "../../gg_ui/packages/gg_icon" }`). That local-dep tax is the
+only cost of the core/data split.
+
+**No dependency cycle.** A set imports `gg_icon`; `gg_ui` imports `gg_icon`;
+`gg_ui` the *package* never imports a set. The `gg_ui` **registry** *references*
+set packages, but that's JSON metadata, not a Gleam import. Acyclic. Anyone can
+add a new set later — a `gg_icons_<set>` that depends on `gg_icon` and uses
+`gg_icon_gen` is automatically registry-compatible.
 
 ### Why a slim `gg_icon` interface package (not "depend on `gg_ui`")
 
@@ -157,10 +173,11 @@ The matching `.cn-icon-size-*` **CSS recipe still ships as a `gg_ui` fragment**
 Gleam (in `gg_ui`) and its CSS recipe (a fragment) are already split. Set
 packages stay Tailwind-free and immune to kit churn.
 
-> **Alternative (recorded):** put the interface module *inside* `gg_ui` and have
-> sets depend on `gg_ui` directly, as first proposed. Same compile result, fewer
-> packages, heavier set deps. Pick `gg_icon` unless the extra package isn't worth
-> it early on.
+> **Alternative (rejected):** put the interface *inside* `gg_ui` and have sets
+> depend on `gg_ui` directly. Same compile result, but it pulls the whole styled
+> kit into every set. `gg_icon` being its **own** package — now co-located in the
+> monorepo, so the "extra repo" cost that worried us is gone — keeps sets lean for
+> free.
 
 ### The sizing interface — default + typed scale + escape hatch
 
@@ -183,38 +200,58 @@ For a genuinely non-square escape hatch (`w-[18px] h-[24px]`) the caller owns th
 source-order outcome; document `size-*` (incl. arbitrary `size-[Npx]`) as the
 recommended hatch.
 
-## The generator — pure Gleam, one per set, committed
+## The generator — a shared pure-Gleam engine + a thin per-set adapter
 
-Each set package ships its own generator, invoked with `gleam run` (no
-TypeScript build step — keeps even the toolchain target-agnostic, per rule 3).
-This is the `lucide_lustre` model (`gleam run -m gg_icons_lucide/add chevron-down`
-fetches an SVG and converts it with the `html_lustre_converter` Hex package) with
-three deliberate changes:
+The generation pipeline is **identical across sets** — only the *source*,
+per-variant *defaults*, and any SVG *cleaning* differ. So the engine is shared,
+in its own **dev-only package `gg_icon_gen`**, and each set provides a small
+`Config`. It is **not** in `gg_icon`: that's the runtime interface every consumer
+(and `gg_ui`) depends on, and the engine's build-only deps (`simplifile`,
+`argv`, …) must never reach a shipped app. Sets depend on `gg_icon_gen` as a
+**`dev_dependency`** only — kept out of the published library by living in a
+nested `gen/` project (its own `gleam.toml`) that writes into `../src`, run with
+`cd gen && gleam run`.
 
-1. **Commit the generated `.gleam` and pin the upstream version.** `lucide_lustre`
-   curls each icon on demand; we vendor/pin an upstream snapshot, generate, and
-   commit — reproducible, offline, version-locked geometry. The cost lives in the
-   repo, not in user bundles (per-function tree-shaking).
-2. **Emit against the shared `gg_icon.svg` wrapper**, with that set's defaults,
-   so every set exposes the same call shape.
-3. **Variant-aware.** The generator config lists each variant with its upstream
-   source glob, `view_box`, `defaults`, and a `default: True` flag on one of
-   them. `build` iterates **every variant**, emitting one module each.
+```
+gg_icon_gen   shared engine (pure-Gleam SVG→Gleam + shard + emit + manifest;
+  ▲  ▲  ▲     simplifile/argv for I/O). dev_dependency of each set's gen/ project.
+lucide tabler …  each gen/ hands the engine a Config: per-variant source dir +
+                 view_box + defaults + default flag + a `clean` hook.
+```
+
+Invoked with `gleam run` (no TypeScript — toolchain stays target-agnostic, rule
+3). Deliberate choices vs `lucide_lustre`:
+
+1. **Commit the generated `.gleam` and pin the upstream version** — vendor/pin an
+   upstream snapshot, generate, commit. Reproducible, offline, version-locked. The
+   cost lives in the repo, not user bundles (per-function tree-shaking).
+2. **Emit against the shared `gg_icon.svg` wrapper**, so every set exposes the
+   same call shape.
+3. **Variant-aware.** The `Config` lists each variant with its source dir,
+   `view_box`, `defaults`, and a `default: True` flag. `build` iterates **every
+   variant**, emitting one module per `(variant, shard)`.
 4. **`create_or_update` semantics**, three entry points (`[variant/]name`, no
-   qualifier = default variant):
-   - `gleam run -m gg_icons_tabler/build` — (re)generate **all variants × icons**
-     from the pinned source.
-   - `gleam run -m gg_icons_tabler/add filled/star` — add one icon to one variant.
-   - `gleam run -m gg_icons_tabler/update [filled/star]` — refresh changed
-     geometry when the upstream set republishes.
+   qualifier = default variant): `build` (all variants × icons), `add filled/star`
+   (one icon), `update [filled/star]` (refresh changed geometry).
 
-Pipeline per `(variant, icon)`: read upstream SVG → `html_lustre_converter.convert`
-(HTML/SVG → Lustre element source) → strip the wrapping `<svg>`, splice the
-variant's `view_box` + `defaults` + `..attrs` into the `gg_icon.svg` call →
-write/replace `pub fn <snake_name>` in the **shard module for its first letter**
-(`<variant>/<letter>.gleam`). `build` rewrites whole shard files atomically;
-`add`/`update` rewrite just the one affected shard. Naming: **snake_case Gleam
-function names** (`chevron_down`), kebab upstream name in the module doc-comment.
+**SVG → Gleam is hand-rolled in the engine, not `html_lustre_converter`.**
+Verified empirically: that package is **JS-only and needs a browser `DOMParser`**
+(no Erlang impl; crashes under Node), so it can't run in a `gleam run` CLI. Icon
+SVGs are a small, regular subset, so the engine parses the inner elements itself
+and emits the matching lustre `svg.*` calls — pure Gleam, dual-target, fully
+testable, and it controls the output exactly (the leaf elements `path`/`circle`/
+`rect`/`line`/`ellipse`/`polygon`/`polyline` are `svg.<tag>(attrs)`; `g`/`defs`
+are `svg.<tag>(attrs, children)`).
+
+Pipeline per `(variant, icon)`: read upstream SVG → strip the wrapping `<svg>` →
+parse inner elements → `clean` (per-set hook) → emit children as lustre `svg.*`
+calls spliced into the variant's `gg_icon.svg(view_box:, defaults:, attrs:,
+children:)` template → write/replace `pub fn <snake_name>` in the **shard module
+for its first letter** (`<variant>/<letter>.gleam`; non-`a–z` → the `0` bucket,
+and a digit-leading name gets an `n` prefix to stay a valid Gleam identifier).
+`build` rewrites whole shard files atomically; `add`/`update` rewrite just the
+one affected shard. Naming: **snake_case function names** (`chevron_down`), kebab
+upstream name in the doc-comment.
 
 **Each set ships a generated manifest** — `icons.json` (named to *not* collide
 with Gleam's own `manifest.toml` dependency lockfile) — that the
@@ -224,10 +261,9 @@ per variant, every icon name mapped to its **shard**. That's the allow-list *and
 the `name → shard` resolution the transformer needs; it fails loudly on a typo'd
 name, a wrong variant, or a name absent from the requested variant.
 
-> `html_lustre_converter` is a **dev-dependency of the set package's generator
-> only** — never a runtime dep of `gg_ui` or the generated modules. Light
-> post-processing may be needed where it emits generic `element("svg", …)`
-> instead of `svg.*`; that's a generator detail.
+> All generation deps (`gg_icon_gen`, `simplifile`, `argv`) are **dev-only**,
+> confined to each set's nested `gen/` project — never a runtime dep of `gg_icon`,
+> `gg_ui`, or the generated modules.
 
 ### The two launch sets: lucide + tabler
 
@@ -610,18 +646,17 @@ manifest, which remains the source of truth the transformer validates against.
 ## Implementation order
 
 1. **`gg_icon`** — `Size` + `icon.size`, the variant-generic `icon.svg` wrapper,
-   `Library`/`Variant` contract, `placeholder` (fallback-box dev body). Add the
-   `.cn-icon-size-*` CSS fragment to `gg_ui/styles` and wire it into the
-   Storybook entry.
-2. **`gg_icons_lucide`** — pure-Gleam generator (`build`/`add`/`update` via
-   `html_lustre_converter`) with the variant-aware, first-letter-sharded config
-   (one variant), pinned lucide, committed starter set, generated manifest
-   (`name → shard`). The single-variant case keeps the generator honest about the
-   variant axis from the start.
-3. **`gg_icons_tabler`** — **proves variants end-to-end**: two variants
-   (`outline` + `filled`), sharded modules per variant, manifest with
-   `defaultVariant`. The real test of the `(set, variant)` design, not a stretch
-   goal — tabler ships filled.
+   `placeholder` (fallback-box dev body). Add the `.cn-icon-size-*` CSS fragment
+   to `gg_ui/styles` and wire it into the Storybook entry. ✅ *built (slice)*
+2. **`gg_icon_gen`** — the shared engine: hand-rolled SVG→Gleam (parse inner →
+   emit lustre `svg.*` → splice into `gg_icon.svg`), `name → shard` bucketing,
+   module + `icons.json` rendering (pure core), plus `simplifile`/`argv` I/O for
+   `build`/`add`/`update`.
+3. **`gg_icons_lucide`** (1 variant) + **`gg_icons_tabler`** (`outline` + `filled`)
+   — each a `gen/` project handing `gg_icon_gen` its `Config` (sources, per-variant
+   `view_box`/`defaults`, default flag, `clean` hook); run it to generate the
+   committed shards + `icons.json` from pinned upstream. Tabler **proves variants
+   end-to-end** — it ships filled. ✅ *hand-baked slice built; generator next*
 4. **Storybook demo catalog + toolbar** — the curated ~20-icon `demo_icons.gleam`
    in `apps/storybook` (manifest-validated), the `Icon set`/`Icon variant`
    `globalTypes`, an icon-gallery story, and one component story (button/tooltip)
