@@ -158,16 +158,21 @@ fn one_side(side: Side, label: String) -> Element(msg) {
 fn view_icon(side: Side, set: IconSet, variant: IconVariant) -> Element(msg) {
   let tip = tooltip.anatomy()
   html.div([attribute.class("text-foreground")], [
-    // A non-styled trigger: merge the behavior attributes onto an icon button.
-    // The glyph is decorative (gg_icon.svg sets aria-hidden), so the icon-only
-    // button needs its own accessible name — `aria-label`.
+    // Just the icon as the trigger — no button box. We merge the tooltip's
+    // behavior attributes onto a bare `<button>` (not `button.classes`, which
+    // would draw the outline/rounded box). The glyph is decorative (gg_icon.svg
+    // sets aria-hidden), so the icon-only button needs its own accessible name
+    // via `aria-label`; resting `text-muted-foreground` brightens on
+    // hover/focus, the only affordance left without a box.
     html.button(
       [
         attribute.attribute("aria-label", "More information"),
-        attribute.class(button.classes(
-          variant: button.Outline,
-          size: button.IconSm,
-        )),
+        attribute.class(
+          "inline-flex items-center justify-center rounded-sm "
+          <> "text-muted-foreground transition-colors hover:text-foreground "
+          <> "focus-visible:text-foreground focus-visible:outline-2 "
+          <> "focus-visible:outline-ring focus-visible:outline-offset-2",
+        ),
         ..tooltip.trigger_attributes(
           tip,
           delay: tooltip.default_delay,
@@ -175,8 +180,7 @@ fn view_icon(side: Side, set: IconSet, variant: IconVariant) -> Element(msg) {
         )
       ],
       // A bigger glyph from the typed scale (Lg), so it reads at a glance and
-      // its `size-` token also suppresses the button's `:not([class*='size-'])`
-      // auto-size.
+      // its `size-` token also suppresses any container auto-size.
       [demo_icons.render(set, variant, demo_icons.Info, [icon.size(icon.Lg)])],
     ),
     tooltip.content(tip, side:, align: Center, arrow: True, children: [
