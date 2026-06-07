@@ -1,9 +1,11 @@
 //// Icon gallery — the visual proof that every `(set, variant)` renders. A
-//// static render-once grid of the whole demo catalog, driven by the `Icon set`
-//// / `Icon variant` toolbar globals (threaded in from the `.stories.ts`). Flip a
-//// toolbar dropdown and the story re-runs with the new set/variant.
+//// static render-once grid of square tiles; each tile is a tooltip trigger that
+//// reveals the icon's name on hover/focus (dogfooding gg_ui's own tooltip).
+//// Driven by the `Icon set` / `Icon variant` toolbar globals (threaded in from
+//// the `.stories.ts`) — flip a dropdown and the story re-runs with the new set.
 
 import gg_icon/icon
+import gg_ui/ui/tooltip
 import gleam/list
 import lustre
 import lustre/attribute
@@ -35,28 +37,45 @@ fn view_gallery(set: IconSet, variant: IconVariant) -> Element(msg) {
   html.div(
     [
       attribute.class(
-        "grid grid-cols-4 gap-3 p-2 text-foreground sm:grid-cols-5",
+        "grid grid-cols-4 gap-3 p-2 text-foreground sm:grid-cols-6",
       ),
     ],
     list.map(demo_icons.all(), fn(which) { cell(set, variant, which) }),
   )
 }
 
+/// One square tile. The tile *is* the tooltip trigger — its name is the tip, so
+/// the grid stays a clean wall of glyphs. Built with `tooltip_with_trigger` +
+/// `trigger_attributes` (the trigger isn't the styled button): the icon-only
+/// `<button>` carries an `aria-label` so it has an accessible name (the a11y
+/// addon runs as `error`), and the icon stays decorative.
 fn cell(set: IconSet, variant: IconVariant, which: DemoIcon) -> Element(msg) {
-  html.div(
-    [
-      attribute.class(
-        "flex flex-col items-center justify-center gap-2 rounded-md "
-        <> "border border-border p-4",
-      ),
-    ],
-    [
-      // Dogfood the typed size scale — the cn-icon-size-lg recipe from the new
-      // gg_ui styles/icons.css fragment.
-      demo_icons.render(set, variant, which, [icon.size(icon.Lg)]),
-      html.span([attribute.class("text-xs text-muted-foreground")], [
-        html.text(demo_icons.label(which)),
-      ]),
-    ],
+  let name = demo_icons.label(which)
+  tooltip.tooltip_with_trigger(
+    trigger: fn(anatomy) {
+      html.button(
+        list.flatten([
+          [
+            attribute.type_("button"),
+            attribute.attribute("aria-label", name),
+            attribute.class(
+              "flex aspect-square items-center justify-center rounded-md "
+              <> "border border-border transition-colors "
+              <> "hover:bg-accent hover:text-accent-foreground "
+              <> "focus-visible:border-ring focus-visible:ring-3 "
+              <> "focus-visible:ring-ring/50 focus-visible:outline-none",
+            ),
+          ],
+          tooltip.trigger_attributes(
+            anatomy,
+            delay: tooltip.default_delay,
+            close_delay: tooltip.default_close_delay,
+          ),
+        ]),
+        [demo_icons.render(set, variant, which, [icon.size(icon.Lg)])],
+      )
+    },
+    options: tooltip.options(),
+    content: [html.text(name)],
   )
 }
