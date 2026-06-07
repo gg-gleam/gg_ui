@@ -90,36 +90,16 @@ const preview: Preview = {
         dynamicTitle: true,
       },
     },
-    // ICON SET / VARIANT — drive the demo-catalog stories (gallery, button
-    // WithIcon). Unlike shape/color these aren't root classes: stories read them
-    // from `globals` and forward them into their `mount_*`, which calls the typed
-    // `demo_icons.render(set, variant, …)`. lucide is single-variant and ignores
-    // `iconVariant`; a tabler stroke-only glyph under Filled falls back to
-    // outline (see demo_icons `fillable`).
-    iconSet: {
-      description: "Icon set for demo-catalog stories",
-      toolbar: {
-        title: "Icon set",
-        icon: "star",
-        items: [
-          { value: "lucide", title: "Lucide" },
-          { value: "tabler", title: "Tabler" },
-        ],
-        dynamicTitle: true,
-      },
-    },
-    iconVariant: {
-      description: "Icon variant (tabler: outline / filled; lucide ignores)",
-      toolbar: {
-        title: "Icon variant",
-        icon: "mirror",
-        items: [
-          { value: "outline", title: "Outline" },
-          { value: "filled", title: "Filled" },
-        ],
-        dynamicTitle: true,
-      },
-    },
+    // ICON SET / VARIANT — drive the demo-catalog stories (gallery, sizes,
+    // button WithIcon). These are NOT static `globalTypes` toolbars: the variant
+    // options depend on the selected set (which built-in toolbars can't express),
+    // and a custom tool must render beside the set selector rather than in the
+    // separate `globalTypes` cluster. Both selectors live in the manager addon
+    // (`.storybook/manager.tsx`) — it reads/writes the `iconSet` / `iconVariant`
+    // globals that stories forward into their `mount_*`, which call the typed
+    // `demo_icons.render(set, variant, …)`. Their initial values live in
+    // `initialGlobals` below.
+    //
     // Manual trigger for a story's interaction test (`play`). Storybook auto-runs
     // `play` on every render, which flickers stateful components (popover opening
     // then closing) while you browse. Stories gate their play behind this global

@@ -20,3 +20,4 @@ gg_ui = { path = "../../packages/gg_ui" }
 gg_icon = { path = "../../packages/gg_icon" }
 gg_icons_lucide = { path = "../../../gg_icons/lucide" }
 gg_icons_tabler = { path = "../../../gg_icons/tabler" }
+gg_icons_heroicons = { path = "../../../gg_icons/heroicons" }
