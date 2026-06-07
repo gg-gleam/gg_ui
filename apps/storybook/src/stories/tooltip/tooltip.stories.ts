@@ -198,5 +198,13 @@ export const WithArrow: Story = {
 export const IconTrigger: Story = {
   name: "Icon trigger",
   parameters: { controls: { disable: true } },
-  render: ({ side }) => mountLustre((selector) => mount_icon(selector, side)),
+  render: ({ side }, { globals }) => {
+    const { iconSet, iconVariant } = globals as {
+      iconSet: string
+      iconVariant: string
+    }
+    return mountLustre((selector) =>
+      mount_icon(selector, side, iconSet, iconVariant),
+    )
+  },
 }

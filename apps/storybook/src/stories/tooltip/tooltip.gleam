@@ -7,6 +7,7 @@ import lustre
 import lustre/attribute
 import lustre/element.{type Element}
 import lustre/element/html
+import stories/icons/demo_icons.{type IconSet, type IconVariant}
 
 // --- uncontrolled mounts -------------------------------------------------
 //
@@ -66,9 +67,22 @@ pub fn mount_sides(selector: String) -> Nil {
 }
 
 /// An icon-only trigger built from `trigger_attributes` on a small icon button —
-/// the canonical "what does this button do?" tooltip.
-pub fn mount_icon(selector: String, side: String) -> Nil {
-  mount_static(selector, view_icon(parse_side(side)))
+/// the canonical "what does this button do?" tooltip. The glyph is a real
+/// catalog icon (`Info`) that follows the Icon set / variant toolbar globals.
+pub fn mount_icon(
+  selector: String,
+  side: String,
+  icon_set: String,
+  icon_variant: String,
+) -> Nil {
+  mount_static(
+    selector,
+    view_icon(
+      parse_side(side),
+      demo_icons.parse_set(icon_set),
+      demo_icons.parse_variant(icon_variant),
+    ),
+  )
 }
 
 // --- views ---------------------------------------------------------------
@@ -140,12 +154,15 @@ fn one_side(side: Side, label: String) -> Element(msg) {
   ])
 }
 
-fn view_icon(side: Side) -> Element(msg) {
+fn view_icon(side: Side, set: IconSet, variant: IconVariant) -> Element(msg) {
   let tip = tooltip.anatomy()
   html.div([attribute.class("text-foreground")], [
     // A non-styled trigger: merge the behavior attributes onto an icon button.
+    // The glyph is decorative (gg_icon.svg sets aria-hidden), so the icon-only
+    // button needs its own accessible name — `aria-label`.
     html.button(
       [
+        attribute.attribute("aria-label", "More information"),
         attribute.class(button.classes(
           variant: button.Outline,
           size: button.IconSm,
@@ -156,7 +173,7 @@ fn view_icon(side: Side) -> Element(msg) {
           close_delay: tooltip.default_close_delay,
         )
       ],
-      [html.text("?")],
+      [demo_icons.render(set, variant, demo_icons.Info, [])],
     ),
     tooltip.content(tip, side:, align: Center, arrow: True, children: [
       html.text("More information"),

@@ -14,7 +14,6 @@ import lustre/attribute.{type Attribute}
 import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html
-import lustre/element/svg
 import lustre/event
 import stories/icons/demo_icons.{type IconSet, type IconVariant}
 
@@ -44,9 +43,17 @@ pub fn mount_playground(
   variant: String,
   size: String,
   disabled: Bool,
+  icon_set: String,
+  icon_variant: String,
 ) -> Nil {
   mount(selector, fn(_model) {
-    view_playground(parse_variant(variant), parse_size(size), disabled)
+    view_playground(
+      parse_variant(variant),
+      parse_size(size),
+      disabled,
+      demo_icons.parse_set(icon_set),
+      demo_icons.parse_variant(icon_variant),
+    )
   })
 }
 
@@ -54,13 +61,22 @@ pub fn mount_variants(selector: String) -> Nil {
   mount(selector, fn(_model) { view_variants() })
 }
 
-pub fn mount_sizes(selector: String) -> Nil {
-  mount(selector, fn(_model) { view_sizes() })
+pub fn mount_sizes(
+  selector: String,
+  icon_set: String,
+  icon_variant: String,
+) -> Nil {
+  mount(selector, fn(_model) {
+    view_sizes(
+      demo_icons.parse_set(icon_set),
+      demo_icons.parse_variant(icon_variant),
+    )
+  })
 }
 
 pub fn mount_with_icon(selector: String, set: String, variant: String) -> Nil {
   mount(selector, fn(_model) {
-    view_with_icon(parse_icon_set(set), parse_icon_variant(variant))
+    view_with_icon(demo_icons.parse_set(set), demo_icons.parse_variant(variant))
   })
 }
 
@@ -94,34 +110,23 @@ fn parse_size(size: String) -> Size {
   }
 }
 
-fn parse_icon_set(set: String) -> IconSet {
-  case set {
-    "tabler" -> demo_icons.Tabler
-    _ -> demo_icons.Lucide
-  }
-}
-
-fn parse_icon_variant(variant: String) -> IconVariant {
-  case variant {
-    "filled" -> demo_icons.Filled
-    _ -> demo_icons.Outline
-  }
-}
-
 // --- views ---------------------------------------------------------------
 
 fn view_playground(
   variant: Variant,
   size: Size,
   disabled: Bool,
+  icon_set: IconSet,
+  icon_variant: IconVariant,
 ) -> Element(Msg) {
   // Icon-only buttons have no text node, so they need an explicit accessible
-  // name (aria-label); the icon itself is decorative (aria-hidden, set in
-  // `plus_icon`). Buttons with visible text don't.
+  // name (aria-label); the icon itself is decorative (gg_icon.svg sets
+  // aria-hidden). Buttons with visible text don't.
   let #(label, name_attrs) = case size {
-    Icon | IconXs | IconSm | IconLg -> #([plus_icon([])], [
-      aria_label("Add item"),
-    ])
+    Icon | IconXs | IconSm | IconLg -> #(
+      [demo_icons.render(icon_set, icon_variant, demo_icons.Plus, [])],
+      [aria_label("Add item")],
+    )
     _ -> #([html.text("Button")], [])
   }
   let attrs = case disabled {
@@ -144,16 +149,19 @@ fn view_variants() -> Element(Msg) {
   ])
 }
 
-fn view_sizes() -> Element(Msg) {
+fn view_sizes(icon_set: IconSet, icon_variant: IconVariant) -> Element(Msg) {
+  let plus = fn() {
+    demo_icons.render(icon_set, icon_variant, demo_icons.Plus, [])
+  }
   row([
     button.button(Default, Xs, [], [html.text("Extra small")]),
     button.button(Default, Sm, [], [html.text("Small")]),
     button.button(Default, Medium, [], [html.text("Default")]),
     button.button(Default, Lg, [], [html.text("Large")]),
-    button.button(Outline, IconXs, [aria_label("Add item")], [plus_icon([])]),
-    button.button(Outline, IconSm, [aria_label("Add item")], [plus_icon([])]),
-    button.button(Outline, Icon, [aria_label("Add item")], [plus_icon([])]),
-    button.button(Outline, IconLg, [aria_label("Add item")], [plus_icon([])]),
+    button.button(Outline, IconXs, [aria_label("Add item")], [plus()]),
+    button.button(Outline, IconSm, [aria_label("Add item")], [plus()]),
+    button.button(Outline, Icon, [aria_label("Add item")], [plus()]),
+    button.button(Outline, IconLg, [aria_label("Add item")], [plus()]),
   ])
 }
 
@@ -221,28 +229,5 @@ fn row(children: List(Element(Msg))) -> Element(Msg) {
       ),
     ],
     children,
-  )
-}
-
-/// A plain inline plus icon. The button base class sizes any unsized `<svg>`.
-/// Decorative: `aria-hidden` so AT relies on the button's text / aria-label.
-fn plus_icon(extra: List(Attribute(Msg))) -> Element(Msg) {
-  svg.svg(
-    list.flatten([
-      [
-        attribute.attribute("aria-hidden", "true"),
-        attribute.attribute("viewBox", "0 0 24 24"),
-        attribute.attribute("fill", "none"),
-        attribute.attribute("stroke", "currentColor"),
-        attribute.attribute("stroke-width", "2"),
-        attribute.attribute("stroke-linecap", "round"),
-        attribute.attribute("stroke-linejoin", "round"),
-      ],
-      extra,
-    ]),
-    [
-      svg.path([attribute.attribute("d", "M5 12h14")]),
-      svg.path([attribute.attribute("d", "M12 5v14")]),
-    ],
   )
 }

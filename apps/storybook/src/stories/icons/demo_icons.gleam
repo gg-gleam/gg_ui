@@ -144,6 +144,24 @@ pub fn fillable(which: DemoIcon) -> Bool {
   }
 }
 
+/// Parse the raw `iconSet` toolbar-global string (Storybook hands stories raw
+/// strings). Unknown → `Lucide`, the initial global. Shared by every story that
+/// threads the toolbar globals into its `mount_*`.
+pub fn parse_set(set: String) -> IconSet {
+  case set {
+    "tabler" -> Tabler
+    _ -> Lucide
+  }
+}
+
+/// Parse the raw `iconVariant` toolbar-global string. Unknown → `Outline`.
+pub fn parse_variant(variant: String) -> IconVariant {
+  case variant {
+    "filled" -> Filled
+    _ -> Outline
+  }
+}
+
 /// Render a demo glyph for the active `(set, variant)`. `attrs` flow straight
 /// through to the generated icon (so `icon.size(...)` / `size-*` work).
 pub fn render(

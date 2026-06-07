@@ -14,23 +14,10 @@ import lustre/element/html
 import stories/icons/demo_icons.{type DemoIcon, type IconSet, type IconVariant}
 
 pub fn mount_gallery(selector: String, set: String, variant: String) -> Nil {
-  let view = view_gallery(parse_set(set), parse_variant(variant))
+  let view =
+    view_gallery(demo_icons.parse_set(set), demo_icons.parse_variant(variant))
   let assert Ok(_) = lustre.start(lustre.element(view), selector, Nil)
   Nil
-}
-
-fn parse_set(set: String) -> IconSet {
-  case set {
-    "tabler" -> demo_icons.Tabler
-    _ -> demo_icons.Lucide
-  }
-}
-
-fn parse_variant(variant: String) -> IconVariant {
-  case variant {
-    "filled" -> demo_icons.Filled
-    _ -> demo_icons.Outline
-  }
 }
 
 fn view_gallery(set: IconSet, variant: IconVariant) -> Element(msg) {
