@@ -150,16 +150,41 @@ export const Basic: Story = {
 }
 
 /**
- * Terse `tooltip.tooltip` at its simplest: a trigger label + the tip content,
- * everything else defaulted via `tooltip.options()` (auto id, top/center, Base
- * UI's 600ms delay). Verifies the hidden wiring still produces a working trigger.
+ * Terse `tooltip.tooltip` mounted as a real Lustre app (`lustre.simple`): the
+ * trigger carries an `event.on_click` (via `Options.trigger_attrs`) that
+ * increments a counter shown beneath it. Verifies the hidden wiring still works,
+ * that the click dispatches into `update`, and — the regression that matters —
+ * that the tooltip keeps popping *after* a click re-renders the view (its
+ * anatomy id is pinned, so the wiring survives).
  */
 export const TerseApi: Story = {
   name: "Terse API",
   render: ({ side, align, arrow }) =>
     mountLustre((selector) => mount_terse(selector, side, align, arrow)),
   play: testOnly(async ({ canvasElement }) => {
-    await expectWiring(canvasElement, /hover me/i)
+    const trigger = await expectWiring(canvasElement, /hover me/i)
+    const canvas = within(canvasElement)
+    await expect(canvas.getByText(/you clicked 0 times/i)).toBeInTheDocument()
+
+    // The interactive part needs Vitest Browser Mode (a real userEvent).
+    if (!inVitestBrowser()) return
+    const user = await browserUserEvent()
+
+    // `event.on_click` flows through the terse `trigger_attrs` into `update`.
+    await user.click(trigger)
+    await waitFor(() =>
+      expect(canvas.getByText(/you clicked 1 times/i)).toBeInTheDocument(),
+    )
+
+    // Regression: that click re-rendered the view. With a pinned anatomy id the
+    // Interest-Invoker/anchor wiring is untouched, so the hint still opens on
+    // hover (a churned id would silently break it after the first click).
+    if (!supportsInterestInvokers()) return
+    const content = hint(canvasElement)
+    await user.hover(trigger)
+    await waitFor(() => expect(content.matches(":popover-open")).toBe(true), {
+      timeout: 2000,
+    })
   }),
 }
 

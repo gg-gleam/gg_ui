@@ -27,6 +27,7 @@
 import gg_base_ui/tooltip/tooltip as base_tooltip
 import gg_ui/positioning.{type Align, type Side, Center, Top}
 import gg_ui/ui/button
+import gleam/list
 import gleam/option.{type Option, None, Some}
 import lustre/attribute
 import lustre/element.{type Element}
@@ -77,18 +78,29 @@ pub const default_close_delay = 0
 /// requires both, so there's no hidden lock-in. `delay` / `close_delay` are the
 /// native open / close delays in ms — pass `default_delay` / `default_close_delay`
 /// for the standard feel.
+///
+/// `attrs` are your own attributes/events on the styled button — an
+/// `event.on_click`, a native `onclick`, an `id`, extra classes. They're applied
+/// **before** the trigger's behavior attributes, so the load-bearing wiring (the
+/// anchor-name `style`, the anchor `id`, `interestfor` / `aria-describedby`)
+/// always wins a conflict and the tooltip can't be broken from the outside. Pass
+/// `[]` when the trigger is purely presentational.
 pub fn trigger(
   anatomy: Anatomy,
   variant variant: button.Variant,
   size size: button.Size,
   delay delay: Int,
   close_delay close_delay: Int,
+  attrs attrs: List(attribute.Attribute(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
   button.button(
     variant:,
     size:,
-    attrs: base_tooltip.trigger_attributes(anatomy, delay:, close_delay:),
+    attrs: list.append(
+      attrs,
+      base_tooltip.trigger_attributes(anatomy, delay:, close_delay:),
+    ),
     children:,
   )
 }
@@ -176,14 +188,17 @@ fn arrow_element(anatomy: Anatomy) -> Element(msg) {
 ///
 /// ```gleam
 /// tooltip.options()                                    // all defaults
-/// Options(..tooltip.options(), text: "Settings")       // just the trigger label
 /// Options(..tooltip.options(), side: Bottom, arrow: True)
+/// Options(..tooltip.options(), trigger_attrs: [event.on_click(Saved)])
 /// ```
 ///
 /// **Trigger** (used by `tooltip`; ignored by `tooltip_with_trigger`, where you
 /// bring your own element):
-/// - `text`: the trigger button's label.
 /// - `variant` / `size`: the trigger button's look (the `Button` enums).
+/// - `trigger_attrs`: your own attributes/events on the trigger button — an
+///   `event.on_click`, a native `onclick`, an `id`, extra classes — without
+///   dropping to `tooltip_with_trigger`. Same merge rule as the standalone
+///   `trigger`: applied before the behavior wiring, which still wins a conflict.
 ///
 /// **Hint**:
 /// - `id`: `None` auto-generates a collision-free id (the default); `Some(id)`
@@ -192,11 +207,12 @@ fn arrow_element(anatomy: Anatomy) -> Element(msg) {
 ///   independently. Defaults to top/center, the conventional tooltip placement.
 /// - `arrow`: render the decorative tail.
 /// - `delay` / `close_delay`: native open / close delays, in ms.
-pub type Options {
+pub type Options(msg) {
   Options(
     id: Option(String),
     variant: button.Variant,
     size: button.Size,
+    trigger_attrs: List(attribute.Attribute(msg)),
     side: Side,
     align: Align,
     arrow: Bool,
@@ -209,11 +225,12 @@ pub type Options {
 /// opening **top / center** (the conventional placement), no arrow, and Base
 /// UI's 600ms / 0ms delays. Spread it with record-update to change a field —
 /// `Options(..tooltip.options(), side: Bottom)`.
-pub fn options() -> Options {
+pub fn options() -> Options(msg) {
   Options(
     id: None,
     variant: button.Outline,
     size: button.Medium,
+    trigger_attrs: [],
     side: Top,
     align: Center,
     arrow: False,
@@ -238,7 +255,7 @@ pub fn options() -> Options {
 /// Render-once by design (the browser owns open state via interest).
 pub fn tooltip(
   label label: List(Element(msg)),
-  options options: Options,
+  options options: Options(msg),
   content content: List(Element(msg)),
 ) -> Element(msg) {
   tooltip_with_trigger(
@@ -249,6 +266,7 @@ pub fn tooltip(
         size: options.size,
         delay: options.delay,
         close_delay: options.close_delay,
+        attrs: options.trigger_attrs,
         children: label,
       )
     },
@@ -260,12 +278,12 @@ pub fn tooltip(
 /// Terse tooltip with a **caller-supplied trigger** — same as `tooltip` but you
 /// provide the trigger element via a callback that receives the minted `Anatomy`.
 /// Build it with the standalone `trigger` (full button props) or your own element
-/// via `trigger_attributes`. The `text` / `variant` / `size` fields of `options`
-/// don't apply here — your trigger owns its appearance; the rest of `options`
-/// (placement, arrow, delays, id) still does.
+/// via `trigger_attributes`. The `variant` / `size` / `trigger_attrs` fields of
+/// `options` don't apply here — your trigger owns its appearance and attributes;
+/// the rest of `options` (placement, arrow, delays, id) still does.
 pub fn tooltip_with_trigger(
   trigger trigger: fn(Anatomy) -> Element(msg),
-  options options: Options,
+  options options: Options(msg),
   content tip: List(Element(msg)),
 ) -> Element(msg) {
   let Options(id:, side:, align:, arrow:, ..) = options
