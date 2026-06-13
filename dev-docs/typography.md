@@ -216,20 +216,23 @@ a deliberate divergence, justified by the platform:
 - **Lustre ergonomics flip shadcn's reasoning #3.** In JSX a recipe is just
   `className="text-4xl font-extrabold tracking-tight"`; in Gleam it's
   `html.h1([attribute.class("…long string…")], …)` — untyped, easy to typo. A
-  typed `text.h1(color:, attrs:, children:)` earns its keep here in a way it
+  typed `text.h1(attrs, children)` earns its keep here in a way it
   doesn't in shadcn-React.
-- **A `Props` record of named, tokenized keys — enforced in the type system.**
-  Helpers take `Props(msg)`: a field per styling decision, each a closed enum (or
-  `Option` of one), all defaulted by `props()`; override via Gleam record-update.
-  Gleam has **no default args**, so this record is how you get "named keys +
-  defaults" — the closest expression of a props object:
+- **The API mirrors Lustre — `text.h1(attrs, children)`, enforced in the type
+  system.** Like every Lustre element (`html.h1(attrs, children)`), a helper
+  takes a `List(Attr(msg))` then children; the common case is an empty list. We
+  chose this over a `Props` *record* (briefly tried) because it's the ecosystem
+  idiom — `lustre/attribute` and every element work this way — and it has the
+  least boilerplate (no `text.props()` / no `Props(..props(), …)` record-update,
+  which Gleam's lack of default args makes verbose):
   ```gleam
-  text.h5(text.props(), [html.text("Subtitle")])                    // defaults
-  text.h5(text.Props(..text.props(), color: text.Muted, align: text.Center), […])
+  text.h1([], [html.text("Heading")])                          // defaults
+  text.h1([text.color(text.Muted), text.align(text.Center)], […])
   ```
-  There is deliberately **no `class`/`style` field anywhere**, so off-token /
-  off-scale text *can't be expressed* — the guarantee a recipe page can only
-  suggest, and why it needs **no tailwind-merge** (no external class sources).
+  `Attr` is **opaque** with deliberately **no `class`/`style` constructor**, so
+  off-token / off-scale text *can't be expressed* — the guarantee a recipe page
+  can only suggest, and why it needs **no tailwind-merge** (no external class
+  sources). `text.color(Muted)` *is* the idiomatic "named key" in Gleam.
 
 Shape of it:
 
@@ -244,21 +247,18 @@ Shape of it:
   only allow sanctioned styles (stronger enforcement, 1:1 with named Figma
   styles, simpler CSS). Element default: `h1–h4` → `<h1>–<h4>`; `h5–h7` → neutral
   `<p>` (a body-sized `<h6>` would pollute the a11y outline).
-- **Tokenized modifier fields, every one a closed enum.** The Latitude `Text`
-  prop set — but typed and named: `color` (default `Foreground`), `align`,
+- **Tokenized modifiers, every one a closed enum, all `Attr` constructors.** The
+  Latitude `Text` prop set — but typed: `color` (default `Foreground`), `align`,
   `transform`, `decoration`, `italic`, `truncate` (`Ellipsis` | `Lines(n)`, n
   clamped 1–6), `whitespace`, `word_break`, `wrap` (balance/pretty), `opacity`,
-  `selectable`. Omitted/`None` ⇒ that class isn't emitted.
-- **Two typed escape valves — no raw `class` anywhere.**
-  - `render_as: Some(html.h3)` — render the style on a *different*, real Lustre
-    element (the asChild / `useRender` analogue). `None` = the helper's natural
-    tag. So an H1 *look* on a semantic `<h3>` is `Props(..props(), render_as:
-    Some(html.h3))` — no more `import html` + merge-`attributes` dance, and never
-    the Latitude `Text.H1`-renders-`<span>` footgun.
-  - `html_attrs: [text.id(…), text.aria(…), text.on_click(…)]` — a **curated**
-    opaque `Attr` list (id / aria / data / events). It has **no `class`/`style`
-    constructor**, so even the escape channel can't reintroduce an off-token
-    override (verified: `attribute.class(…)` doesn't typecheck there).
+  `selectable`. Omit the `Attr` ⇒ that class isn't emitted.
+- **`render_as` + a11y/events live in the same list — no raw `class` anywhere.**
+  `text.render_as(html.h3)` renders the style on a *different*, real Lustre
+  element (the asChild / `useRender` analogue) — so an H1 *look* on a semantic
+  `<h3>` is `text.h1([text.render_as(html.h3)], …)`, no `import html` + merge
+  dance, and never the Latitude `Text.H1`-renders-`<span>` footgun. `text.id` /
+  `text.aria` / `text.data` / `text.on_click` cover a11y + interaction. All are
+  the same opaque `Attr`, none can carry `class`.
 - **No headless layer.** Text has no behavior/ARIA beyond the element, so (like
   `icon`) it lives only in `gg_ui/ui/`. Emits `cn-text-*`. Split, like the rest
   of the kit: the **type scale + color** (shape-specific) lives per-shape in
@@ -283,13 +283,13 @@ argument for the right-hand column.
 | --- | --- | --- |
 | **Ships a typography component?** | **No.** Typography is a docs page of utility-class recipes. | **Yes** — `gg_ui/ui/text.gleam`, a real typed component. |
 | **Core principle** | *Recipes, not abstractions.* You own the markup + classes. | *Enforcement, not documentation.* The API can't express off-token/off-scale text. |
-| **How you style an h1** | `<h1 className="scroll-m-20 text-4xl font-extrabold …">` — a string you copy. | `text.h1(text.props(), […])` — a typed call; the recipe lives in a `cn-*` fragment. |
+| **How you style an h1** | `<h1 className="scroll-m-20 text-4xl font-extrabold …">` — a string you copy. | `text.h1([], […])` — mirrors Lustre's `html.h1(attrs, children)`; the recipe lives in a `cn-*` fragment. |
 | **The scale** | Open: any Tailwind utilities, any combination. | Closed numeric `h1…h7` enum + curated baked weight members (`h4_m`/`h4_b`). |
-| **Off-scale text** | Possible by design (you can write anything). | Impossible to express — `Props` has no `class`/`style` field. |
-| **Color / modifiers** | Raw utilities (`text-muted-foreground`, `uppercase`, `line-clamp-2`). | Named tokenized `Props` keys (`color: Muted`, `transform: Some(Uppercase)`, `truncate: Some(Lines(2))`). |
+| **Off-scale text** | Possible by design (you can write anything). | Impossible to express — the opaque `Attr` has no `class`/`style` constructor. |
+| **Color / modifiers** | Raw utilities (`text-muted-foreground`, `uppercase`, `line-clamp-2`). | Tokenized `Attr`s (`text.color(Muted)`, `text.transform(Uppercase)`, `text.truncate(Lines(2))`). |
 | **tailwind-merge** | Needed (many class sources can conflict). | **None** — `cn-*` names never conflict; pure join, dual-target. |
-| **Element vs style** | The recipe is applied to whatever element you write. | Decoupled: helpers default a tag (h1–h4 headings, h5–h7 `<p>`); `render_as: Some(html.h3)` puts any style on any element. |
-| **Escape valves** | n/a — it's all open. | `render_as` (element) + `html_attrs` (curated id/aria/data/events). Both typed; neither can carry `class`. |
+| **Element vs style** | The recipe is applied to whatever element you write. | Decoupled: helpers default a tag (h1–h4 headings, h5–h7 `<p>`); `text.render_as(html.h3)` puts any style on any element. |
+| **Escape valves** | n/a — it's all open. | `text.render_as` (element) + `text.id`/`aria`/`data`/`on_click` (a11y/events) — same opaque `Attr` list; none can carry `class`. |
 | **Why this fits** | A *public registry you copy and own* → transparency > consistency; no abstraction to fight. | A *kit consumed as typed Gleam* → consistency > transparency; utility-string juggling is awkward and a closed API guarantees the scale. |
 
 **Why the divergence is justified here, not a betrayal of shadcn:** two of
