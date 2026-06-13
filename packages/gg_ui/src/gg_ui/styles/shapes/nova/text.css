@@ -17,10 +17,8 @@
     @apply font-sans;
   }
 
-  .cn-text-display {
-    @apply font-heading text-5xl font-extrabold tracking-tight text-balance;
-  }
-
+  /* Headings (h1–h4) — display face, tight tracking, weight baked. h4 ships
+   * three weights as curated members (semibold / medium / bold). */
   .cn-text-h1 {
     @apply font-heading text-4xl font-extrabold tracking-tight text-balance;
   }
@@ -37,28 +35,39 @@
     @apply font-heading text-xl font-semibold tracking-tight;
   }
 
-  .cn-text-lead {
-    @apply text-xl leading-7;
+  .cn-text-h4-m {
+    @apply font-heading text-xl font-medium tracking-tight;
   }
 
-  .cn-text-large {
+  .cn-text-h4-b {
+    @apply font-heading text-xl font-bold tracking-tight;
+  }
+
+  /* h5 — subtitle / large. */
+  .cn-text-h5 {
     @apply text-lg font-semibold;
   }
 
-  .cn-text-body {
+  .cn-text-h5-m {
+    @apply text-lg font-medium;
+  }
+
+  /* h6 — body. h6-b is the "body strong" emphasis. */
+  .cn-text-h6 {
     @apply text-base leading-7;
   }
 
-  .cn-text-body-strong {
+  .cn-text-h6-m {
     @apply text-base leading-7 font-medium;
   }
 
-  .cn-text-small {
-    @apply text-sm leading-none font-medium;
+  .cn-text-h6-b {
+    @apply text-base leading-7 font-semibold;
   }
 
-  .cn-text-caption {
-    @apply text-xs;
+  /* h7 — small / caption. */
+  .cn-text-h7 {
+    @apply text-sm leading-none font-medium;
   }
 
   .cn-text-color-foreground {

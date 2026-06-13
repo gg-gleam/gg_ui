@@ -65,46 +65,29 @@ pub fn mount_text_playground(
 
 // --- showcase views ------------------------------------------------------
 
-/// The full closed scale, each member labeled — the "type styles" specimen.
+/// The full closed scale, each member labeled — the numeric "type styles"
+/// specimen. h1–h4 are headings; h5–h7 neutral. `_m`/`_b` are weight variants.
 fn view_scale() -> Element(msg) {
   column([
-    specimen("display", text.display([], [html.text("Display")])),
     specimen("h1", text.h1([], [html.text("Heading 1")])),
     specimen("h2", text.h2([], [html.text("Heading 2")])),
     specimen("h3", text.h3([], [html.text("Heading 3")])),
     specimen("h4", text.h4([], [html.text("Heading 4")])),
+    specimen("h4_m", text.h4_m([], [html.text("Heading 4 — medium")])),
+    specimen("h4_b", text.h4_b([], [html.text("Heading 4 — bold")])),
+    specimen("h5", text.h5([], [html.text("Subtitle / large")])),
+    specimen("h5_m", text.h5_m([], [html.text("Subtitle — medium")])),
     specimen(
-      "lead",
-      text.lead([text.color(text.Muted)], [
-        html.text(
-          "A lead paragraph that introduces a section with a softer, larger voice.",
-        ),
-      ]),
-    ),
-    specimen("large", text.large([], [html.text("Are you absolutely sure?")])),
-    specimen(
-      "body",
-      text.body([], [
+      "h6",
+      text.h6([], [
         html.text(
           "Body copy is the default reading size, tuned for comfortable line length and rhythm.",
         ),
       ]),
     ),
-    specimen(
-      "body-strong",
-      text.body_strong([], [
-        html.text(
-          "Body strong is the same size with a heavier weight for emphasis.",
-        ),
-      ]),
-    ),
-    specimen("small", text.small([], [html.text("Email address")])),
-    specimen(
-      "caption",
-      text.caption([text.color(text.Muted)], [
-        html.text("Enter the email you signed up with."),
-      ]),
-    ),
+    specimen("h6_m", text.h6_m([], [html.text("Body — medium")])),
+    specimen("h6_b", text.h6_b([], [html.text("Body — strong")])),
+    specimen("h7", text.h7([], [html.text("Small / caption")])),
   ])
 }
 
@@ -113,23 +96,23 @@ fn view_colors() -> Element(msg) {
   column([
     specimen(
       "foreground",
-      text.large([], [html.text("Foreground — the default text color")]),
+      text.h5([], [html.text("Foreground — the default text color")]),
     ),
     specimen(
       "muted",
-      text.large([text.color(text.Muted)], [
+      text.h5([text.color(text.Muted)], [
         html.text("Muted — secondary / helper text"),
       ]),
     ),
     specimen(
       "primary",
-      text.large([text.color(text.Primary)], [
+      text.h5([text.color(text.Primary)], [
         html.text("Primary — accent emphasis"),
       ]),
     ),
     specimen(
       "destructive",
-      text.large([text.color(text.Destructive)], [
+      text.h5([text.color(text.Destructive)], [
         html.text("Destructive — errors and danger"),
       ]),
     ),
@@ -187,17 +170,18 @@ fn render_style(
   children: List(Element(msg)),
 ) -> Element(msg) {
   case style {
-    text.Display -> text.display(attrs, children)
     text.H1 -> text.h1(attrs, children)
     text.H2 -> text.h2(attrs, children)
     text.H3 -> text.h3(attrs, children)
     text.H4 -> text.h4(attrs, children)
-    text.Lead -> text.lead(attrs, children)
-    text.Large -> text.large(attrs, children)
-    text.Body -> text.body(attrs, children)
-    text.BodyStrong -> text.body_strong(attrs, children)
-    text.Small -> text.small(attrs, children)
-    text.Caption -> text.caption(attrs, children)
+    text.H4M -> text.h4_m(attrs, children)
+    text.H4B -> text.h4_b(attrs, children)
+    text.H5 -> text.h5(attrs, children)
+    text.H5M -> text.h5_m(attrs, children)
+    text.H6 -> text.h6(attrs, children)
+    text.H6M -> text.h6_m(attrs, children)
+    text.H6B -> text.h6_b(attrs, children)
+    text.H7 -> text.h7(attrs, children)
   }
 }
 
@@ -205,17 +189,18 @@ fn render_style(
 
 fn parse_style(value: String) -> text.Style {
   case value {
-    "display" -> text.Display
     "h1" -> text.H1
     "h2" -> text.H2
     "h3" -> text.H3
     "h4" -> text.H4
-    "lead" -> text.Lead
-    "large" -> text.Large
-    "body-strong" -> text.BodyStrong
-    "small" -> text.Small
-    "caption" -> text.Caption
-    _ -> text.Body
+    "h4_m" -> text.H4M
+    "h4_b" -> text.H4B
+    "h5" -> text.H5
+    "h5_m" -> text.H5M
+    "h6_m" -> text.H6M
+    "h6_b" -> text.H6B
+    "h7" -> text.H7
+    _ -> text.H6
   }
 }
 
@@ -315,7 +300,7 @@ fn center(children: List(Element(msg))) -> Element(msg) {
 
 fn specimen(label: String, content: Element(msg)) -> Element(msg) {
   html.div([attribute.class("flex flex-col gap-1")], [
-    text.caption([text.color(text.Muted)], [html.text(label)]),
+    text.h7([text.color(text.Muted)], [html.text(label)]),
     content,
   ])
 }

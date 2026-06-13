@@ -38,21 +38,26 @@ import lustre/element/html
 
 // --- axes --------------------------------------------------------------------
 
-/// The closed type scale — each member bundles size + weight + leading +
-/// tracking + family as ONE decision. Weight variants are named *members*
-/// (`BodyStrong`), never a free axis — that closedness keeps text on one scale.
+/// The closed, **numeric** type scale — `h1…h7`, the way a designer names text
+/// styles in Figma ("set h5, it maps to the DS"). Each member bundles size +
+/// weight + leading + tracking + family as ONE decision. **Weight variants are
+/// baked enum members** (`H4M` = medium, `H4B` = bold), a curated allow-list —
+/// NOT a free `weight` axis (which would permit off-scale combos). Add a member
+/// only when the design system defines that style. Default element: `h1–h4` are
+/// headings, `h5–h7` neutral (see the helpers).
 pub type Style {
-  Display
   H1
   H2
   H3
   H4
-  Lead
-  Large
-  Body
-  BodyStrong
-  Small
-  Caption
+  H4M
+  H4B
+  H5
+  H5M
+  H6
+  H6M
+  H6B
+  H7
 }
 
 /// Color — semantic tokens only, so text rides the Base Color / Theme axes.
@@ -313,17 +318,18 @@ fn resolve(key: Key) -> String {
 
 fn style_class(style: Style) -> String {
   case style {
-    Display -> "cn-text-display"
     H1 -> "cn-text-h1"
     H2 -> "cn-text-h2"
     H3 -> "cn-text-h3"
     H4 -> "cn-text-h4"
-    Lead -> "cn-text-lead"
-    Large -> "cn-text-large"
-    Body -> "cn-text-body"
-    BodyStrong -> "cn-text-body-strong"
-    Small -> "cn-text-small"
-    Caption -> "cn-text-caption"
+    H4M -> "cn-text-h4-m"
+    H4B -> "cn-text-h4-b"
+    H5 -> "cn-text-h5"
+    H5M -> "cn-text-h5-m"
+    H6 -> "cn-text-h6"
+    H6M -> "cn-text-h6-m"
+    H6B -> "cn-text-h6-b"
+    H7 -> "cn-text-h7"
   }
 }
 
@@ -402,15 +408,10 @@ fn opacity_class(opacity: Opacity) -> String {
 }
 
 // --- named helpers — sugar over `attributes`, each with a default element ----
-// `color` defaults to Foreground (add `text.color(…)` to override). The element
-// can be overridden by using `attributes` on the tag you want instead.
-
-pub fn display(
-  attrs attrs: List(Attr(msg)),
-  children children: List(Element(msg)),
-) -> Element(msg) {
-  el(html.h1, Display, attrs, children)
-}
+// `color` defaults to Foreground (add `text.color(…)` to override). Default
+// element: h1–h4 are headings, h5–h7 are neutral `<p>` (a body-sized `<h6>`
+// would pollute the a11y outline). Override the element via `attributes` on any
+// tag. Weight variants are terse: `_m` = medium, `_b` = bold.
 
 pub fn h1(
   attrs attrs: List(Attr(msg)),
@@ -440,46 +441,60 @@ pub fn h4(
   el(html.h4, H4, attrs, children)
 }
 
-pub fn lead(
+pub fn h4_m(
   attrs attrs: List(Attr(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  el(html.p, Lead, attrs, children)
+  el(html.h4, H4M, attrs, children)
 }
 
-pub fn large(
+pub fn h4_b(
   attrs attrs: List(Attr(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  el(html.div, Large, attrs, children)
+  el(html.h4, H4B, attrs, children)
 }
 
-pub fn body(
+pub fn h5(
   attrs attrs: List(Attr(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  el(html.p, Body, attrs, children)
+  el(html.p, H5, attrs, children)
 }
 
-pub fn body_strong(
+pub fn h5_m(
   attrs attrs: List(Attr(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  el(html.p, BodyStrong, attrs, children)
+  el(html.p, H5M, attrs, children)
 }
 
-pub fn small(
+pub fn h6(
   attrs attrs: List(Attr(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  el(html.small, Small, attrs, children)
+  el(html.p, H6, attrs, children)
 }
 
-pub fn caption(
+pub fn h6_m(
   attrs attrs: List(Attr(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  el(html.span, Caption, attrs, children)
+  el(html.p, H6M, attrs, children)
+}
+
+pub fn h6_b(
+  attrs attrs: List(Attr(msg)),
+  children children: List(Element(msg)),
+) -> Element(msg) {
+  el(html.p, H6B, attrs, children)
+}
+
+pub fn h7(
+  attrs attrs: List(Attr(msg)),
+  children children: List(Element(msg)),
+) -> Element(msg) {
+  el(html.p, H7, attrs, children)
 }
 
 fn el(

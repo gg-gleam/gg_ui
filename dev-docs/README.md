@@ -37,8 +37,9 @@ Layered roughly bottom-up (foundations first):
   **Heading** toolbars (shadcn's body/heading split). Recipes ship as a
   docs-only `Components/Typography` story + the four semantic roles
   (Lead/Large/Small/Muted). Plus a **considered divergence from shadcn**: a
-  typed, tokenized **`text` component** (`gg_ui/ui/text`, closed `Style`
-  scale + `Color` axis, no `className`) — justified by Lustre ergonomics +
+  typed, tokenized **`text` component** (`gg_ui/ui/text`, closed numeric
+  `h1…h7` scale with baked weight variants `h4_m`/`h4_b`, tokenized
+  modifiers, no `className`) — justified by Lustre ergonomics +
   enforcement.
 - **[icons.md](icons.md)** — icon strategy: placeholder pattern in
   registry source, transformer at install time, generated inline-SVG

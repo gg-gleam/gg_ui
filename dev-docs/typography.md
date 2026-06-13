@@ -241,12 +241,19 @@ a deliberate divergence, justified by the platform:
 
 Shape of it (mirrors `button`):
 
-- **A closed `Style` scale** — `Display / H1–H4 / Lead / Large / Body /
-  BodyStrong / Small / Caption`. Each member bundles size + weight + leading +
-  tracking + family as *one* decision. Weight variants are named *members*
-  (`BodyStrong`), **never a free `weight` axis** — that closedness is what keeps
-  text on one scale (the place the Latitude `Text` atom, with independent
-  `size`/`weight`/`spacing`, leaked consistency).
+- **A closed, *numeric* `Style` scale** — `h1 … h7` (the way a designer names a
+  text style in Figma: "set h5, it maps to the DS"; semantic names like
+  `Body`/`Large`/`Lead` were "harder to remember what to apply"). Each member
+  bundles size + weight + leading + tracking + family as *one* decision. **Weight
+  variants are baked enum members** — `H4M` (medium), `H4B` (bold), `H5M`, `H6M`,
+  `H6B` — a *curated allow-list*, the terse `h4_m`/`h4_b` helper convention from
+  the Latitude `Text`. We **rejected a `weight()` modifier**: it would permit
+  off-scale combos (h1 + thin) and need override machinery, whereas baked members
+  only allow sanctioned styles (stronger enforcement, 1:1 with named Figma
+  styles, simpler CSS). They're enum *members* (not loose helpers) so the
+  element-agnostic `attributes(style:, …)` escape hatch can express them. Element
+  default: `h1–h4` → `<h1>–<h4>`; `h5–h7` → neutral `<p>` (a body-sized `<h6>`
+  would pollute the a11y outline).
 - **Tokenized modifiers, every one a closed enum, all funneled through the
   opaque `Attr`.** The Latitude `Text` prop set — but typed: `color` (default
   `Foreground` → just omit it), `align`, `transform`, `decoration`, `italic`,
