@@ -13,11 +13,13 @@ scale that component internals draw from.
 > shadcn (font isn't a library-prescribed axis — see below): the **Storybook app**
 > loads real variable families (`@fontsource-variable/*`) and its **Font** +
 > **Heading** toolbars set those vars (independent body/heading, shadcn's split).
-> The recipes ship the shadcn way — **as a documentation story, not a component**
-> (`Components/Typography`: Overview / Elements / Roles). No
-> `gg_ui/ui/typography.gleam` exists, by design (see the decision below). Still
-> deferred: wiring the semantic **roles** into real component internals (none
-> beyond `button`/`popover` yet), and RTL.
+> The recipes ship the shadcn way — **as a documentation story**
+> (`Components/Typography`: Overview / Elements / Roles). **And then we go
+> further than shadcn:** a real, typed **`text` component**
+> (`gg_ui/ui/text.gleam`, story `Components/Text`) — a considered divergence
+> justified by Lustre ergonomics + enforcement (see §3). Markdown/MDX is out of
+> scope (style it with Tailwind `prose`). Still deferred: per-shape `text.css`
+> beyond `nova`, and RTL.
 
 ## The core philosophy: shadcn ships *no* typography
 
@@ -211,16 +213,52 @@ This is maximal fidelity to shadcn's "we ship nothing," and it keeps the kit's
 "no raw Tailwind in `gg_ui/ui/`" rule intact precisely *because* typography never
 enters the kit.
 
-**Decision: (a) over (b).** The rejected alternative (b) was `cn-*` recipes in a
-fragment (`.cn-h1 { @apply … }`) plus `typography.h1()` helpers emitting `cn-h1`.
-It's more "batteries included" but re-introduces the global-ish styled-prose
-surface shadcn deliberately avoids, and shadcn ships nothing of the sort. We
-escalate to (b) only if a consumer needs a *stable* styled-prose surface (e.g. a
-docs renderer) — at which point the recipes here port over verbatim.
+This recipe page documents shadcn's model and stays useful for **rendered
+content** (Markdown / MDX), which a component can't reach — though in practice we
+expect consumers to style that with Tailwind's `prose` plugin, so the recipe
+story is mostly a reference. For **authored app views** we go further (next).
 
-The **semantic roles** (Lead / Large / Small / Muted) are demonstrated in the
-`Roles` story as the shared scale; wiring them into real component internals
-(`dialog`/`field`/`card`) happens when those components land.
+### 3. A `text` component — a considered divergence from shadcn (**spike**)
+
+shadcn ships *no* Text component; gg_ui's `gg_ui/ui/text.gleam` **does**. This is
+a deliberate divergence, justified by the platform:
+
+- **Lustre ergonomics flip shadcn's reasoning #3.** In JSX a recipe is just
+  `className="text-4xl font-extrabold tracking-tight"`; in Gleam it's
+  `html.h1([attribute.class("…long string…")], …)` — untyped, easy to typo. A
+  typed `text.h1(color:, attrs:, children:)` earns its keep here in a way it
+  doesn't in shadcn-React.
+- **Enforcement, not documentation.** The API is **closed and tokenized with no
+  `className` hole**, so app text *cannot* drift off-token or off-scale — the
+  consistency guarantee a recipe page can only suggest. (This is also why it
+  needs **no tailwind-merge**: there are no external class sources to reconcile.)
+
+Shape of it (mirrors `button`):
+
+- **A closed `Style` scale** — `Display / H1–H4 / Lead / Large / Body /
+  BodyStrong / Small / Caption`. Each member bundles size + weight + leading +
+  tracking + family as *one* decision. Weight variants are named *members*
+  (`BodyStrong`), **never a free `weight` axis** — that closedness is what keeps
+  text on one scale (the place the Latitude `Text` atom, with independent
+  `size`/`weight`/`spacing`, leaked consistency).
+- **`Color` is a separate, also-closed axis** — `Foreground / Muted / Primary /
+  Destructive`. A `Style` never bakes in a color, so shadcn's "Lead" = `Lead` +
+  `Muted`. Color tokens ride the Base Color / Theme axes.
+- **Element-agnostic** (the asChild / `useRender` analogue). Named helpers
+  (`text.h1`) default to a sensible tag; for "H3 *look* on a semantic `<h2>`",
+  merge `text.attributes(H3, …)` onto any element — same render-prop split
+  `button` uses for its `<a>`. Visual style is decoupled from document structure,
+  so we never repeat the Latitude footgun of `Text.H1` rendering a `<span>`.
+- **No headless layer.** Text has no behavior/ARIA beyond the element, so (like
+  `icon`) it lives only in `gg_ui/ui/`. Emits `cn-text-*`; recipe per shape in
+  `styles/shapes/<style>/text.css` (only `nova` so far — see the spike note in
+  that file). Story: `Components/Text`.
+
+**Status: spike.** Open points: whether named helpers should default `color` to
+`Foreground` for ergonomics (Gleam has no default args, so every call currently
+passes `color:`); whether the `text` component makes the docs-only recipe story
+(§2) redundant for everything except the `prose`/content reference; and the
+per-shape `text.css` for the other six shapes.
 
 ## Open questions
 

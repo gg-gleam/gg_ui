@@ -1,0 +1,79 @@
+/* nova · text — type-scale + color recipe for the `cn-text-*` names emitted by
+ * gg_ui/ui/text. A fragment; no tailwind import.
+ *
+ * Each `.cn-text-{style}` is one closed type style (size + weight + leading +
+ * tracking + family). Headings opt into the FONT axis's display face via
+ * `font-heading`; everything else stays on `font-sans` (the base). Color is a
+ * SEPARATE set of `.cn-text-color-*` rules so it composes orthogonally — a style
+ * never bakes in a color. Source order: base → style → color (no conflicts
+ * across the three, so order is just for tidiness).
+ *
+ * SPIKE NOTE: only the `nova` shape ships a recipe so far. The other six shapes
+ * (vega / luma / sera / lyra / mira / maia) each need their own `text.css` —
+ * exactly like `button` has a per-shape recipe — before text renders under them
+ * (`sera` would remap headings to a serif, etc.). */
+.style-nova {
+  .cn-text {
+    @apply font-sans;
+  }
+
+  .cn-text-display {
+    @apply font-heading text-5xl font-extrabold tracking-tight text-balance;
+  }
+
+  .cn-text-h1 {
+    @apply font-heading text-4xl font-extrabold tracking-tight text-balance;
+  }
+
+  .cn-text-h2 {
+    @apply font-heading text-3xl font-semibold tracking-tight;
+  }
+
+  .cn-text-h3 {
+    @apply font-heading text-2xl font-semibold tracking-tight;
+  }
+
+  .cn-text-h4 {
+    @apply font-heading text-xl font-semibold tracking-tight;
+  }
+
+  .cn-text-lead {
+    @apply text-xl leading-7;
+  }
+
+  .cn-text-large {
+    @apply text-lg font-semibold;
+  }
+
+  .cn-text-body {
+    @apply text-base leading-7;
+  }
+
+  .cn-text-body-strong {
+    @apply text-base leading-7 font-medium;
+  }
+
+  .cn-text-small {
+    @apply text-sm leading-none font-medium;
+  }
+
+  .cn-text-caption {
+    @apply text-xs;
+  }
+
+  .cn-text-color-foreground {
+    @apply text-foreground;
+  }
+
+  .cn-text-color-muted {
+    @apply text-muted-foreground;
+  }
+
+  .cn-text-color-primary {
+    @apply text-primary;
+  }
+
+  .cn-text-color-destructive {
+    @apply text-destructive;
+  }
+}

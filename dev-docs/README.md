@@ -36,7 +36,10 @@ Layered roughly bottom-up (foundations first):
   Storybook app loads real `@fontsource` families behind **Font** +
   **Heading** toolbars (shadcn's body/heading split). Recipes ship as a
   docs-only `Components/Typography` story + the four semantic roles
-  (Lead/Large/Small/Muted).
+  (Lead/Large/Small/Muted). Plus a **considered divergence from shadcn**: a
+  typed, tokenized **`text` component** (`gg_ui/ui/text`, closed `Style`
+  scale + `Color` axis, no `className`) — justified by Lustre ergonomics +
+  enforcement.
 - **[icons.md](icons.md)** — icon strategy: placeholder pattern in
   registry source, transformer at install time, generated inline-SVG
   Gleam modules per library. Works on both Lustre targets.

@@ -92,6 +92,11 @@ declare module "*.gleam" {
   export const mount_elements: MountStatic
   export const mount_roles: MountStatic
 
+  // text component stories — static specimens, no args
+  export const mount_scale: MountStatic
+  export const mount_colors: MountStatic
+  export const mount_as_element: MountStatic
+
   // icon catalog stories
   export const mount_with_icon: MountWithIcons // button (decorative glyphs)
   export const mount_gallery: MountWithIcons // icons/gallery
