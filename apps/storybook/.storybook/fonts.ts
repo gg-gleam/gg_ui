@@ -1,14 +1,18 @@
 // Font families for the Storybook demo — the *consumer* side of the typography
 // story. The library (gg_ui) ships NO fonts; it only exposes the `--font-sans` /
 // `--font-heading` / `--font-mono` custom props (tokens.css). Here, the demo app
-// loads real variable faces (`@fontsource-variable/*`, the same packages
-// shadcn's create flow installs) and the Font / Heading toolbars set those vars
-// from the families below. This mirrors shadcn's font-family picker (a body font
-// + an independent heading font), not an abstract "type set".
+// loads real variable faces and the Font / Heading toolbars set those vars from
+// the families below. This mirrors shadcn's font-family picker (a body font + an
+// independent heading font), not an abstract "type set".
 //
-// Importing a `@fontsource-variable/*` package injects its `@font-face` rules,
-// so the family becomes available to CSS. Eager import here keeps the demo
-// deterministic (no CDN; works in the vitest browser run).
+// Loading: `@fontsource-variable/*` (self-hosted). NOTE this is *not* how
+// shadcn's docs site loads fonts — that's a Next app and uses `next/font/google`
+// (its `@fontsource` names are just metadata + a non-Next template). We're a
+// Vite/Storybook app, so `next/font` isn't an option, and a Google-Fonts CDN
+// link would break the offline/deterministic vitest-browser run. `@fontsource`
+// is the standard self-hosting route here (and what shadcn's own non-Next
+// template uses). Importing a package injects its `@font-face` rules; eager
+// import makes every family available to CSS up front.
 import "@fontsource-variable/geist"
 import "@fontsource-variable/inter"
 import "@fontsource-variable/dm-sans"

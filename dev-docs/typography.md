@@ -179,15 +179,24 @@ which *is* persisted). We mirror that split:
   fragments under `styles/fonts/`; that was an abstract stand-in and was removed
   — it isn't how shadcn models fonts.)
 - **Consumer = real families + the picker.** The Storybook app
-  (`.storybook/fonts.ts`) loads a curated cross-section of variable faces via
-  **`@fontsource-variable/*`** (the same packages shadcn's create flow installs:
-  Geist, Inter, DM Sans, Figtree, Space Grotesk, Playfair Display, Lora,
+  (`.storybook/fonts.ts`) loads a curated cross-section of variable faces
+  (Geist, Inter, DM Sans, Figtree, Space Grotesk, Playfair Display, Lora,
   JetBrains Mono, Geist Mono). Two toolbars — **Font** (body) and **Heading**
   (independent; `Inherit` follows the body) — and the `preview.ts` decorator sets
   `--font-sans` / `--font-heading` from the picked families (a `System` body pick
   leaves the `:root` fallback). This is shadcn's body/heading font-family picker,
   not an abstract "type set". Headings opt into `--font-heading` via the
   `font-heading` utility in the recipes.
+
+  > **On the loading mechanism (don't over-read it):** we self-host via
+  > `@fontsource-variable/*`. shadcn's *docs site* does **not** — it's a Next app
+  > and loads preview fonts with `next/font/google`; its `@fontsource` package
+  > names are only a metadata field + one non-Next starter template, and its
+  > generated setup tells users to use `next/font` or Google Fonts. We're a
+  > Vite/Storybook app (no `next/font`) and want the vitest-browser run offline,
+  > so `@fontsource` self-hosting is the right fit — but it's a *demo* choice, not
+  > a library contract. A CLI-scaffolded app would get the `--font-*` vars written
+  > for it and pick its own loader.
 
 The library side is pure CSS → both targets, no `gg_base_ui` involvement.
 
@@ -218,10 +227,10 @@ The **semantic roles** (Lead / Large / Small / Muted) are demonstrated in the
 - **How big is the family catalogue, and how does a real app register a font?**
   The Storybook demo loads 9 families (shadcn curates ~26). The demo's loading is
   `@fontsource` imports, which is a *demo* choice — a CLI-scaffolded app would get
-  the same `--font-*` vars written for it plus a font dependency / `@font-face` of
-  its choosing (shadcn writes `next/font` or `@fontsource`). Formalizing the
-  catalogue + how the CLI installs a chosen family is a CLI concern
-  ([`cli.md`](cli.md)); the library contract (the three vars) is fixed.
+  the same `--font-*` vars written for it and pick its own loader (shadcn's own
+  generated setup uses `next/font/google`, or Google Fonts for non-Next apps).
+  Formalizing the catalogue + how the CLI installs a chosen family is a CLI
+  concern ([`cli.md`](cli.md)); the library contract (the three vars) is fixed.
 - **A font "preset" layer?** shadcn pairs a style with an icon library *and* a
   font/heading combination per preset (e.g. `sera` → Lucide / Noto Sans +
   Playfair Display). We have the mechanism but no preset bundling. Likely lands
