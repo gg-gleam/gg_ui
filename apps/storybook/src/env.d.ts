@@ -99,3 +99,7 @@ declare module "*.gleam" {
 }
 
 declare module "*.css"
+
+// @fontsource-variable/* packages are CSS-only (side-effect imports inject
+// @font-face); they ship no JS/types. See .storybook/fonts.ts.
+declare module "@fontsource-variable/*"

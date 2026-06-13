@@ -3,17 +3,21 @@
 import "../src/gg_ui.css"
 
 import type { Preview } from "@storybook/html-vite"
+import { BODY_ITEMS, HEADING_ITEMS, resolveBody, resolveHeading } from "./fonts"
 
-// The axes, matching shadcn's vocabulary. All are classes on the story root:
+// The axes, matching shadcn's vocabulary. The first three are classes on the
+// story root; FONT sets the `--font-*` custom props directly (a real font
+// family, loaded by the demo app — see ./fonts.ts):
 //   SHAPE      → style-<name>        (padding / radius / density)
 //   BASE COLOR → base-color-<name>   (neutral palette: bg / fg / muted / border)
 //   THEME      → theme-<name>        (accent; overrides --primary). "none" = the
 //                                     base color's own neutral primary.
-//   FONT       → font-set-<name>     (typeface; --font-sans/--font-heading/--font-mono)
+//   FONT       → --font-sans (body) + --font-heading (heading, independent;
+//                "inherit" follows the body), shadcn's body/heading split.
 //   MODE       → .dark
-// Keep these in sync with packages/gg_ui/src/gg_ui/styles/{shapes,base_colors,themes,fonts}.
+// Keep shapes/baseColors/themes in sync with
+// packages/gg_ui/src/gg_ui/styles/{shapes,base_colors,themes}; fonts in ./fonts.ts.
 const shapes = ["nova", "vega", "luma", "sera", "lyra", "mira", "maia"] as const
-const fonts = ["sans", "editorial", "mono"] as const
 const baseColors = [
   "neutral",
   "stone",
@@ -80,12 +84,21 @@ const preview: Preview = {
         dynamicTitle: true,
       },
     },
-    font: {
-      description: "Font (typeface for body + headings)",
+    fontBody: {
+      description: "Body font family",
       toolbar: {
         title: "Font",
         icon: "paragraph",
-        items: fonts.map((f) => ({ value: f, title: f })),
+        items: BODY_ITEMS,
+        dynamicTitle: true,
+      },
+    },
+    fontHeading: {
+      description: "Heading font family (independent of body)",
+      toolbar: {
+        title: "Heading",
+        icon: "bold",
+        items: HEADING_ITEMS,
         dynamicTitle: true,
       },
     },
@@ -135,7 +148,8 @@ const preview: Preview = {
     shape: "nova",
     baseColor: "neutral",
     theme: "none",
-    font: "sans",
+    fontBody: "geist",
+    fontHeading: "inherit",
     mode: "light",
     iconSet: "lucide",
     iconVariant: "outline",
@@ -149,19 +163,17 @@ const preview: Preview = {
   // accent are visible on the canvas.
   decorators: [
     (story, context) => {
-      const { shape, baseColor, theme, font, mode } = context.globals as {
-        shape: string
-        baseColor: string
-        theme: string
-        font: string
-        mode: string
-      }
+      const { shape, baseColor, theme, fontBody, fontHeading, mode } =
+        context.globals as {
+          shape: string
+          baseColor: string
+          theme: string
+          fontBody: string
+          fontHeading: string
+          mode: string
+        }
       const root = story() as HTMLElement
-      root.classList.add(
-        `style-${shape}`,
-        `base-color-${baseColor}`,
-        `font-set-${font}`,
-      )
+      root.classList.add(`style-${shape}`, `base-color-${baseColor}`)
       if (theme && theme !== "none") {
         root.classList.add(`theme-${theme}`)
       }
@@ -170,8 +182,14 @@ const preview: Preview = {
       }
       root.style.setProperty("background", "var(--background)")
       root.style.setProperty("color", "var(--foreground)")
-      // Body text inherits the FONT axis's --font-sans (headings opt into
-      // --font-heading via the `font-heading` utility).
+      // FONT axis — override the gg_ui `--font-*` vars with the picked families
+      // (null = leave the :root system-stack fallback). Body text inherits
+      // --font-sans; headings opt into --font-heading via the `font-heading`
+      // utility (independent — "inherit" makes it follow the body font).
+      const body = resolveBody(fontBody)
+      const heading = resolveHeading(fontHeading, fontBody)
+      if (body) root.style.setProperty("--font-sans", body)
+      if (heading) root.style.setProperty("--font-heading", heading)
       root.style.setProperty("font-family", "var(--font-sans)")
       root.style.setProperty("padding", "3rem")
       root.style.setProperty("border-radius", "0.5rem")

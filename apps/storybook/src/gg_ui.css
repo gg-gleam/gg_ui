@@ -4,8 +4,6 @@
  * file is one entry that assembles them:
  *   - Tailwind v4 itself.
  *   - tokens.css — the `@theme inline` mapping so utilities like `bg-primary` exist.
- *   - fonts — the FONT axis (typeface; `--font-sans`/`--font-heading`/`--font-mono`
- *     via `.font-set-*`). Orthogonal to the three color/shape axes.
  *   - base_colors — the BASE COLOR axis (neutral palettes; `--background`,
  *     `--foreground`, …, plus a default neutral `--primary`).
  *   - themes — the THEME axis (accents; override `--primary` on top of the base
@@ -23,12 +21,6 @@
 
 /* Token mapping (shared). */
 @import "../../../packages/gg_ui/src/gg_ui/styles/tokens.css";
-
-/* Fonts — the FONT axis (typeface; `--font-sans`/`--font-heading`/`--font-mono`
- * via `.font-set-*`). Orthogonal to shape / base color / theme. */
-@import "../../../packages/gg_ui/src/gg_ui/styles/fonts/sans.css";
-@import "../../../packages/gg_ui/src/gg_ui/styles/fonts/editorial.css";
-@import "../../../packages/gg_ui/src/gg_ui/styles/fonts/mono.css";
 
 /* Base colors — neutral palettes (light + dark values). */
 @import "../../../packages/gg_ui/src/gg_ui/styles/base_colors/neutral.css";

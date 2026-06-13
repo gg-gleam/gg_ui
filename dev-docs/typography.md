@@ -5,14 +5,19 @@ What shadcn does about text, and how it maps to `gg_ui`. Companion to
 one is about **type** — the font axis, the per-element recipes, the shared text
 scale that component internals draw from.
 
-> **Status: implemented (font axis + recipe catalogue).** The **FONT axis**
-> ships as a fourth orthogonal axis (`.font-set-*` fragments under
-> `styles/fonts/`, republished by `tokens.css`), with a **Font** toolbar in
-> Storybook. The recipes ship the shadcn way — **as a documentation story, not a
-> component** (`Components/Typography`: Overview / Elements / Roles). No
-> `gg_ui/ui/typography.gleam` exists, by design (see the decision below). What's
-> still deferred: wiring the semantic **roles** into real component internals
-> (there are none beyond `button`/`popover` yet), and RTL.
+> **Status: implemented (font plumbing + recipe catalogue).** The library
+> exposes the **`--font-sans` / `--font-heading` / `--font-mono`** custom props
+> (seeded with system-stack fallbacks in `tokens.css`, republished via
+> `@theme inline` as the `font-sans` / `font-heading` / `font-mono` utilities) —
+> and nothing more. **Font *family* selection is a consumer concern**, matching
+> shadcn (font isn't a library-prescribed axis — see below): the **Storybook app**
+> loads real variable families (`@fontsource-variable/*`) and its **Font** +
+> **Heading** toolbars set those vars (independent body/heading, shadcn's split).
+> The recipes ship the shadcn way — **as a documentation story, not a component**
+> (`Components/Typography`: Overview / Elements / Roles). No
+> `gg_ui/ui/typography.gleam` exists, by design (see the decision below). Still
+> deferred: wiring the semantic **roles** into real component internals (none
+> beyond `button`/`popover` yet), and RTL.
 
 ## The core philosophy: shadcn ships *no* typography
 
@@ -156,29 +161,35 @@ document `dir`.
 Following shadcn's restraint, **we do not ship a typography component.** Two
 pieces, mapped onto the existing architecture:
 
-### 1. The FONT axis — a fourth orthogonal axis (**done**)
+### 1. Font plumbing in the library; family selection in the consumer (**done**)
 
-A real axis alongside Style / Base Color / Theme, same fragment mechanics:
+shadcn has **no "font axis"** of CSS classes: it picks a real family at create
+time, installs it, and writes the `--font-*` vars (`font` isn't even a
+`components.json` field — it's a scaffold-time choice, unlike `iconLibrary`,
+which *is* persisted). We mirror that split:
 
-- **`styles/fonts/<set>.css`** — one fragment per set (`sans`, `editorial`,
-  `mono`), each setting `--font-sans` / `--font-heading` / `--font-mono` on a
-  `.font-set-<name>` root class. `editorial` is the proof the heading face is
-  independent of the body face (sans body + serif headings); `mono` is the
-  code-forward look. **System stacks only** — the library bundles no font files
-  (a consumer repoints the three vars at its own `@font-face` / next-font
-  output; that machinery is deliberately *not* in the library).
-- **`styles/tokens.css`** — seeds the three custom props at `:root` (so they
-  resolve with no `.font-set-*` present; `--font-heading` defaults to the body
-  face) and republishes them via `@theme inline` (`--font-sans: var(--font-sans)`,
-  …) so `font-sans` / `font-heading` / `font-mono` are real utilities. `inline`
-  means Tailwind emits no `--font-*` of its own, which is why the `:root` seed is
-  load-bearing — same reasoning as the `--radius` note in that file.
-- **Storybook** — a **Font** toolbar dropdown (`preview.ts`), and the decorator
-  adds `font-set-<font>` to the root plus `font-family: var(--font-sans)` so body
-  text picks up the axis; headings opt in with the `font-heading` utility.
+- **Library = the var contract only.** `styles/tokens.css` seeds `--font-sans` /
+  `--font-heading` / `--font-mono` at `:root` with **system-stack fallbacks**
+  (`--font-heading` defaults to the body face) and republishes them via
+  `@theme inline` (`--font-sans: var(--font-sans)`, …) so `font-sans` /
+  `font-heading` / `font-mono` are real utilities. `inline` means Tailwind emits
+  no `--font-*` of its own, which is why the `:root` seed is load-bearing — same
+  reasoning as the `--radius` note in that file. **The library bundles no font
+  files and prescribes no families.** (An earlier draft shipped `.font-set-*`
+  fragments under `styles/fonts/`; that was an abstract stand-in and was removed
+  — it isn't how shadcn models fonts.)
+- **Consumer = real families + the picker.** The Storybook app
+  (`.storybook/fonts.ts`) loads a curated cross-section of variable faces via
+  **`@fontsource-variable/*`** (the same packages shadcn's create flow installs:
+  Geist, Inter, DM Sans, Figtree, Space Grotesk, Playfair Display, Lora,
+  JetBrains Mono, Geist Mono). Two toolbars — **Font** (body) and **Heading**
+  (independent; `Inherit` follows the body) — and the `preview.ts` decorator sets
+  `--font-sans` / `--font-heading` from the picked families (a `System` body pick
+  leaves the `:root` fallback). This is shadcn's body/heading font-family picker,
+  not an abstract "type set". Headings opt into `--font-heading` via the
+  `font-heading` utility in the recipes.
 
-Pure CSS → both targets, no `gg_base_ui` involvement, composes freely with the
-other three axes (+ `dark`).
+The library side is pure CSS → both targets, no `gg_base_ui` involvement.
 
 ### 2. The recipes — docs-only, **option (a)** (**done**)
 
@@ -204,11 +215,17 @@ The **semantic roles** (Lead / Large / Small / Muted) are demonstrated in the
 
 ## Open questions
 
-- **How big is the font set list?** We ship three role-named sets (`sans` /
-  `editorial` / `mono`) over system stacks — enough to exercise the axis. shadcn
-  curates ~26 named families (Geist, Inter, Playfair, …) and loads them. Whether
-  we grow the list, and how a consumer registers a custom face, is a CLI concern
-  ([`cli.md`](cli.md)) — the axis mechanism is set; the catalogue is open.
+- **How big is the family catalogue, and how does a real app register a font?**
+  The Storybook demo loads 9 families (shadcn curates ~26). The demo's loading is
+  `@fontsource` imports, which is a *demo* choice — a CLI-scaffolded app would get
+  the same `--font-*` vars written for it plus a font dependency / `@font-face` of
+  its choosing (shadcn writes `next/font` or `@fontsource`). Formalizing the
+  catalogue + how the CLI installs a chosen family is a CLI concern
+  ([`cli.md`](cli.md)); the library contract (the three vars) is fixed.
+- **A font "preset" layer?** shadcn pairs a style with an icon library *and* a
+  font/heading combination per preset (e.g. `sera` → Lucide / Noto Sans +
+  Playfair Display). We have the mechanism but no preset bundling. Likely lands
+  with the CLI alongside icon-library prescription.
 - **Where do the semantic roles live once components need them?** Re-demonstrated
   as raw utilities per component, or hoisted into shared `cn-*`/helpers. Decide
   when the first text-heavy component (`dialog`/`field`/`card`) lands — that's
