@@ -29,6 +29,18 @@ Layered roughly bottom-up (foundations first):
   `styles/tokens.css`, fragments vs the consumer entry, light/dark
   mechanics. Naming is shadcn-exact — the accent axis is "Theme", never
   "colors".
+- **[typography.md](typography.md)** — what shadcn does about text: ship
+  **no** typography component (recipes, not abstractions). The library
+  exposes only the `--font-sans`/`--font-heading`/`--font-mono` vars (via
+  `@theme inline`); **font *family* selection is a consumer concern** — the
+  Storybook app loads real `@fontsource` families behind **Font** +
+  **Heading** toolbars (shadcn's body/heading split). Recipes ship as a
+  docs-only `Components/Typography` story + the four semantic roles
+  (Lead/Large/Small/Muted). Plus a **considered divergence from shadcn**: a
+  typed, tokenized **`text` component** (`gg_ui/ui/text`, closed numeric
+  `h1…h7` scale with baked weight variants `h4_m`/`h4_b`, tokenized
+  modifiers, no `className`) — justified by Lustre ergonomics +
+  enforcement.
 - **[icons.md](icons.md)** — icon strategy: placeholder pattern in
   registry source, transformer at install time, generated inline-SVG
   Gleam modules per library. Works on both Lustre targets.
