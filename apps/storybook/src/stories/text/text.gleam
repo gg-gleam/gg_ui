@@ -1,15 +1,10 @@
 //// Story mounts for the styled `Text` component (gg_ui/ui/text) — the typed,
-//// tokenized typography primitive. Contrast with `Components/Typography`, the
-//// shadcn-style docs-only recipe page; this is the gg_ui divergence: a real
-//// component with a closed `Style` scale + tokenized modifiers and no className.
-////
-//// `Playground` is the kitchen sink — every tokenized axis as a Storybook
-//// control, the Latitude `Text` prop set but typed. The showcase stories
+//// tokenized typography primitive. `Playground` is the kitchen sink: every
+//// tokenized `Props` key as a Storybook control. The showcase stories
 //// (`Scale` / `Colors` / `AsElement`) render fixed grids. Views call the styled
 //// layer ONLY (`import gg_ui/ui/text`) — no raw Tailwind, no `gg_base_ui`.
 
-import gg_ui/ui/text
-import gleam/list
+import gg_ui/ui/text.{Props}
 import gleam/option.{type Option, None, Some}
 import lustre
 import lustre/attribute
@@ -35,30 +30,22 @@ pub fn mount_text_playground(
   selectable: Bool,
   content: String,
 ) -> Nil {
-  // Each control contributes at most one typed `Attr`; "none"/default → omit.
-  let attrs =
-    [
-      Some(text.color(parse_color(color))),
-      option.map(parse_align(align), text.align),
-      option.map(parse_transform(transform), text.transform),
-      option.map(parse_decoration(decoration), text.decoration),
-      case italic {
-        True -> Some(text.italic())
-        False -> None
-      },
-      option.map(parse_truncate(truncate, lines), text.truncate),
-      option.map(parse_whitespace(whitespace), text.whitespace),
-      option.map(parse_word_break(word_break), text.word_break),
-      option.map(parse_wrap(wrap), text.wrap),
-      option.map(parse_opacity(opacity), text.opacity),
-      case selectable {
-        True -> None
-        False -> Some(text.selectable(False))
-      },
-    ]
-    |> list.filter_map(option.to_result(_, Nil))
-
-  let view = render_style(parse_style(style), attrs, [html.text(content)])
+  let props =
+    Props(
+      ..text.props(),
+      color: parse_color(color),
+      align: parse_align(align),
+      transform: parse_transform(transform),
+      decoration: parse_decoration(decoration),
+      italic:,
+      truncate: parse_truncate(truncate, lines),
+      whitespace: parse_whitespace(whitespace),
+      word_break: parse_word_break(word_break),
+      wrap: parse_wrap(wrap),
+      opacity: parse_opacity(opacity),
+      selectable:,
+    )
+  let view = render_style(parse_style(style), props, [html.text(content)])
   let assert Ok(_) = lustre.start(lustre.element(center([view])), selector, Nil)
   Nil
 }
@@ -69,25 +56,25 @@ pub fn mount_text_playground(
 /// specimen. h1–h4 are headings; h5–h7 neutral. `_m`/`_b` are weight variants.
 fn view_scale() -> Element(msg) {
   column([
-    specimen("h1", text.h1([], [html.text("Heading 1")])),
-    specimen("h2", text.h2([], [html.text("Heading 2")])),
-    specimen("h3", text.h3([], [html.text("Heading 3")])),
-    specimen("h4", text.h4([], [html.text("Heading 4")])),
-    specimen("h4_m", text.h4_m([], [html.text("Heading 4 — medium")])),
-    specimen("h4_b", text.h4_b([], [html.text("Heading 4 — bold")])),
-    specimen("h5", text.h5([], [html.text("Subtitle / large")])),
-    specimen("h5_m", text.h5_m([], [html.text("Subtitle — medium")])),
+    specimen("h1", text.h1(text.props(), [html.text("Heading 1")])),
+    specimen("h2", text.h2(text.props(), [html.text("Heading 2")])),
+    specimen("h3", text.h3(text.props(), [html.text("Heading 3")])),
+    specimen("h4", text.h4(text.props(), [html.text("Heading 4")])),
+    specimen("h4_m", text.h4_m(text.props(), [html.text("Heading 4 — medium")])),
+    specimen("h4_b", text.h4_b(text.props(), [html.text("Heading 4 — bold")])),
+    specimen("h5", text.h5(text.props(), [html.text("Subtitle / large")])),
+    specimen("h5_m", text.h5_m(text.props(), [html.text("Subtitle — medium")])),
     specimen(
       "h6",
-      text.h6([], [
+      text.h6(text.props(), [
         html.text(
           "Body copy is the default reading size, tuned for comfortable line length and rhythm.",
         ),
       ]),
     ),
-    specimen("h6_m", text.h6_m([], [html.text("Body — medium")])),
-    specimen("h6_b", text.h6_b([], [html.text("Body — strong")])),
-    specimen("h7", text.h7([], [html.text("Small / caption")])),
+    specimen("h6_m", text.h6_m(text.props(), [html.text("Body — medium")])),
+    specimen("h6_b", text.h6_b(text.props(), [html.text("Body — strong")])),
+    specimen("h7", text.h7(text.props(), [html.text("Small / caption")])),
   ])
 }
 
@@ -96,50 +83,46 @@ fn view_colors() -> Element(msg) {
   column([
     specimen(
       "foreground",
-      text.h5([], [html.text("Foreground — the default text color")]),
+      text.h5(text.props(), [
+        html.text("Foreground — the default text color"),
+      ]),
     ),
     specimen(
       "muted",
-      text.h5([text.color(text.Muted)], [
+      text.h5(Props(..text.props(), color: text.Muted), [
         html.text("Muted — secondary / helper text"),
       ]),
     ),
     specimen(
       "primary",
-      text.h5([text.color(text.Primary)], [
+      text.h5(Props(..text.props(), color: text.Primary), [
         html.text("Primary — accent emphasis"),
       ]),
     ),
     specimen(
       "destructive",
-      text.h5([text.color(text.Destructive)], [
+      text.h5(Props(..text.props(), color: text.Destructive), [
         html.text("Destructive — errors and danger"),
       ]),
     ),
   ])
 }
 
-/// Element-agnostic: apply a `Style` to a *different* tag via `attributes` —
-/// the asChild analogue. Style and element are decoupled; still no className.
+/// `render_as` puts a `Style` on a *different* element — the asChild analogue.
+/// Style and document structure are decoupled; still no className.
 fn view_as_element() -> Element(msg) {
   column([
     specimen(
-      "<h3> element + H1 style",
-      html.h3(text.attributes(style: text.H1, attrs: []), [
+      "h1 style, render_as <h3>",
+      text.h1(Props(..text.props(), render_as: Some(html.h3)), [
         html.text("Looks like H1, semantically h3"),
       ]),
     ),
     specimen(
-      "<h2> element + H3 style",
-      html.h2(text.attributes(style: text.H3, attrs: [text.color(text.Muted)]), [
-        html.text("Semantic h2, styled as h3, muted"),
+      "h3 style + curated attrs (id)",
+      text.h3(Props(..text.props(), html_attrs: [text.id("section-jokes")]), [
+        html.text("Semantic h3 with an id, no className anywhere"),
       ]),
-    ),
-    // The curated `Attr` path: id/aria/data are typed; there is no
-    // `text.class`, so a styling override can't be expressed here.
-    specimen(
-      "default helper + curated attrs (id)",
-      text.h3([text.id("section-jokes")], [html.text("Same look, semantic h3")]),
     ),
   ])
 }
@@ -166,26 +149,26 @@ pub fn mount_as_element(selector: String) -> Nil {
 
 fn render_style(
   style: text.Style,
-  attrs: List(text.Attr(msg)),
+  props: text.Props(msg),
   children: List(Element(msg)),
 ) -> Element(msg) {
   case style {
-    text.H1 -> text.h1(attrs, children)
-    text.H2 -> text.h2(attrs, children)
-    text.H3 -> text.h3(attrs, children)
-    text.H4 -> text.h4(attrs, children)
-    text.H4M -> text.h4_m(attrs, children)
-    text.H4B -> text.h4_b(attrs, children)
-    text.H5 -> text.h5(attrs, children)
-    text.H5M -> text.h5_m(attrs, children)
-    text.H6 -> text.h6(attrs, children)
-    text.H6M -> text.h6_m(attrs, children)
-    text.H6B -> text.h6_b(attrs, children)
-    text.H7 -> text.h7(attrs, children)
+    text.H1 -> text.h1(props, children)
+    text.H2 -> text.h2(props, children)
+    text.H3 -> text.h3(props, children)
+    text.H4 -> text.h4(props, children)
+    text.H4M -> text.h4_m(props, children)
+    text.H4B -> text.h4_b(props, children)
+    text.H5 -> text.h5(props, children)
+    text.H5M -> text.h5_m(props, children)
+    text.H6 -> text.h6(props, children)
+    text.H6M -> text.h6_m(props, children)
+    text.H6B -> text.h6_b(props, children)
+    text.H7 -> text.h7(props, children)
   }
 }
 
-// --- arg parsing (safe fallbacks; "none"/unknown → omit the modifier) ------
+// --- arg parsing (safe fallbacks; "none"/unknown → default/omit) -----------
 
 fn parse_style(value: String) -> text.Style {
   case value {
@@ -213,12 +196,11 @@ fn parse_color(value: String) -> text.Color {
   }
 }
 
-fn parse_align(value: String) -> Option(text.Align) {
+fn parse_align(value: String) -> text.Align {
   case value {
-    "center" -> Some(text.Center)
-    "end" -> Some(text.End)
-    "start" -> Some(text.Start)
-    _ -> None
+    "center" -> text.Center
+    "end" -> text.End
+    _ -> text.Start
   }
 }
 
@@ -300,7 +282,7 @@ fn center(children: List(Element(msg))) -> Element(msg) {
 
 fn specimen(label: String, content: Element(msg)) -> Element(msg) {
   html.div([attribute.class("flex flex-col gap-1")], [
-    text.h7([text.color(text.Muted)], [html.text(label)]),
+    text.h7(Props(..text.props(), color: text.Muted), [html.text(label)]),
     content,
   ])
 }

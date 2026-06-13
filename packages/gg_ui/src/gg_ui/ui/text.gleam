@@ -1,50 +1,54 @@
 //// `Text` — typed, tokenized typography for app UIs. **A deliberate divergence
-//// from shadcn**, which ships *no* Text component (you copy utility recipes).
-//// gg_ui ships one because in Lustre hand-writing utility strings on `html.h1`
-//// is awkward, and a *closed, typed* API enforces a single type scale + a fixed
-//// set of presentational tokens: app text can't drift off-token or off-scale.
-//// There is **no headless layer** — text has no behavior/ARIA beyond the
-//// element you render it as (so, like `icon`, it lives only here).
+//// from shadcn**, which ships no typography component (only copy-paste recipes).
+//// gg_ui ships a real one because in Lustre hand-writing utility strings on
+//// `html.h1` is awkward, and a *closed, typed* API enforces a single type scale
+//// + palette. No headless layer — text has no behavior/ARIA beyond the element.
 ////
-//// ## Enforcement is in the type system, not convention
+//// ## The API: a `Props` record of named, tokenized keys
 ////
-//// The helpers take `List(Attr(msg))` — an **opaque** type. Every constructor
-//// is either a11y/structural (`id`/`aria`/`data`) or a **tokenized modifier**
-//// (`color`/`align`/`transform`/`decoration`/`italic`/`truncate`/`whitespace`/
-//// `word_break`/`wrap`/`opacity`/`selectable`). There is deliberately **no
-//// `class`/`style` constructor**, so a raw, non-tokenized override *cannot
-//// compile* on the helper path. Every modifier is a closed enum, so the whole
-//// surface — the Latitude `Text` atom's prop set, but typed — stays on-scale.
+//// Every styling decision is a **named field** on `Props`, each a closed enum
+//// (or `Option` of one), all defaulted by `props()`. Override with Gleam
+//// record-update:
 ////
-//// `color` defaults to `Foreground` (omit it); other modifiers default to
-//// "normal" (omit them). Going off-road is still possible, but only via the
-//// explicit escape hatch `attributes(style, attrs)` — it returns the *open*
-//// `Attribute` list, the one sanctioned place to merge raw `class`/`style` onto
-//// a bare element. Off-road by opt-in, never by accident.
+//// ```gleam
+//// text.h5(text.props(), [html.text("Subtitle")])           // defaults
+//// text.h5(
+////   text.Props(..text.props(), color: text.Muted, align: text.Center),
+////   [html.text("Subtitle")],
+//// )
+//// ```
 ////
-//// It emits `cn-*` names; the per-shape type scale (Style + Color) lives in
+//// There is **no `class`/`style` field anywhere**, so off-token / off-scale text
+//// can't be expressed — the consistency guarantee a recipe page can only suggest
+//// (and why no tailwind-merge is needed). Two escape valves, both typed:
+////   - `render_as: Some(html.h3)` — render the style on a *different* element (a
+////     real Lustre element), e.g. an H1 look on a semantic `<h3>`. Default `None`
+////     uses the helper's natural tag.
+////   - `html_attrs: [text.id(…), text.aria(…), text.on_click(…)]` — a **curated**
+////     list (id / aria / data / events only — still no `class`) for a11y, hooks,
+////     and interaction.
+////
+//// It emits `cn-*` names; the per-shape type scale lives in
 //// `styles/shapes/<style>/text.css`, the shape-invariant modifiers in
-//// `styles/text.css`. **Element-agnostic**: named helpers (`text.h1`) default a
-//// tag; for "H1 *look* on a semantic `<h3>`", merge `attributes(H1, …)` onto any
-//// element — the asChild / `useRender` analogue.
+//// `styles/text.css`. Element default: `h1–h4` are headings, `h5–h7` neutral
+//// `<p>` (a body-sized `<h6>` would pollute the a11y outline).
 
 import gg_ui/helpers/cn
 import gleam/int
 import gleam/list
-import gva
+import gleam/option.{type Option, None, Some}
 import lustre/attribute.{type Attribute}
 import lustre/element.{type Element}
 import lustre/element/html
+import lustre/event
 
-// --- axes --------------------------------------------------------------------
+// --- the type scale ----------------------------------------------------------
 
-/// The closed, **numeric** type scale — `h1…h7`, the way a designer names text
-/// styles in Figma ("set h5, it maps to the DS"). Each member bundles size +
+/// The closed, **numeric** type scale — `h1…h7`, the way a designer names a text
+/// style in Figma ("set h5, it maps to the DS"). Each member bundles size +
 /// weight + leading + tracking + family as ONE decision. **Weight variants are
-/// baked enum members** (`H4M` = medium, `H4B` = bold), a curated allow-list —
-/// NOT a free `weight` axis (which would permit off-scale combos). Add a member
-/// only when the design system defines that style. Default element: `h1–h4` are
-/// headings, `h5–h7` neutral (see the helpers).
+/// baked members** (`H4M` = medium, `H4B` = bold) — a curated allow-list, NOT a
+/// free `weight` axis. Add a member only when the design system defines it.
 pub type Style {
   H1
   H2
@@ -60,8 +64,9 @@ pub type Style {
   H7
 }
 
+// --- tokenized modifier axes (each a named `Props` field) --------------------
+
 /// Color — semantic tokens only, so text rides the Base Color / Theme axes.
-/// `Foreground` is the default (omit `color`).
 pub type Color {
   Foreground
   Muted
@@ -69,34 +74,34 @@ pub type Color {
   Destructive
 }
 
-/// Logical text alignment. `Start` is the default (omit `align`).
+/// Logical text alignment.
 pub type Align {
   Start
   Center
   End
 }
 
-/// Letter-case transform. Omit for none.
+/// Letter-case transform.
 pub type Transform {
   Uppercase
   Lowercase
   Capitalize
 }
 
-/// Text decoration. Omit for none.
+/// Text decoration.
 pub type Decoration {
   Underline
   LineThrough
 }
 
 /// Truncation. `Ellipsis` = single line; `Lines(n)` = clamp to n lines
-/// (clamped to 1–6, mirroring the Latitude atom).
+/// (clamped to 1–6).
 pub type Truncate {
   Ellipsis
   Lines(Int)
 }
 
-/// `white-space`. Omit for `normal`.
+/// `white-space`.
 pub type Whitespace {
   NoWrap
   Pre
@@ -104,20 +109,20 @@ pub type Whitespace {
   PreWrap
 }
 
-/// `word-break` / `overflow-wrap`. Omit for `normal`.
+/// `word-break` / `overflow-wrap`.
 pub type WordBreak {
   BreakAll
   BreakWord
   KeepAll
 }
 
-/// `text-wrap` for balanced/pretty line breaking (headings, short blocks).
+/// `text-wrap` for balanced / pretty line breaking.
 pub type Wrap {
   Balance
   Pretty
 }
 
-/// Text opacity steps. `O100` is the default (omit `opacity`).
+/// Text opacity steps (`100%` is the default — leave `opacity: None`).
 pub type Opacity {
   O90
   O80
@@ -126,193 +131,193 @@ pub type Opacity {
   O50
 }
 
-// --- the safe attribute vocabulary -------------------------------------------
+// --- curated html attributes (no class/style) --------------------------------
 
-/// A **safe** attribute for the `text.*` helpers. Opaque, so the only values
-/// that exist are the ones the constructors below mint — structural
-/// (`id`/`aria`/`data`) or a tokenized modifier. There is **no `class`/`style`
-/// constructor**, which is what makes a non-tokenized override impossible to
-/// express on the helper path.
+/// A **safe** HTML attribute for `Props.html_attrs`. Opaque: the only values are
+/// the ones the constructors below mint — `id` / `aria` / `data` / `on_click`.
+/// There is **no `class`/`style` constructor**, so the escape channel can't
+/// reintroduce a non-tokenized styling override.
 pub opaque type Attr(msg) {
-  AttrHtml(Attribute(msg))
-  AttrColor(Color)
-  AttrAlign(Align)
-  AttrTransform(Transform)
-  AttrDecoration(Decoration)
-  AttrItalic
-  AttrTruncate(Truncate)
-  AttrWhitespace(Whitespace)
-  AttrWordBreak(WordBreak)
-  AttrWrap(Wrap)
-  AttrOpacity(Opacity)
-  AttrSelectable(Bool)
+  Attr(Attribute(msg))
 }
 
 /// `id="…"` — for `aria-labelledby`, anchors, etc.
 pub fn id(value: String) -> Attr(msg) {
-  AttrHtml(attribute.id(value))
+  Attr(attribute.id(value))
 }
 
 /// `aria-<name>="…"` (pass `name` without the `aria-` prefix).
 pub fn aria(name name: String, value value: String) -> Attr(msg) {
-  AttrHtml(attribute.attribute("aria-" <> name, value))
+  Attr(attribute.attribute("aria-" <> name, value))
 }
 
 /// `data-<name>="…"` (pass `name` without the `data-` prefix).
 pub fn data(name name: String, value value: String) -> Attr(msg) {
-  AttrHtml(attribute.attribute("data-" <> name, value))
+  Attr(attribute.attribute("data-" <> name, value))
 }
 
-/// Override the text color (default `Foreground`).
-pub fn color(value: Color) -> Attr(msg) {
-  AttrColor(value)
+/// A click handler (for interactive text). More event constructors can be added
+/// the same way; raw `Attribute`s are deliberately not accepted.
+pub fn on_click(msg: msg) -> Attr(msg) {
+  Attr(event.on_click(msg))
 }
 
-/// Set the text alignment (default `Start`).
-pub fn align(value: Align) -> Attr(msg) {
-  AttrAlign(value)
+// --- props -------------------------------------------------------------------
+
+/// The full, named configuration for a `text.*` element. Every field is a
+/// tokenized key with a default (see `props`); override via record-update. There
+/// is intentionally no `class`/`style` field.
+pub type Props(msg) {
+  Props(
+    color: Color,
+    align: Align,
+    transform: Option(Transform),
+    decoration: Option(Decoration),
+    italic: Bool,
+    truncate: Option(Truncate),
+    whitespace: Option(Whitespace),
+    word_break: Option(WordBreak),
+    wrap: Option(Wrap),
+    opacity: Option(Opacity),
+    selectable: Bool,
+    /// Render the style on a different element (a real Lustre element such as
+    /// `html.h3`). `None` = the helper's natural tag.
+    render_as: Option(
+      fn(List(Attribute(msg)), List(Element(msg))) -> Element(msg),
+    ),
+    /// Curated a11y / data / event attributes (no class/style).
+    html_attrs: List(Attr(msg)),
+  )
 }
 
-/// Apply a letter-case transform.
-pub fn transform(value: Transform) -> Attr(msg) {
-  AttrTransform(value)
+/// The default props: `Foreground`, `Start`, no modifiers, selectable, natural
+/// element, no extra attrs. Start every override from here:
+/// `Props(..text.props(), color: text.Muted)`.
+pub fn props() -> Props(msg) {
+  Props(
+    color: Foreground,
+    align: Start,
+    transform: None,
+    decoration: None,
+    italic: False,
+    truncate: None,
+    whitespace: None,
+    word_break: None,
+    wrap: None,
+    opacity: None,
+    selectable: True,
+    render_as: None,
+    html_attrs: [],
+  )
 }
 
-/// Apply a text decoration.
-pub fn decoration(value: Decoration) -> Attr(msg) {
-  AttrDecoration(value)
+// --- named helpers — h1–h4 headings, h5–h7 neutral `<p>` ----------------------
+
+pub fn h1(props: Props(msg), children: List(Element(msg))) -> Element(msg) {
+  render(H1, html.h1, props, children)
 }
 
-/// Render italic.
-pub fn italic() -> Attr(msg) {
-  AttrItalic
+pub fn h2(props: Props(msg), children: List(Element(msg))) -> Element(msg) {
+  render(H2, html.h2, props, children)
 }
 
-/// Truncate with an ellipsis (single line) or clamp to N lines.
-pub fn truncate(value: Truncate) -> Attr(msg) {
-  AttrTruncate(value)
+pub fn h3(props: Props(msg), children: List(Element(msg))) -> Element(msg) {
+  render(H3, html.h3, props, children)
 }
 
-/// Set `white-space`.
-pub fn whitespace(value: Whitespace) -> Attr(msg) {
-  AttrWhitespace(value)
+pub fn h4(props: Props(msg), children: List(Element(msg))) -> Element(msg) {
+  render(H4, html.h4, props, children)
 }
 
-/// Set `word-break` / `overflow-wrap`.
-pub fn word_break(value: WordBreak) -> Attr(msg) {
-  AttrWordBreak(value)
+pub fn h4_m(props: Props(msg), children: List(Element(msg))) -> Element(msg) {
+  render(H4M, html.h4, props, children)
 }
 
-/// Set `text-wrap` (balanced / pretty line breaking).
-pub fn wrap(value: Wrap) -> Attr(msg) {
-  AttrWrap(value)
+pub fn h4_b(props: Props(msg), children: List(Element(msg))) -> Element(msg) {
+  render(H4B, html.h4, props, children)
 }
 
-/// Reduce text opacity (default fully opaque).
-pub fn opacity(value: Opacity) -> Attr(msg) {
-  AttrOpacity(value)
+pub fn h5(props: Props(msg), children: List(Element(msg))) -> Element(msg) {
+  render(H5, html.p, props, children)
 }
 
-/// Toggle user text selection (default `True`). `selectable(False)` adds
-/// `select-none`.
-pub fn selectable(value: Bool) -> Attr(msg) {
-  AttrSelectable(value)
+pub fn h5_m(props: Props(msg), children: List(Element(msg))) -> Element(msg) {
+  render(H5M, html.p, props, children)
 }
 
-// --- recipe ------------------------------------------------------------------
+pub fn h6(props: Props(msg), children: List(Element(msg))) -> Element(msg) {
+  render(H6, html.p, props, children)
+}
 
-type Key {
-  StyleKey(Style)
-  ColorKey(Color)
-  AlignKey(Align)
-  TransformKey(Transform)
-  DecorationKey(Decoration)
-  ItalicKey
-  TruncateKey(Truncate)
-  WhitespaceKey(Whitespace)
-  WordBreakKey(WordBreak)
-  WrapKey(Wrap)
-  OpacityKey(Opacity)
-  SelectKey(Bool)
+pub fn h6_m(props: Props(msg), children: List(Element(msg))) -> Element(msg) {
+  render(H6M, html.p, props, children)
+}
+
+pub fn h6_b(props: Props(msg), children: List(Element(msg))) -> Element(msg) {
+  render(H6B, html.p, props, children)
+}
+
+pub fn h7(props: Props(msg), children: List(Element(msg))) -> Element(msg) {
+  render(H7, html.p, props, children)
+}
+
+// --- internals ---------------------------------------------------------------
+
+fn render(
+  style: Style,
+  default_element: fn(List(Attribute(msg)), List(Element(msg))) -> Element(msg),
+  props: Props(msg),
+  children: List(Element(msg)),
+) -> Element(msg) {
+  let element = case props.render_as {
+    Some(custom) -> custom
+    None -> default_element
+  }
+  let attrs = [
+    attribute.attribute("data-slot", "text"),
+    attribute.class(classes(style, props)),
+    ..list.map(props.html_attrs, to_attribute)
+  ]
+  element(attrs, children)
+}
+
+fn to_attribute(attr: Attr(msg)) -> Attribute(msg) {
+  let Attr(inner) = attr
+  inner
 }
 
 const base = "cn-text"
 
-/// The styled attributes, **element-agnostic** — merge onto any element to
-/// apply a text style without committing to its default tag (the asChild
-/// analogue): `html.h2(text.attributes(H3, [text.color(text.Muted)]), [..])`.
-///
-/// Also the **escape hatch**: it returns the open `Attribute(msg)` list (the
-/// resolved class + `data-slot` + any structural attrs), so this is the single
-/// sanctioned place to knowingly prepend a raw `attribute.class`/`style`.
-pub fn attributes(
-  style style: Style,
-  attrs attrs: List(Attr(msg)),
-) -> List(Attribute(msg)) {
-  let #(keys, html_attrs) = partition(attrs, [], [])
-  [
-    attribute.attribute("data-slot", "text"),
-    attribute.class(classes(style, keys)),
-    ..html_attrs
-  ]
+fn classes(style: Style, p: Props(msg)) -> String {
+  cn.cn([
+    base,
+    style_class(style),
+    color_class(p.color),
+    align_class(p.align),
+    opt(p.transform, transform_class),
+    opt(p.decoration, decoration_class),
+    flag(p.italic, "cn-text-italic"),
+    opt(p.truncate, truncate_class),
+    opt(p.whitespace, whitespace_class),
+    opt(p.word_break, word_break_class),
+    opt(p.wrap, wrap_class),
+    opt(p.opacity, opacity_class),
+    flag(!p.selectable, "cn-text-select-none"),
+  ])
 }
 
-fn classes(style: Style, keys: List(Key)) -> String {
-  gva.gva(default: base, resolver: resolve, defaults: [ColorKey(Foreground)])
-  |> gva.with(StyleKey(style))
-  |> gva.with_all(keys)
-  |> gva.build
-  |> fn(recipe) { cn.cn([recipe]) }
-}
-
-// Split the caller's attrs into gva modifier keys + passthrough HTML attributes.
-fn partition(
-  attrs: List(Attr(msg)),
-  keys: List(Key),
-  html_attrs: List(Attribute(msg)),
-) -> #(List(Key), List(Attribute(msg))) {
-  case attrs {
-    [] -> #(list.reverse(keys), list.reverse(html_attrs))
-    [attr, ..rest] ->
-      case attr {
-        AttrHtml(a) -> partition(rest, keys, [a, ..html_attrs])
-        AttrColor(c) -> partition(rest, [ColorKey(c), ..keys], html_attrs)
-        AttrAlign(a) -> partition(rest, [AlignKey(a), ..keys], html_attrs)
-        AttrTransform(t) ->
-          partition(rest, [TransformKey(t), ..keys], html_attrs)
-        AttrDecoration(d) ->
-          partition(rest, [DecorationKey(d), ..keys], html_attrs)
-        AttrItalic -> partition(rest, [ItalicKey, ..keys], html_attrs)
-        AttrTruncate(t) -> partition(rest, [TruncateKey(t), ..keys], html_attrs)
-        AttrWhitespace(w) ->
-          partition(rest, [WhitespaceKey(w), ..keys], html_attrs)
-        AttrWordBreak(w) ->
-          partition(rest, [WordBreakKey(w), ..keys], html_attrs)
-        AttrWrap(w) -> partition(rest, [WrapKey(w), ..keys], html_attrs)
-        AttrOpacity(o) -> partition(rest, [OpacityKey(o), ..keys], html_attrs)
-        AttrSelectable(b) -> partition(rest, [SelectKey(b), ..keys], html_attrs)
-      }
+// Resolve an optional modifier to its class, or "" when absent (cn drops it).
+fn opt(value: Option(a), to_class: fn(a) -> String) -> String {
+  case value {
+    Some(v) -> to_class(v)
+    None -> ""
   }
 }
 
-fn resolve(key: Key) -> String {
-  case key {
-    StyleKey(style) -> style_class(style)
-    ColorKey(color) -> color_class(color)
-    AlignKey(align) -> align_class(align)
-    TransformKey(transform) -> transform_class(transform)
-    DecorationKey(decoration) -> decoration_class(decoration)
-    ItalicKey -> "cn-text-italic"
-    TruncateKey(truncate) -> truncate_class(truncate)
-    WhitespaceKey(whitespace) -> whitespace_class(whitespace)
-    WordBreakKey(word_break) -> word_break_class(word_break)
-    WrapKey(wrap) -> wrap_class(wrap)
-    OpacityKey(opacity) -> opacity_class(opacity)
-    SelectKey(selectable) ->
-      case selectable {
-        True -> ""
-        False -> "cn-text-select-none"
-      }
+fn flag(on: Bool, class: String) -> String {
+  case on {
+    True -> class
+    False -> ""
   }
 }
 
@@ -368,7 +373,6 @@ fn decoration_class(decoration: Decoration) -> String {
 fn truncate_class(truncate: Truncate) -> String {
   case truncate {
     Ellipsis -> "cn-text-ellipsis"
-    // Clamp to 1–6 lines; out-of-range values saturate (mirrors Latitude).
     Lines(n) -> "cn-text-clamp-" <> int.to_string(int.clamp(n, 1, 6))
   }
 }
@@ -405,103 +409,4 @@ fn opacity_class(opacity: Opacity) -> String {
     O60 -> "cn-text-opacity-60"
     O50 -> "cn-text-opacity-50"
   }
-}
-
-// --- named helpers — sugar over `attributes`, each with a default element ----
-// `color` defaults to Foreground (add `text.color(…)` to override). Default
-// element: h1–h4 are headings, h5–h7 are neutral `<p>` (a body-sized `<h6>`
-// would pollute the a11y outline). Override the element via `attributes` on any
-// tag. Weight variants are terse: `_m` = medium, `_b` = bold.
-
-pub fn h1(
-  attrs attrs: List(Attr(msg)),
-  children children: List(Element(msg)),
-) -> Element(msg) {
-  el(html.h1, H1, attrs, children)
-}
-
-pub fn h2(
-  attrs attrs: List(Attr(msg)),
-  children children: List(Element(msg)),
-) -> Element(msg) {
-  el(html.h2, H2, attrs, children)
-}
-
-pub fn h3(
-  attrs attrs: List(Attr(msg)),
-  children children: List(Element(msg)),
-) -> Element(msg) {
-  el(html.h3, H3, attrs, children)
-}
-
-pub fn h4(
-  attrs attrs: List(Attr(msg)),
-  children children: List(Element(msg)),
-) -> Element(msg) {
-  el(html.h4, H4, attrs, children)
-}
-
-pub fn h4_m(
-  attrs attrs: List(Attr(msg)),
-  children children: List(Element(msg)),
-) -> Element(msg) {
-  el(html.h4, H4M, attrs, children)
-}
-
-pub fn h4_b(
-  attrs attrs: List(Attr(msg)),
-  children children: List(Element(msg)),
-) -> Element(msg) {
-  el(html.h4, H4B, attrs, children)
-}
-
-pub fn h5(
-  attrs attrs: List(Attr(msg)),
-  children children: List(Element(msg)),
-) -> Element(msg) {
-  el(html.p, H5, attrs, children)
-}
-
-pub fn h5_m(
-  attrs attrs: List(Attr(msg)),
-  children children: List(Element(msg)),
-) -> Element(msg) {
-  el(html.p, H5M, attrs, children)
-}
-
-pub fn h6(
-  attrs attrs: List(Attr(msg)),
-  children children: List(Element(msg)),
-) -> Element(msg) {
-  el(html.p, H6, attrs, children)
-}
-
-pub fn h6_m(
-  attrs attrs: List(Attr(msg)),
-  children children: List(Element(msg)),
-) -> Element(msg) {
-  el(html.p, H6M, attrs, children)
-}
-
-pub fn h6_b(
-  attrs attrs: List(Attr(msg)),
-  children children: List(Element(msg)),
-) -> Element(msg) {
-  el(html.p, H6B, attrs, children)
-}
-
-pub fn h7(
-  attrs attrs: List(Attr(msg)),
-  children children: List(Element(msg)),
-) -> Element(msg) {
-  el(html.p, H7, attrs, children)
-}
-
-fn el(
-  element: fn(List(Attribute(msg)), List(Element(msg))) -> Element(msg),
-  style: Style,
-  attrs: List(Attr(msg)),
-  children: List(Element(msg)),
-) -> Element(msg) {
-  element(attributes(style:, attrs:), children)
 }

@@ -218,48 +218,47 @@ a deliberate divergence, justified by the platform:
   `html.h1([attribute.class("…long string…")], …)` — untyped, easy to typo. A
   typed `text.h1(color:, attrs:, children:)` earns its keep here in a way it
   doesn't in shadcn-React.
-- **Enforcement in the type system, not documentation.** The helpers take
-  `List(Attr(msg))` — an **opaque** type whose only constructors are `id` /
-  `aria` / `data`. There is deliberately **no `class`/`style` constructor**, so a
-  non-tokenized styling override *fails to compile* on the helper path (verified:
-  passing `attribute.class(…)` errors with "Expected `List(text.Attr)`, found
-  `List(attribute.Attribute)`"). a11y/structural attrs still work. App text
-  *cannot* drift off-token or off-scale — the guarantee a recipe page can only
-  suggest. (This is also why it needs **no tailwind-merge**: no external class
-  sources to reconcile.) Going off-road is still *possible*, but only by the
-  explicit, visible escape hatch (next bullet) — never by accident.
+- **A `Props` record of named, tokenized keys — enforced in the type system.**
+  Helpers take `Props(msg)`: a field per styling decision, each a closed enum (or
+  `Option` of one), all defaulted by `props()`; override via Gleam record-update.
+  Gleam has **no default args**, so this record is how you get "named keys +
+  defaults" — the closest expression of a props object:
+  ```gleam
+  text.h5(text.props(), [html.text("Subtitle")])                    // defaults
+  text.h5(text.Props(..text.props(), color: text.Muted, align: text.Center), […])
+  ```
+  There is deliberately **no `class`/`style` field anywhere**, so off-token /
+  off-scale text *can't be expressed* — the guarantee a recipe page can only
+  suggest, and why it needs **no tailwind-merge** (no external class sources).
 
-Shape of it (mirrors `button`):
+Shape of it:
 
 - **A closed, *numeric* `Style` scale** — `h1 … h7` (the way a designer names a
   text style in Figma: "set h5, it maps to the DS"; semantic names like
   `Body`/`Large`/`Lead` were "harder to remember what to apply"). Each member
   bundles size + weight + leading + tracking + family as *one* decision. **Weight
   variants are baked enum members** — `H4M` (medium), `H4B` (bold), `H5M`, `H6M`,
-  `H6B` — a *curated allow-list*, the terse `h4_m`/`h4_b` helper convention from
-  the Latitude `Text`. We **rejected a `weight()` modifier**: it would permit
+  `H6B` — a *curated allow-list* with the terse `h4_m`/`h4_b` helper convention
+  from the Latitude `Text`. We **rejected a `weight()` modifier**: it would permit
   off-scale combos (h1 + thin) and need override machinery, whereas baked members
   only allow sanctioned styles (stronger enforcement, 1:1 with named Figma
-  styles, simpler CSS). They're enum *members* (not loose helpers) so the
-  element-agnostic `attributes(style:, …)` escape hatch can express them. Element
-  default: `h1–h4` → `<h1>–<h4>`; `h5–h7` → neutral `<p>` (a body-sized `<h6>`
-  would pollute the a11y outline).
-- **Tokenized modifiers, every one a closed enum, all funneled through the
-  opaque `Attr`.** The Latitude `Text` prop set — but typed: `color` (default
-  `Foreground` → just omit it), `align`, `transform`, `decoration`, `italic`,
-  `truncate` (`Ellipsis` | `Lines(n)`, n clamped 1–6), `whitespace`,
-  `word_break`, `wrap` (balance/pretty), `opacity`, `selectable`. A control with
-  no value omits its `Attr` (gva drops the `Foreground` default when a `color`
-  is supplied, via `comparator.is_same_kind`). `text.body([], children)` is the
-  common case; `text.h2([text.color(text.Muted), text.align(text.Center)], …)`
-  the loaded one.
-- **Element-agnostic** (the asChild / `useRender` analogue) — *and the escape
-  hatch*. Named helpers (`text.h1`) default to a sensible tag; for "H1 *look* on
-  a semantic `<h3>`", merge `text.attributes(H1, attrs)` onto any element — same
-  render-prop split `button` uses for its `<a>`. Visual style is decoupled from
-  document structure, so we never repeat the Latitude footgun of `Text.H1`
-  rendering a `<span>`. `attributes` returns the *open* `Attribute` list, so it's
-  also the single sanctioned place to knowingly mix in raw `class`/`style`.
+  styles, simpler CSS). Element default: `h1–h4` → `<h1>–<h4>`; `h5–h7` → neutral
+  `<p>` (a body-sized `<h6>` would pollute the a11y outline).
+- **Tokenized modifier fields, every one a closed enum.** The Latitude `Text`
+  prop set — but typed and named: `color` (default `Foreground`), `align`,
+  `transform`, `decoration`, `italic`, `truncate` (`Ellipsis` | `Lines(n)`, n
+  clamped 1–6), `whitespace`, `word_break`, `wrap` (balance/pretty), `opacity`,
+  `selectable`. Omitted/`None` ⇒ that class isn't emitted.
+- **Two typed escape valves — no raw `class` anywhere.**
+  - `render_as: Some(html.h3)` — render the style on a *different*, real Lustre
+    element (the asChild / `useRender` analogue). `None` = the helper's natural
+    tag. So an H1 *look* on a semantic `<h3>` is `Props(..props(), render_as:
+    Some(html.h3))` — no more `import html` + merge-`attributes` dance, and never
+    the Latitude `Text.H1`-renders-`<span>` footgun.
+  - `html_attrs: [text.id(…), text.aria(…), text.on_click(…)]` — a **curated**
+    opaque `Attr` list (id / aria / data / events). It has **no `class`/`style`
+    constructor**, so even the escape channel can't reintroduce an off-token
+    override (verified: `attribute.class(…)` doesn't typecheck there).
 - **No headless layer.** Text has no behavior/ARIA beyond the element, so (like
   `icon`) it lives only in `gg_ui/ui/`. Emits `cn-text-*`. Split, like the rest
   of the kit: the **type scale + color** (shape-specific) lives per-shape in
@@ -284,13 +283,13 @@ argument for the right-hand column.
 | --- | --- | --- |
 | **Ships a typography component?** | **No.** Typography is a docs page of utility-class recipes. | **Yes** — `gg_ui/ui/text.gleam`, a real typed component. |
 | **Core principle** | *Recipes, not abstractions.* You own the markup + classes. | *Enforcement, not documentation.* The API can't express off-token/off-scale text. |
-| **How you style an h1** | `<h1 className="scroll-m-20 text-4xl font-extrabold …">` — a string you copy. | `text.h1([], […])` — a typed call; the recipe lives in a `cn-*` fragment. |
+| **How you style an h1** | `<h1 className="scroll-m-20 text-4xl font-extrabold …">` — a string you copy. | `text.h1(text.props(), […])` — a typed call; the recipe lives in a `cn-*` fragment. |
 | **The scale** | Open: any Tailwind utilities, any combination. | Closed numeric `h1…h7` enum + curated baked weight members (`h4_m`/`h4_b`). |
-| **Off-scale text** | Possible by design (you can write anything). | Impossible to express on the helper path — no `class`/`style` constructor on the opaque `Attr`. |
-| **Color / modifiers** | Raw utilities (`text-muted-foreground`, `uppercase`, `line-clamp-2`). | Tokenized typed `Attr`s (`text.color(Muted)`, `text.transform(Uppercase)`, `text.truncate(Lines(2))`). |
+| **Off-scale text** | Possible by design (you can write anything). | Impossible to express — `Props` has no `class`/`style` field. |
+| **Color / modifiers** | Raw utilities (`text-muted-foreground`, `uppercase`, `line-clamp-2`). | Named tokenized `Props` keys (`color: Muted`, `transform: Some(Uppercase)`, `truncate: Some(Lines(2))`). |
 | **tailwind-merge** | Needed (many class sources can conflict). | **None** — `cn-*` names never conflict; pure join, dual-target. |
-| **Element vs style** | The recipe is applied to whatever element you write. | Decoupled: helpers default a tag (h1–h4 headings, h5–h7 `<p>`); `attributes(style:, …)` puts any style on any tag. |
-| **Escape hatch** | n/a — it's all open. | The open `attributes` list — the single sanctioned place to mix in raw `class`. Off-road by opt-in, never by accident. |
+| **Element vs style** | The recipe is applied to whatever element you write. | Decoupled: helpers default a tag (h1–h4 headings, h5–h7 `<p>`); `render_as: Some(html.h3)` puts any style on any element. |
+| **Escape valves** | n/a — it's all open. | `render_as` (element) + `html_attrs` (curated id/aria/data/events). Both typed; neither can carry `class`. |
 | **Why this fits** | A *public registry you copy and own* → transparency > consistency; no abstraction to fight. | A *kit consumed as typed Gleam* → consistency > transparency; utility-string juggling is awkward and a closed API guarantees the scale. |
 
 **Why the divergence is justified here, not a betrayal of shadcn:** two of
