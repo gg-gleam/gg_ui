@@ -87,11 +87,6 @@ declare module "*.gleam" {
     iconVariant: string,
   ) => void
 
-  // typography stories — static specimens, no args (driven by the toolbars)
-  export const mount_overview: MountStatic
-  export const mount_elements: MountStatic
-  export const mount_roles: MountStatic
-
   // text component stories
   // Playground: kitchen sink — one arg per tokenized axis (all strings except
   // italic/selectable booleans and lines).

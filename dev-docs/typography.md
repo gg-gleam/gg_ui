@@ -13,13 +13,11 @@ scale that component internals draw from.
 > shadcn (font isn't a library-prescribed axis — see below): the **Storybook app**
 > loads real variable families (`@fontsource-variable/*`) and its **Font** +
 > **Heading** toolbars set those vars (independent body/heading, shadcn's split).
-> The recipes ship the shadcn way — **as a documentation story**
-> (`Components/Typography`: Overview / Elements / Roles). **And then we go
-> further than shadcn:** a real, typed **`text` component**
-> (`gg_ui/ui/text.gleam`, story `Components/Text`) — a considered divergence
-> justified by Lustre ergonomics + enforcement (see §3). Markdown/MDX is out of
-> scope (style it with Tailwind `prose`). Still deferred: per-shape `text.css`
-> beyond `nova`, and RTL.
+> Instead of shadcn's copy-paste recipes, we ship a real, typed **`text`
+> component** (`gg_ui/ui/text.gleam`, story `Components/Text`) — a considered
+> divergence justified by Lustre ergonomics + enforcement (see §2). Markdown/MDX
+> is out of scope (style it with Tailwind `prose`). Still deferred: per-shape
+> `text.css` beyond `nova`, and RTL.
 
 ## The core philosophy: shadcn ships *no* typography
 
@@ -202,23 +200,15 @@ which *is* persisted). We mirror that split:
 
 The library side is pure CSS → both targets, no `gg_base_ui` involvement.
 
-### 2. The recipes — docs-only, **option (a)** (**done**)
+> **On the recipes (not shipped).** An earlier iteration shipped the shadcn
+> recipes as a docs-only `Components/Typography` Storybook story; it was
+> **removed** once `text` (below) landed. `text` covers authored app views, and
+> **Markdown/MDX is out of scope** (style it with Tailwind's `prose` plugin), so
+> the recipe page had no remaining job. The shadcn recipes still live in this doc
+> above ("How shadcn organizes it") as rationale + the source of the scale values
+> `text` encodes.
 
-We ship the recipes as a **Storybook documentation story**
-(`apps/storybook/src/stories/typography/`: Overview / Elements / Roles), **not**
-as a `gg_ui/ui/` component. The story `.gleam` uses raw Tailwind utility strings
-directly — legitimate because stories live in the consumer app (which imports
-Tailwind), and consistent with how existing stories use utilities for layout.
-This is maximal fidelity to shadcn's "we ship nothing," and it keeps the kit's
-"no raw Tailwind in `gg_ui/ui/`" rule intact precisely *because* typography never
-enters the kit.
-
-This recipe page documents shadcn's model and stays useful for **rendered
-content** (Markdown / MDX), which a component can't reach — though in practice we
-expect consumers to style that with Tailwind's `prose` plugin, so the recipe
-story is mostly a reference. For **authored app views** we go further (next).
-
-### 3. A `text` component — a considered divergence from shadcn (**spike**)
+### 2. A `text` component — a considered divergence from shadcn
 
 shadcn ships *no* Text component; gg_ui's `gg_ui/ui/text.gleam` **does**. This is
 a deliberate divergence, justified by the platform:
@@ -280,9 +270,40 @@ Shape of it (mirrors `button`):
 
 **Status: spike.** Open points: whether the curated `Attr` set needs typed
 **events** (currently id/aria/data only — events go through the escape hatch);
-whether the `text` component makes the docs-only recipe story (§2) redundant
-except as a `prose`/content reference; and the per-shape `text.css` for the other
-six shapes (the universal modifier recipes already cover all shapes).
+and the per-shape `text.css` for the other six shapes (the universal modifier
+recipes already cover all shapes).
+
+## Two philosophies, side by side
+
+The `text` component is where gg_ui **deliberately parts ways with shadcn**. Both
+are internally consistent; they optimize for different distribution models, so
+the right choice flips with the platform. The whole rest of this doc is the
+argument for the right-hand column.
+
+| | **shadcn** (React, copy-paste registry) | **gg_ui** (Lustre, typed kit) |
+| --- | --- | --- |
+| **Ships a typography component?** | **No.** Typography is a docs page of utility-class recipes. | **Yes** — `gg_ui/ui/text.gleam`, a real typed component. |
+| **Core principle** | *Recipes, not abstractions.* You own the markup + classes. | *Enforcement, not documentation.* The API can't express off-token/off-scale text. |
+| **How you style an h1** | `<h1 className="scroll-m-20 text-4xl font-extrabold …">` — a string you copy. | `text.h1([], […])` — a typed call; the recipe lives in a `cn-*` fragment. |
+| **The scale** | Open: any Tailwind utilities, any combination. | Closed numeric `h1…h7` enum + curated baked weight members (`h4_m`/`h4_b`). |
+| **Off-scale text** | Possible by design (you can write anything). | Impossible to express on the helper path — no `class`/`style` constructor on the opaque `Attr`. |
+| **Color / modifiers** | Raw utilities (`text-muted-foreground`, `uppercase`, `line-clamp-2`). | Tokenized typed `Attr`s (`text.color(Muted)`, `text.transform(Uppercase)`, `text.truncate(Lines(2))`). |
+| **tailwind-merge** | Needed (many class sources can conflict). | **None** — `cn-*` names never conflict; pure join, dual-target. |
+| **Element vs style** | The recipe is applied to whatever element you write. | Decoupled: helpers default a tag (h1–h4 headings, h5–h7 `<p>`); `attributes(style:, …)` puts any style on any tag. |
+| **Escape hatch** | n/a — it's all open. | The open `attributes` list — the single sanctioned place to mix in raw `class`. Off-road by opt-in, never by accident. |
+| **Why this fits** | A *public registry you copy and own* → transparency > consistency; no abstraction to fight. | A *kit consumed as typed Gleam* → consistency > transparency; utility-string juggling is awkward and a closed API guarantees the scale. |
+
+**Why the divergence is justified here, not a betrayal of shadcn:** two of
+shadcn's reasons for *not* shipping a component weaken on Lustre — hand-writing
+utility strings on `html.h1` is genuinely worse than JSX `className` (so the
+abstraction earns its keep), and the recipes are not trivial to apply by hand. We
+keep shadcn's foundations (token-driven color via the Base Color / Theme axes,
+the `cn-*` + per-shape-fragment authoring model, ejectability) and only swap the
+*surface*: a typed component instead of a recipe page. The Latitude `Text` atom
+(the user's own prior art) sat at the far end of this axis — we took its
+ergonomics but dropped its `className` hole, its `<span>`-as-`H1` footgun, and
+its open `size`/`weight` axes, all of which leaked the consistency a design
+system is supposed to enforce.
 
 ## Open questions
 
