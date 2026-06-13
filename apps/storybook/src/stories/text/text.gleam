@@ -122,21 +122,31 @@ fn view_colors() -> Element(msg) {
   ])
 }
 
-/// Element-agnostic: the H3 *look* on a semantic `<h2>` via `attributes` — the
-/// asChild analogue. Style and element are decoupled; still no className.
+/// Element-agnostic: apply a `Style` to a *different* tag via `attributes` —
+/// the asChild analogue. Style and element are decoupled; still no className.
 fn view_as_element() -> Element(msg) {
   column([
+    specimen(
+      "<h3> element + H1 style",
+      html.h3(text.attributes(style: text.H1, color: text.Foreground), [
+        html.text("Looks like H1, semantically h3"),
+      ]),
+    ),
     specimen(
       "<h2> element + H3 style",
       html.h2(text.attributes(style: text.H3, color: text.Foreground), [
         html.text("Semantic h2, styled as h3"),
       ]),
     ),
+    // The curated `Attr` path: id/aria/data are typed; there is no
+    // `text.class`, so a styling override can't be expressed here.
     specimen(
-      "default: text.h3 → <h3> element",
-      text.h3(color: text.Foreground, attrs: [], children: [
-        html.text("Same look, semantic h3"),
-      ]),
+      "default helper + curated attrs (id)",
+      text.h3(
+        color: text.Foreground,
+        attrs: [text.id("section-jokes")],
+        children: [html.text("Same look, semantic h3")],
+      ),
     ),
   ])
 }
@@ -169,15 +179,9 @@ fn column(children: List(Element(msg))) -> Element(msg) {
 }
 
 fn specimen(label: String, content: Element(msg)) -> Element(msg) {
+  // Dogfood: the specimen label is itself a `text` style, not raw utilities.
   html.div([attribute.class("flex flex-col gap-1")], [
-    html.div(
-      [
-        attribute.class(
-          "text-xs font-medium tracking-wide text-muted-foreground uppercase",
-        ),
-      ],
-      [html.text(label)],
-    ),
+    text.caption(color: text.Muted, attrs: [], children: [html.text(label)]),
     content,
   ])
 }

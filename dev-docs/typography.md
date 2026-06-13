@@ -228,10 +228,16 @@ a deliberate divergence, justified by the platform:
   `html.h1([attribute.class("…long string…")], …)` — untyped, easy to typo. A
   typed `text.h1(color:, attrs:, children:)` earns its keep here in a way it
   doesn't in shadcn-React.
-- **Enforcement, not documentation.** The API is **closed and tokenized with no
-  `className` hole**, so app text *cannot* drift off-token or off-scale — the
-  consistency guarantee a recipe page can only suggest. (This is also why it
-  needs **no tailwind-merge**: there are no external class sources to reconcile.)
+- **Enforcement in the type system, not documentation.** The helpers take
+  `List(Attr(msg))` — an **opaque** type whose only constructors are `id` /
+  `aria` / `data`. There is deliberately **no `class`/`style` constructor**, so a
+  non-tokenized styling override *fails to compile* on the helper path (verified:
+  passing `attribute.class(…)` errors with "Expected `List(text.Attr)`, found
+  `List(attribute.Attribute)`"). a11y/structural attrs still work. App text
+  *cannot* drift off-token or off-scale — the guarantee a recipe page can only
+  suggest. (This is also why it needs **no tailwind-merge**: no external class
+  sources to reconcile.) Going off-road is still *possible*, but only by the
+  explicit, visible escape hatch (next bullet) — never by accident.
 
 Shape of it (mirrors `button`):
 
@@ -244,11 +250,13 @@ Shape of it (mirrors `button`):
 - **`Color` is a separate, also-closed axis** — `Foreground / Muted / Primary /
   Destructive`. A `Style` never bakes in a color, so shadcn's "Lead" = `Lead` +
   `Muted`. Color tokens ride the Base Color / Theme axes.
-- **Element-agnostic** (the asChild / `useRender` analogue). Named helpers
-  (`text.h1`) default to a sensible tag; for "H3 *look* on a semantic `<h2>`",
-  merge `text.attributes(H3, …)` onto any element — same render-prop split
-  `button` uses for its `<a>`. Visual style is decoupled from document structure,
-  so we never repeat the Latitude footgun of `Text.H1` rendering a `<span>`.
+- **Element-agnostic** (the asChild / `useRender` analogue) — *and the escape
+  hatch*. Named helpers (`text.h1`) default to a sensible tag; for "H1 *look* on
+  a semantic `<h3>`", merge `text.attributes(H1, …)` onto any element — same
+  render-prop split `button` uses for its `<a>`. Visual style is decoupled from
+  document structure, so we never repeat the Latitude footgun of `Text.H1`
+  rendering a `<span>`. `attributes` returns the *open* `Attribute` list, so it's
+  also the single sanctioned place to knowingly mix in raw `class`/`style`.
 - **No headless layer.** Text has no behavior/ARIA beyond the element, so (like
   `icon`) it lives only in `gg_ui/ui/`. Emits `cn-text-*`; recipe per shape in
   `styles/shapes/<style>/text.css` (only `nova` so far — see the spike note in
@@ -256,9 +264,10 @@ Shape of it (mirrors `button`):
 
 **Status: spike.** Open points: whether named helpers should default `color` to
 `Foreground` for ergonomics (Gleam has no default args, so every call currently
-passes `color:`); whether the `text` component makes the docs-only recipe story
-(§2) redundant for everything except the `prose`/content reference; and the
-per-shape `text.css` for the other six shapes.
+passes `color:`); whether the curated `Attr` set needs typed **events**
+(currently id/aria/data only — events would go through the escape hatch); whether
+the `text` component makes the docs-only recipe story (§2) redundant except as a
+`prose`/content reference; and the per-shape `text.css` for the other six shapes.
 
 ## Open questions
 
