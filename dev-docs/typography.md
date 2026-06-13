@@ -247,27 +247,35 @@ Shape of it (mirrors `button`):
   (`BodyStrong`), **never a free `weight` axis** — that closedness is what keeps
   text on one scale (the place the Latitude `Text` atom, with independent
   `size`/`weight`/`spacing`, leaked consistency).
-- **`Color` is a separate, also-closed axis** — `Foreground / Muted / Primary /
-  Destructive`. A `Style` never bakes in a color, so shadcn's "Lead" = `Lead` +
-  `Muted`. Color tokens ride the Base Color / Theme axes.
+- **Tokenized modifiers, every one a closed enum, all funneled through the
+  opaque `Attr`.** The Latitude `Text` prop set — but typed: `color` (default
+  `Foreground` → just omit it), `align`, `transform`, `decoration`, `italic`,
+  `truncate` (`Ellipsis` | `Lines(n)`, n clamped 1–6), `whitespace`,
+  `word_break`, `wrap` (balance/pretty), `opacity`, `selectable`. A control with
+  no value omits its `Attr` (gva drops the `Foreground` default when a `color`
+  is supplied, via `comparator.is_same_kind`). `text.body([], children)` is the
+  common case; `text.h2([text.color(text.Muted), text.align(text.Center)], …)`
+  the loaded one.
 - **Element-agnostic** (the asChild / `useRender` analogue) — *and the escape
   hatch*. Named helpers (`text.h1`) default to a sensible tag; for "H1 *look* on
-  a semantic `<h3>`", merge `text.attributes(H1, …)` onto any element — same
+  a semantic `<h3>`", merge `text.attributes(H1, attrs)` onto any element — same
   render-prop split `button` uses for its `<a>`. Visual style is decoupled from
   document structure, so we never repeat the Latitude footgun of `Text.H1`
   rendering a `<span>`. `attributes` returns the *open* `Attribute` list, so it's
   also the single sanctioned place to knowingly mix in raw `class`/`style`.
 - **No headless layer.** Text has no behavior/ARIA beyond the element, so (like
-  `icon`) it lives only in `gg_ui/ui/`. Emits `cn-text-*`; recipe per shape in
-  `styles/shapes/<style>/text.css` (only `nova` so far — see the spike note in
-  that file). Story: `Components/Text`.
+  `icon`) it lives only in `gg_ui/ui/`. Emits `cn-text-*`. Split, like the rest
+  of the kit: the **type scale + color** (shape-specific) lives per-shape in
+  `styles/shapes/<style>/text.css` (only `nova` so far); the **modifiers**
+  (shape-invariant) live in a universal `styles/text.css` (like `icons.css`).
+  Story: `Components/Text` — a kitchen-sink `Playground` (every axis a control)
+  plus `Scale` / `Colors` / `AsElement` showcases.
 
-**Status: spike.** Open points: whether named helpers should default `color` to
-`Foreground` for ergonomics (Gleam has no default args, so every call currently
-passes `color:`); whether the curated `Attr` set needs typed **events**
-(currently id/aria/data only — events would go through the escape hatch); whether
-the `text` component makes the docs-only recipe story (§2) redundant except as a
-`prose`/content reference; and the per-shape `text.css` for the other six shapes.
+**Status: spike.** Open points: whether the curated `Attr` set needs typed
+**events** (currently id/aria/data only — events go through the escape hatch);
+whether the `text` component makes the docs-only recipe story (§2) redundant
+except as a `prose`/content reference; and the per-shape `text.css` for the other
+six shapes (the universal modifier recipes already cover all shapes).
 
 ## Open questions
 

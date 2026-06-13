@@ -92,7 +92,26 @@ declare module "*.gleam" {
   export const mount_elements: MountStatic
   export const mount_roles: MountStatic
 
-  // text component stories — static specimens, no args
+  // text component stories
+  // Playground: kitchen sink — one arg per tokenized axis (all strings except
+  // italic/selectable booleans and lines).
+  export const mount_text_playground: (
+    selector: string,
+    style: string,
+    color: string,
+    align: string,
+    transform: string,
+    decoration: string,
+    italic: boolean,
+    truncate: string,
+    lines: number,
+    whitespace: string,
+    wordBreak: string,
+    wrap: string,
+    opacity: string,
+    selectable: boolean,
+    content: string,
+  ) => void
   export const mount_scale: MountStatic
   export const mount_colors: MountStatic
   export const mount_as_element: MountStatic

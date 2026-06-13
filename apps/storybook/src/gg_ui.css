@@ -66,6 +66,10 @@
 /* Icons — universal sizing recipe (cn-icon + cn-icon-size-*). */
 @import "../../../packages/gg_ui/src/gg_ui/styles/icons.css";
 
+/* Text — universal modifier recipes (cn-text-align/transform/truncate/…). The
+ * per-shape type scale (cn-text-\3c style> + color) lives in shapes/\3c style>/text.css. */
+@import "../../../packages/gg_ui/src/gg_ui/styles/text.css";
+
 /* Motion — shared transition layer. */
 @import "../../../packages/gg_ui/src/gg_ui/styles/motion.css";
 
