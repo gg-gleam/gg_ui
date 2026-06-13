@@ -29,6 +29,13 @@ Layered roughly bottom-up (foundations first):
   `styles/tokens.css`, fragments vs the consumer entry, light/dark
   mechanics. Naming is shadcn-exact — the accent axis is "Theme", never
   "colors".
+- **[typography.md](typography.md)** — what shadcn does about text: ship
+  **no** typography component (recipes, not abstractions). The **Font**
+  axis (a 4th orthogonal axis — `.font-set-*` fragments →
+  `--font-sans`/`--font-heading`/`--font-mono` via `@theme inline`, with a
+  Storybook **Font** toolbar) and the recipe catalogue (a docs-only
+  `Components/Typography` story + the four semantic roles
+  Lead/Large/Small/Muted) both shipped.
 - **[icons.md](icons.md)** — icon strategy: placeholder pattern in
   registry source, transformer at install time, generated inline-SVG
   Gleam modules per library. Works on both Lustre targets.

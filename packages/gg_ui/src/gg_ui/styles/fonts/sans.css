@@ -1,0 +1,16 @@
+/* sans — FONT axis (the typeface, orthogonal to shape / base color / theme).
+ * Uniform sans for body and headings; the default set. A fragment; no tailwind
+ * import. Sets the three custom props that `tokens.css` republishes via
+ * `@theme inline` as the `font-sans` / `font-heading` / `font-mono` utilities.
+ * A real app points these vars at its own @font-face / next-font output — here
+ * we ship only system stacks so the library bundles no font files. */
+.font-set-sans {
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji";
+  --font-heading: var(--font-sans);
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+}

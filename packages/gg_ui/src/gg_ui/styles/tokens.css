@@ -9,12 +9,36 @@
  * *invalid*, and arbitrary utilities like `rounded-[min(var(--radius-md),10px)]`
  * (used by the xs/sm button sizes) would collapse to a 0 radius. All themes ship
  * the same value, so a single root definition is lossless.
+ *
+ * Font axis defaults live here for the same reason: the `@theme inline` font
+ * tokens below reference these custom props by name (shadcn's `--font-sans:
+ * var(--font-sans)` pattern), and `inline` means Tailwind does NOT emit its own
+ * `--font-*`, so the value has to come from `:root`. A `.font-set-*` fragment
+ * (the FONT axis) overrides them on the root; `--font-heading` defaults to the
+ * body face, so a single-typeface system needs no heading choice. System stacks
+ * only — the library bundles no font files; a consumer points these at its own.
  */
 :root {
   --radius: 0.625rem;
+
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji";
+  --font-heading: var(--font-sans);
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
 }
 
 @theme inline {
+  /* Font tokens — `inline` so the utilities resolve to the `:root`/`.font-set-*`
+   * custom props at use-site (overridable per FONT axis) rather than baking a
+   * static value. `font-heading` is the gg_ui-specific utility for display text. */
+  --font-sans: var(--font-sans);
+  --font-heading: var(--font-heading);
+  --font-mono: var(--font-mono);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

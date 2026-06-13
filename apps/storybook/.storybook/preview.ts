@@ -9,9 +9,11 @@ import type { Preview } from "@storybook/html-vite"
 //   BASE COLOR → base-color-<name>   (neutral palette: bg / fg / muted / border)
 //   THEME      → theme-<name>        (accent; overrides --primary). "none" = the
 //                                     base color's own neutral primary.
+//   FONT       → font-set-<name>     (typeface; --font-sans/--font-heading/--font-mono)
 //   MODE       → .dark
-// Keep these in sync with packages/gg_ui/src/gg_ui/styles/{shapes,base_colors,themes}.
+// Keep these in sync with packages/gg_ui/src/gg_ui/styles/{shapes,base_colors,themes,fonts}.
 const shapes = ["nova", "vega", "luma", "sera", "lyra", "mira", "maia"] as const
+const fonts = ["sans", "editorial", "mono"] as const
 const baseColors = [
   "neutral",
   "stone",
@@ -78,6 +80,15 @@ const preview: Preview = {
         dynamicTitle: true,
       },
     },
+    font: {
+      description: "Font (typeface for body + headings)",
+      toolbar: {
+        title: "Font",
+        icon: "paragraph",
+        items: fonts.map((f) => ({ value: f, title: f })),
+        dynamicTitle: true,
+      },
+    },
     mode: {
       description: "Light / dark mode",
       toolbar: {
@@ -124,6 +135,7 @@ const preview: Preview = {
     shape: "nova",
     baseColor: "neutral",
     theme: "none",
+    font: "sans",
     mode: "light",
     iconSet: "lucide",
     iconVariant: "outline",
@@ -137,14 +149,19 @@ const preview: Preview = {
   // accent are visible on the canvas.
   decorators: [
     (story, context) => {
-      const { shape, baseColor, theme, mode } = context.globals as {
+      const { shape, baseColor, theme, font, mode } = context.globals as {
         shape: string
         baseColor: string
         theme: string
+        font: string
         mode: string
       }
       const root = story() as HTMLElement
-      root.classList.add(`style-${shape}`, `base-color-${baseColor}`)
+      root.classList.add(
+        `style-${shape}`,
+        `base-color-${baseColor}`,
+        `font-set-${font}`,
+      )
       if (theme && theme !== "none") {
         root.classList.add(`theme-${theme}`)
       }
@@ -153,6 +170,9 @@ const preview: Preview = {
       }
       root.style.setProperty("background", "var(--background)")
       root.style.setProperty("color", "var(--foreground)")
+      // Body text inherits the FONT axis's --font-sans (headings opt into
+      // --font-heading via the `font-heading` utility).
+      root.style.setProperty("font-family", "var(--font-sans)")
       root.style.setProperty("padding", "3rem")
       root.style.setProperty("border-radius", "0.5rem")
       return root

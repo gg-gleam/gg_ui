@@ -87,6 +87,11 @@ declare module "*.gleam" {
     iconVariant: string,
   ) => void
 
+  // typography stories — static specimens, no args (driven by the toolbars)
+  export const mount_overview: MountStatic
+  export const mount_elements: MountStatic
+  export const mount_roles: MountStatic
+
   // icon catalog stories
   export const mount_with_icon: MountWithIcons // button (decorative glyphs)
   export const mount_gallery: MountWithIcons // icons/gallery
