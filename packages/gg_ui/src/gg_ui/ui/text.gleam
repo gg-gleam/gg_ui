@@ -25,9 +25,10 @@
 //// Lustre element); without it, helpers default `h1–h4` → `<h1>–<h4>` and
 //// `h5–h7` → `<p>` (a body-sized `<h6>` would pollute the a11y outline).
 ////
-//// Emits `cn-*` names; the per-shape type scale lives in
-//// `styles/shapes/<style>/text.css`, the shape-invariant modifiers in
-//// `styles/text.css`.
+//// Emits `cn-*` names; the whole recipe (scale + color + modifiers) lives once
+//// in the universal `styles/text.css` — shadcn doesn't vary the type recipe per
+//// style, so neither do we (a style that restyles type adds a `.style-*`
+//// overlay, the exception).
 
 import gg_ui/helpers/cn
 import gleam/int

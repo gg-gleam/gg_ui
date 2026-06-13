@@ -1,15 +1,94 @@
 /*
- * Text modifiers — the shape-INVARIANT axis of `gg_ui/ui/text` (alignment,
- * transform, decoration, truncation, wrapping, opacity, selection). A fragment;
- * no tailwind import.
+ * Text recipe — the CSS for the `cn-text-*` names emitted by gg_ui/ui/text.
+ * A fragment; no tailwind import.
  *
- * These are UNIVERSAL (not under `.style-*`), like `icons.css`: a modifier means
- * the same thing under every shape. The shape-specific part of text — the type
- * scale (`cn-text-\3c style>`) + color (`cn-text-color-*`) — lives per-shape in
- * `styles/shapes/\3c style>/text.css`. Each `cn-text-*` modifier maps 1:1 to the
- * Tailwind utility behind a typed `text.Attr`, so callers never write the raw
- * class themselves (that's the whole point of the component).
+ * UNIVERSAL (not under `.style-*`), like `icons.css`. shadcn does NOT vary the
+ * type *recipe* per style — it keeps `text-4xl font-extrabold …` constant and
+ * varies token VALUES instead (`--text-*`, `--font-heading`). So the whole text
+ * recipe lives here once:
+ *   - the numeric scale `cn-text-h1…h7` (size + weight + leading + tracking;
+ *     headings ride the `--font-heading` face),
+ *   - color `cn-text-color-*` (rides the Base Color / Theme axes),
+ *   - the modifiers (align / transform / truncate / wrap / opacity / …).
+ * A style that genuinely restyles type (e.g. sera → uppercase headings) would
+ * add a small `.style-<name>` overlay — the exception, not per-shape
+ * duplication. Each `cn-text-*` maps 1:1 to the utility behind a typed
+ * `text.Attr`, so callers never write the raw class themselves.
  */
+
+/* --- the numeric type scale (h1–h4 headings, h5–h7 neutral) --------------- */
+
+.cn-text {
+  @apply font-sans;
+}
+
+.cn-text-h1 {
+  @apply font-heading text-4xl font-extrabold tracking-tight text-balance;
+}
+
+.cn-text-h2 {
+  @apply font-heading text-3xl font-semibold tracking-tight;
+}
+
+.cn-text-h3 {
+  @apply font-heading text-2xl font-semibold tracking-tight;
+}
+
+.cn-text-h4 {
+  @apply font-heading text-xl font-semibold tracking-tight;
+}
+
+.cn-text-h4-m {
+  @apply font-heading text-xl font-medium tracking-tight;
+}
+
+.cn-text-h4-b {
+  @apply font-heading text-xl font-bold tracking-tight;
+}
+
+.cn-text-h5 {
+  @apply text-lg font-semibold;
+}
+
+.cn-text-h5-m {
+  @apply text-lg font-medium;
+}
+
+.cn-text-h6 {
+  @apply text-base leading-7;
+}
+
+.cn-text-h6-m {
+  @apply text-base leading-7 font-medium;
+}
+
+.cn-text-h6-b {
+  @apply text-base leading-7 font-semibold;
+}
+
+.cn-text-h7 {
+  @apply text-sm leading-none font-medium;
+}
+
+/* --- color (orthogonal; a style never bakes in a color) ------------------- */
+
+.cn-text-color-foreground {
+  @apply text-foreground;
+}
+
+.cn-text-color-muted {
+  @apply text-muted-foreground;
+}
+
+.cn-text-color-primary {
+  @apply text-primary;
+}
+
+.cn-text-color-destructive {
+  @apply text-destructive;
+}
+
+/* --- modifiers (alignment / transform / truncation / …) ------------------- */
 
 .cn-text-align-start {
   @apply text-start;

@@ -16,8 +16,8 @@ scale that component internals draw from.
 > Instead of shadcn's copy-paste recipes, we ship a real, typed **`text`
 > component** (`gg_ui/ui/text.gleam`, story `Components/Text`) — a considered
 > divergence justified by Lustre ergonomics + enforcement (see §2). Markdown/MDX
-> is out of scope (style it with Tailwind `prose`). Still deferred: per-shape
-> `text.css` beyond `nova`, and RTL.
+> is out of scope (style it with Tailwind `prose`). Still deferred: a shared
+> size ramp across sized components, and RTL.
 
 ## The core philosophy: shadcn ships *no* typography
 
@@ -260,17 +260,21 @@ Shape of it:
   `text.aria` / `text.data` / `text.on_click` cover a11y + interaction. All are
   the same opaque `Attr`, none can carry `class`.
 - **No headless layer.** Text has no behavior/ARIA beyond the element, so (like
-  `icon`) it lives only in `gg_ui/ui/`. Emits `cn-text-*`. Split, like the rest
-  of the kit: the **type scale + color** (shape-specific) lives per-shape in
-  `styles/shapes/<style>/text.css` (only `nova` so far); the **modifiers**
-  (shape-invariant) live in a universal `styles/text.css` (like `icons.css`).
+  `icon`) it lives only in `gg_ui/ui/`. Emits `cn-text-*`. The **whole recipe**
+  (scale + color + modifiers) lives once in the **universal `styles/text.css`**
+  (like `icons.css`) — shadcn doesn't vary the type *recipe* per style (only
+  token values: `--text-*`, `--font-heading`), so neither do we. A style that
+  genuinely restyles type (sera → uppercase headings) would add a small
+  `.style-*` overlay — the exception, not per-shape duplication.
   Story: `Components/Text` — a kitchen-sink `Playground` (every axis a control)
   plus `Scale` / `Colors` / `AsElement` showcases.
 
 **Status: spike.** Open points: whether the curated `Attr` set needs typed
 **events** (currently id/aria/data only — events go through the escape hatch);
-and the per-shape `text.css` for the other six shapes (the universal modifier
-recipes already cover all shapes).
+and a **shared size ramp** so other sized components (button, input, …) draw
+their text size from the same scale instead of picking utilities ad-hoc (the
+"feels less random" idea — likely a documented `--text-*`/named ramp; deliberate
+cross-component pass).
 
 ## Two philosophies, side by side
 
