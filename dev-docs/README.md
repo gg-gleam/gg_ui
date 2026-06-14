@@ -44,6 +44,12 @@ Layered roughly bottom-up (foundations first):
 - **[icons.md](icons.md)** — icon strategy: placeholder pattern in
   registry source, transformer at install time, generated inline-SVG
   Gleam modules per library. Works on both Lustre targets.
+- **[stateful-components.md](stateful-components.md)** — the pattern for the
+  components that *can't* be native-first/render-once (combobox first, then
+  select / menu / autocomplete): a stateful Lustre `Model`/`update` component
+  split into a **pure, both-target-tested core** and a thin **effectful shell**
+  that quarantines the DOM/FFI. Controlled-vs-uncontrolled and where FFI is
+  allowed.
 
 ## The registry & CLI
 
