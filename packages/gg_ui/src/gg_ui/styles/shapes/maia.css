@@ -1,5 +1,6 @@
 /* maia — shape fragment index: one import per component recipe.
  * A fragment; no tailwind import (the entry provides Tailwind). */
 @import "./maia/button.css";
+@import "./maia/input-group.css";
 @import "./maia/popover.css";
 @import "./maia/tooltip.css";
