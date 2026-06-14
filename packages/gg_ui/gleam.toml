@@ -8,6 +8,12 @@ gleam_stdlib = ">= 1.0.0 and < 2.0.0"
 lustre = ">= 5.7.0 and < 6.0.0"
 gva = ">= 1.3.0 and < 2.0.0"
 gg_base_ui = { path = "../gg_base_ui" }
+gg_icon = ">= 0.1.0 and < 1.0.0"
+# Default icon set — lucide, the source of truth (matches shadcn's lucide default).
+# Used only for components' built-in structural glyphs (combobox chevron/check/x).
+# The future CLI swaps this to the user's `components.json` set at eject, so an
+# ejected app installs only its chosen set — nobody is forced onto lucide.
+gg_icons_lucide = { git = "https://github.com/gg-gleam/gg_icons_lucide.git", ref = "main" }
 
 [dev_dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"

@@ -19,6 +19,7 @@ pub fn mount_text_playground(
   selector: String,
   style: String,
   color: String,
+  weight: String,
   align: String,
   transform: String,
   decoration: String,
@@ -36,6 +37,7 @@ pub fn mount_text_playground(
   let attrs =
     [
       Some(text.color(parse_color(color))),
+      option.map(parse_weight(weight), text.weight),
       option.map(parse_align(align), text.align),
       option.map(parse_transform(transform), text.transform),
       option.map(parse_decoration(decoration), text.decoration),
@@ -62,18 +64,16 @@ pub fn mount_text_playground(
 
 // --- showcase views ------------------------------------------------------
 
-/// The full closed scale, each member labeled — the numeric size specimen.
-/// `s1` = largest; `_m`/`_b` are baked weight variants.
+/// The full closed scale, each step labeled — the numeric size specimen. Every
+/// step is **normal weight** (size only); emphasis is the separate Weight axis
+/// (see `view_weights`).
 fn view_scale() -> Element(msg) {
   column([
     specimen("s1", text.s1([], [html.text("Size 1 — largest")])),
     specimen("s2", text.s2([], [html.text("Size 2")])),
     specimen("s3", text.s3([], [html.text("Size 3")])),
     specimen("s4", text.s4([], [html.text("Size 4")])),
-    specimen("s4_m", text.s4_m([], [html.text("Size 4 — medium")])),
-    specimen("s4_b", text.s4_b([], [html.text("Size 4 — bold")])),
     specimen("s5", text.s5([], [html.text("Size 5")])),
-    specimen("s5_m", text.s5_m([], [html.text("Size 5 — medium")])),
     specimen(
       "s6",
       text.s6([], [
@@ -82,9 +82,26 @@ fn view_scale() -> Element(msg) {
         ),
       ]),
     ),
-    specimen("s6_m", text.s6_m([], [html.text("Size 6 — medium")])),
-    specimen("s6_b", text.s6_b([], [html.text("Size 6 — bold")])),
     specimen("s7", text.s7([], [html.text("Size 7 — smallest")])),
+  ])
+}
+
+/// The orthogonal Weight axis applied to one size — nothing is bold by default.
+fn view_weights() -> Element(msg) {
+  column([
+    specimen("normal (default)", text.s4([], [html.text("Normal weight")])),
+    specimen(
+      "medium",
+      text.s4([text.weight(text.Medium)], [html.text("Medium weight")]),
+    ),
+    specimen(
+      "semibold",
+      text.s4([text.weight(text.Semibold)], [html.text("Semibold weight")]),
+    ),
+    specimen(
+      "bold",
+      text.s4([text.weight(text.Bold)], [html.text("Bold weight")]),
+    ),
   ])
 }
 
@@ -153,6 +170,11 @@ pub fn mount_colors(selector: String) -> Nil {
   Nil
 }
 
+pub fn mount_weights(selector: String) -> Nil {
+  let assert Ok(_) = lustre.start(lustre.element(view_weights()), selector, Nil)
+  Nil
+}
+
 pub fn mount_as_element(selector: String) -> Nil {
   let assert Ok(_) =
     lustre.start(lustre.element(view_as_element()), selector, Nil)
@@ -171,13 +193,8 @@ fn render_style(
     text.S2 -> text.s2(attrs, children)
     text.S3 -> text.s3(attrs, children)
     text.S4 -> text.s4(attrs, children)
-    text.S4M -> text.s4_m(attrs, children)
-    text.S4B -> text.s4_b(attrs, children)
     text.S5 -> text.s5(attrs, children)
-    text.S5M -> text.s5_m(attrs, children)
     text.S6 -> text.s6(attrs, children)
-    text.S6M -> text.s6_m(attrs, children)
-    text.S6B -> text.s6_b(attrs, children)
     text.S7 -> text.s7(attrs, children)
   }
 }
@@ -190,12 +207,7 @@ fn parse_style(value: String) -> text.Style {
     "s2" -> text.S2
     "s3" -> text.S3
     "s4" -> text.S4
-    "s4_m" -> text.S4M
-    "s4_b" -> text.S4B
     "s5" -> text.S5
-    "s5_m" -> text.S5M
-    "s6_m" -> text.S6M
-    "s6_b" -> text.S6B
     "s7" -> text.S7
     _ -> text.S6
   }
@@ -207,6 +219,16 @@ fn parse_color(value: String) -> text.Color {
     "primary" -> text.Primary
     "destructive" -> text.Destructive
     _ -> text.Foreground
+  }
+}
+
+fn parse_weight(value: String) -> Option(text.Weight) {
+  case value {
+    "medium" -> Some(text.Medium)
+    "semibold" -> Some(text.Semibold)
+    "bold" -> Some(text.Bold)
+    "normal" -> Some(text.Normal)
+    _ -> None
   }
 }
 

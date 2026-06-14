@@ -1,0 +1,55 @@
+/*
+ * combobox · motion — the combobox's slice of the MOTION layer (imported by
+ * ../motion.css). The listbox popup is a *single* native `popover` element that
+ * is both the top-layer element and the visible box (no positioner/card split,
+ * no arrow), so the fade + zoom-95 + 8px enter-slide apply directly to it —
+ * driven by `:popover-open` + `@starting-style` + `transition-behavior:
+ * allow-discrete`, the same native recipe as popover. A fragment: no
+ * `@import "tailwindcss"`, no `@apply`.
+ */
+
+.cn-combobox-content {
+  opacity: 0;
+  transform: scale(0.95);
+  transition-property: opacity, transform, display, overlay;
+  transition-duration: var(--motion-duration-popover, 100ms);
+  transition-timing-function: var(--motion-ease, ease);
+  transition-behavior: allow-discrete;
+}
+
+.cn-combobox-content:popover-open {
+  opacity: 1;
+  transform: none;
+
+  @starting-style {
+    opacity: 0;
+  }
+}
+
+/* Enter slide toward the input, keyed on the resolved side (enter only — shadcn
+   has no slide-out). */
+@starting-style {
+  .cn-combobox-content[data-side="bottom"]:popover-open {
+    transform: scale(0.95) translateY(-0.5rem);
+  }
+
+  .cn-combobox-content[data-side="top"]:popover-open {
+    transform: scale(0.95) translateY(0.5rem);
+  }
+
+  .cn-combobox-content[data-side="left"]:popover-open {
+    transform: scale(0.95) translateX(0.5rem);
+  }
+
+  .cn-combobox-content[data-side="right"]:popover-open {
+    transform: scale(0.95) translateX(-0.5rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cn-combobox-content,
+  .cn-combobox-content:popover-open {
+    transform: none;
+    transition-duration: 1ms;
+  }
+}

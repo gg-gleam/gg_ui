@@ -1,0 +1,38 @@
+/* vega · combobox — shape recipe, translated from shadcn combobox.tsx.
+ * A fragment; no tailwind import. The field reuses input-group; these are the
+ * popup (listbox) + item recipes. The listbox is a native popover, so its
+ * enter/exit motion lives in styles/motion/combobox.css. */
+.style-vega {
+  .cn-combobox-content {
+    @apply z-50 max-h-96 overflow-x-hidden overflow-y-auto rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md;
+    width: anchor-size(width);
+  }
+
+  .cn-combobox-item {
+    @apply relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50;
+  }
+
+  .cn-combobox-item-label {
+    @apply flex-1 truncate;
+  }
+
+  .cn-combobox-item-indicator {
+    @apply pointer-events-none absolute right-2 flex size-4 items-center justify-center opacity-0 [&>svg]:size-4;
+  }
+
+  .cn-combobox-item[aria-selected="true"] .cn-combobox-item-indicator {
+    @apply opacity-100;
+  }
+
+  .cn-combobox-empty {
+    @apply py-6 text-center text-sm text-muted-foreground;
+  }
+
+  .cn-combobox-trigger {
+    @apply text-muted-foreground hover:text-foreground;
+  }
+
+  .cn-combobox-clear {
+    @apply text-muted-foreground hover:text-foreground;
+  }
+}

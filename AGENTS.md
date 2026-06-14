@@ -72,6 +72,15 @@ shadcn. When they disagree on behavior, Base UI wins.*
    *first*, because training data goes stale fast on web APIs. If it isn't
    available, add the `googlechrome` marketplace and install the plugin. A
    sibling skill, `modern-web-guidance:chrome-extensions`, covers extension work.
+6. **Dogfood the design system.** Anywhere *we* render UI — Storybook stories,
+   the docs site, future apps, even a component composed of others — **use our
+   own `gg_ui` components instead of raw Tailwind** whenever one fits. A story
+   showing a label uses `gg_ui/ui/text` (`text.s2([text.color(text.Muted)], …)`),
+   **not** `html.p` with `class="text-sm text-muted-foreground"`. Reach for raw
+   Tailwind only for the gaps the kit doesn't cover yet (bare layout — flex/grid
+   scaffolding). If you catch yourself hand-writing a recipe a component already
+   owns (text sizing/color, buttons, inputs, …), that's the signal to swap it for
+   the component. Dogfooding is how we find the kit's rough edges first.
 
 ## Project map
 
@@ -90,7 +99,8 @@ packages/
       button/  popover/      #   Native-first; relative `./*_ffi.ts` only where the
       positioning/  arrow/   #   platform needs glue (positioning/arrow are shared).
       helpers/id_gen/        #   the `useId` analogue (popover depends on it)
-  gg_ui/                     # LAYER 2 — thin styled kit. Depends on gg_base_ui (+ gg_icon once it embeds icons).
+  gg_ui/                     # LAYER 2 — thin styled kit. Depends on gg_base_ui + gg_icons_lucide
+                             #   (default icon set / source of truth; CLI swaps it per components.json at eject).
     src/gg_ui/
       ui/button.gleam        #   Emit `cn-*` class names (gva+cn), never raw Tailwind.
       ui/popover.gleam       #   Native-first preserved. (ui/ is what the CLI ejects.)
