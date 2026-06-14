@@ -7,10 +7,9 @@
     "dev": "storybook dev -p 6006",
     "build": "storybook build",
     "typecheck": "tsgo --noEmit",
-    "build:gleam": "gleam build --target javascript",
-    "test:stories": "pnpm build:gleam && vitest run",
-    "test:stories:watch": "pnpm build:gleam && vitest",
-    "coverage": "pnpm build:gleam && vitest run --coverage"
+    "test:stories": "vitest run",
+    "test:stories:watch": "vitest",
+    "coverage": "vitest run --coverage"
   },
   "devDependencies": {
     "@fontsource-variable/dm-sans": "^5.2.8",
