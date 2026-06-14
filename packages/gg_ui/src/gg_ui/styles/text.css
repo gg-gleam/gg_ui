@@ -6,67 +6,69 @@
  * type *recipe* per style — it keeps `text-4xl font-extrabold …` constant and
  * varies token VALUES instead (`--text-*`, `--font-heading`). So the whole text
  * recipe lives here once:
- *   - the numeric scale `cn-text-h1…h7` (size + weight + leading + tracking;
- *     headings ride the `--font-heading` face),
+ *   - the numeric SIZE scale `cn-text-s1…s7` (s1 = largest; size + weight +
+ *     leading + tracking; the larger steps ride the `--font-heading` face),
  *   - color `cn-text-color-*` (rides the Base Color / Theme axes),
  *   - the modifiers (align / transform / truncate / wrap / opacity / …).
- * A style that genuinely restyles type (e.g. sera → uppercase headings) would
- * add a small `.style-<name>` overlay — the exception, not per-shape
- * duplication. Each `cn-text-*` maps 1:1 to the utility behind a typed
- * `text.Attr`, so callers never write the raw class themselves.
+ * The scale carries no element semantics — the component renders a neutral
+ * `<span>` and `render_as` opts into `<h1>`/`<p>`/… A style that genuinely
+ * restyles type (e.g. sera → uppercase) would add a small `.style-<name>`
+ * overlay — the exception. Each `cn-text-*` maps 1:1 to the utility behind a
+ * typed `text.Attr`, so callers never write the raw class themselves.
  */
 
-/* --- the numeric type scale (h1–h4 headings, h5–h7 neutral) --------------- */
+/* --- the numeric size scale (s1 = largest; the larger steps use the
+ *     `--font-heading` display face) ---------------------------------------- */
 
 .cn-text {
   @apply font-sans;
 }
 
-.cn-text-h1 {
+.cn-text-s1 {
   @apply font-heading text-4xl font-extrabold tracking-tight text-balance;
 }
 
-.cn-text-h2 {
+.cn-text-s2 {
   @apply font-heading text-3xl font-semibold tracking-tight;
 }
 
-.cn-text-h3 {
+.cn-text-s3 {
   @apply font-heading text-2xl font-semibold tracking-tight;
 }
 
-.cn-text-h4 {
+.cn-text-s4 {
   @apply font-heading text-xl font-semibold tracking-tight;
 }
 
-.cn-text-h4-m {
+.cn-text-s4-m {
   @apply font-heading text-xl font-medium tracking-tight;
 }
 
-.cn-text-h4-b {
+.cn-text-s4-b {
   @apply font-heading text-xl font-bold tracking-tight;
 }
 
-.cn-text-h5 {
+.cn-text-s5 {
   @apply text-lg font-semibold;
 }
 
-.cn-text-h5-m {
+.cn-text-s5-m {
   @apply text-lg font-medium;
 }
 
-.cn-text-h6 {
+.cn-text-s6 {
   @apply text-base leading-7;
 }
 
-.cn-text-h6-m {
+.cn-text-s6-m {
   @apply text-base leading-7 font-medium;
 }
 
-.cn-text-h6-b {
+.cn-text-s6-b {
   @apply text-base leading-7 font-semibold;
 }
 
-.cn-text-h7 {
+.cn-text-s7 {
   @apply text-sm leading-none font-medium;
 }
 

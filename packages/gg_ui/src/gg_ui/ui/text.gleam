@@ -1,29 +1,42 @@
 //// `Text` — typed, tokenized typography for app UIs. **A deliberate divergence
 //// from shadcn**, which ships no typography component (only copy-paste recipes).
 //// gg_ui ships a real one because in Lustre hand-writing utility strings on
-//// `html.h1` is awkward, and a *closed, typed* API enforces a single type scale
-//// + palette. No headless layer — text has no behavior/ARIA beyond the element.
+//// `html.span` is awkward, and a *closed, typed* API enforces a single type
+//// scale + palette. No headless layer — text has no behavior beyond the element.
 ////
-//// ## The API mirrors Lustre: `text.h1(attrs, children)`
+//// ## A size scale, not a heading scale
 ////
-//// Like every Lustre element (`html.h1(attrs, children)`), a `text` helper takes
-//// a **`List(Attr(msg))`** then children. The common case is an empty list; each
-//// `Attr` is one typed, tokenized decision:
+//// The numeric scale `s1…s7` is a **type-size ramp** (`s1` = largest), the way a
+//// designer picks a step in Figma — it carries **no document semantics**. Every
+//// step renders a neutral inline **`<span>`** by default (the common case in app
+//// UIs, where semantic headings matter far less than on marketing pages). When
+//// you *do* want a semantic element — a real `<h1>` on a public page, or a block
+//// `<p>` — opt in with `render_as`:
 ////
 //// ```gleam
-//// text.h1([], [html.text("Heading")])                          // defaults
-//// text.h1([text.color(text.Muted), text.align(text.Center)], […])
-//// text.h1([text.render_as(html.h3)], […])    // H1 look on a semantic <h3>
-//// text.h1([text.id("intro"), text.on_click(Msg)], […])         // a11y / events
+//// text.s1([], [html.text("Big inline text")])            // <span>
+//// text.s1([text.render_as(html.h1)], […])                // a real <h1>
+//// text.s6([text.render_as(html.p)], […])                 // a block paragraph
+//// ```
+////
+//// ## The API mirrors Lustre: `text.s1(attrs, children)`
+////
+//// Like every Lustre element, a helper takes a `List(Attr(msg))` then children;
+//// the common case is an empty list. Each `Attr` is one typed, tokenized
+//// decision:
+////
+//// ```gleam
+//// text.s1([], [html.text("Heading")])                          // defaults
+//// text.s1([text.color(text.Muted), text.align(text.Center)], […])
+//// text.s1([text.id("intro"), text.on_click(Msg)], […])         // a11y / events
 //// ```
 ////
 //// `Attr` is **opaque** — every constructor is a tokenized modifier, a curated
 //// a11y/event attr, or `render_as`. There is deliberately **no `class`/`style`
 //// constructor**, so off-token / off-scale text can't be expressed (and no
 //// tailwind-merge is needed). `color` defaults to `Foreground`; other modifiers
-//// default to "normal" (omit the attr). `render_as` swaps the element (a real
-//// Lustre element); without it, helpers default `h1–h4` → `<h1>–<h4>` and
-//// `h5–h7` → `<p>` (a body-sized `<h6>` would pollute the a11y outline).
+//// default to "normal" (omit the attr). Weight variants are baked members
+//// (`S4M` = medium, `S4B` = bold) — a curated allow-list, not a free axis.
 ////
 //// Emits `cn-*` names; the whole recipe (scale + color + modifiers) lives once
 //// in the universal `styles/text.css` — shadcn doesn't vary the type recipe per
@@ -39,26 +52,28 @@ import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
 
-// --- the type scale ----------------------------------------------------------
+// --- the size scale ----------------------------------------------------------
 
-/// The closed, **numeric** type scale — `h1…h7`, the way a designer names a text
-/// style in Figma ("set h5, it maps to the DS"). Each member bundles size +
-/// weight + leading + tracking + family as ONE decision. **Weight variants are
-/// baked members** (`H4M` = medium, `H4B` = bold) — a curated allow-list, NOT a
-/// free `weight` axis. Add a member only when the design system defines it.
+/// The closed, **numeric size scale** — `s1…s7` (`s1` = largest), a type-size
+/// ramp a designer picks a step from. It carries **no element semantics**; the
+/// rendered element is always a neutral `<span>` unless `render_as` overrides it.
+/// Each member bundles size + weight + leading + tracking + family as ONE
+/// decision. **Weight variants are baked members** (`S4M` = medium, `S4B` =
+/// bold) — a curated allow-list, NOT a free `weight` axis. Add a member only
+/// when the design system defines it.
 pub type Style {
-  H1
-  H2
-  H3
-  H4
-  H4M
-  H4B
-  H5
-  H5M
-  H6
-  H6M
-  H6B
-  H7
+  S1
+  S2
+  S3
+  S4
+  S4M
+  S4B
+  S5
+  S5M
+  S6
+  S6M
+  S6B
+  S7
 }
 
 // --- tokenized modifier axes -------------------------------------------------
@@ -206,9 +221,9 @@ pub fn selectable(value: Bool) -> Attr(msg) {
   AttrSelectable(value)
 }
 
-/// Render the style on a *different* element — a real Lustre element such as
-/// `html.h3` (the asChild / `useRender` analogue). Without it, the helper's
-/// natural tag is used.
+/// Render on a *different* element — a real Lustre element such as `html.h1`
+/// (semantic heading) or `html.p` (block paragraph). Without it, the default is
+/// a neutral inline `<span>` (the asChild / `useRender` analogue).
 pub fn render_as(
   element: fn(List(Attribute(msg)), List(Element(msg))) -> Element(msg),
 ) -> Attr(msg) {
@@ -236,90 +251,90 @@ pub fn on_click(msg: msg) -> Attr(msg) {
   AttrHtml(event.on_click(msg))
 }
 
-// --- named helpers — h1–h4 headings, h5–h7 neutral `<p>` ----------------------
+// --- named helpers — all default to a neutral inline `<span>` -----------------
 
-pub fn h1(
+pub fn s1(
   attrs attrs: List(Attr(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  render(H1, html.h1, attrs, children)
+  render(S1, attrs, children)
 }
 
-pub fn h2(
+pub fn s2(
   attrs attrs: List(Attr(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  render(H2, html.h2, attrs, children)
+  render(S2, attrs, children)
 }
 
-pub fn h3(
+pub fn s3(
   attrs attrs: List(Attr(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  render(H3, html.h3, attrs, children)
+  render(S3, attrs, children)
 }
 
-pub fn h4(
+pub fn s4(
   attrs attrs: List(Attr(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  render(H4, html.h4, attrs, children)
+  render(S4, attrs, children)
 }
 
-pub fn h4_m(
+pub fn s4_m(
   attrs attrs: List(Attr(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  render(H4M, html.h4, attrs, children)
+  render(S4M, attrs, children)
 }
 
-pub fn h4_b(
+pub fn s4_b(
   attrs attrs: List(Attr(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  render(H4B, html.h4, attrs, children)
+  render(S4B, attrs, children)
 }
 
-pub fn h5(
+pub fn s5(
   attrs attrs: List(Attr(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  render(H5, html.p, attrs, children)
+  render(S5, attrs, children)
 }
 
-pub fn h5_m(
+pub fn s5_m(
   attrs attrs: List(Attr(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  render(H5M, html.p, attrs, children)
+  render(S5M, attrs, children)
 }
 
-pub fn h6(
+pub fn s6(
   attrs attrs: List(Attr(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  render(H6, html.p, attrs, children)
+  render(S6, attrs, children)
 }
 
-pub fn h6_m(
+pub fn s6_m(
   attrs attrs: List(Attr(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  render(H6M, html.p, attrs, children)
+  render(S6M, attrs, children)
 }
 
-pub fn h6_b(
+pub fn s6_b(
   attrs attrs: List(Attr(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  render(H6B, html.p, attrs, children)
+  render(S6B, attrs, children)
 }
 
-pub fn h7(
+pub fn s7(
   attrs attrs: List(Attr(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  render(H7, html.p, attrs, children)
+  render(S7, attrs, children)
 }
 
 // --- internals ---------------------------------------------------------------
@@ -339,14 +354,14 @@ const base = "cn-text"
 
 fn render(
   style: Style,
-  default_element: fn(List(Attribute(msg)), List(Element(msg))) -> Element(msg),
   attrs: List(Attr(msg)),
   children: List(Element(msg)),
 ) -> Element(msg) {
   let r = resolve(attrs)
+  // Default element is a neutral inline span; `render_as` overrides it.
   let element = case r.render_as {
     Some(custom) -> custom
-    None -> default_element
+    None -> html.span
   }
   let class =
     cn.cn([base, style_class(style), color_class(r.color), ..r.classes])
@@ -385,18 +400,18 @@ fn push(acc: Resolved(msg), class: String) -> Resolved(msg) {
 
 fn style_class(style: Style) -> String {
   case style {
-    H1 -> "cn-text-h1"
-    H2 -> "cn-text-h2"
-    H3 -> "cn-text-h3"
-    H4 -> "cn-text-h4"
-    H4M -> "cn-text-h4-m"
-    H4B -> "cn-text-h4-b"
-    H5 -> "cn-text-h5"
-    H5M -> "cn-text-h5-m"
-    H6 -> "cn-text-h6"
-    H6M -> "cn-text-h6-m"
-    H6B -> "cn-text-h6-b"
-    H7 -> "cn-text-h7"
+    S1 -> "cn-text-s1"
+    S2 -> "cn-text-s2"
+    S3 -> "cn-text-s3"
+    S4 -> "cn-text-s4"
+    S4M -> "cn-text-s4-m"
+    S4B -> "cn-text-s4-b"
+    S5 -> "cn-text-s5"
+    S5M -> "cn-text-s5-m"
+    S6 -> "cn-text-s6"
+    S6M -> "cn-text-s6-m"
+    S6B -> "cn-text-s6-b"
+    S7 -> "cn-text-s7"
   }
 }
 

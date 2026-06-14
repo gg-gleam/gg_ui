@@ -215,19 +215,19 @@ a deliberate divergence, justified by the platform:
 
 - **Lustre ergonomics flip shadcn's reasoning #3.** In JSX a recipe is just
   `className="text-4xl font-extrabold tracking-tight"`; in Gleam it's
-  `html.h1([attribute.class("…long string…")], …)` — untyped, easy to typo. A
-  typed `text.h1(attrs, children)` earns its keep here in a way it
-  doesn't in shadcn-React.
-- **The API mirrors Lustre — `text.h1(attrs, children)`, enforced in the type
-  system.** Like every Lustre element (`html.h1(attrs, children)`), a helper
+  `html.span([attribute.class("…long string…")], …)` — untyped, easy to typo. A
+  typed `text.s1(attrs, children)` earns its keep here in a way it doesn't in
+  shadcn-React.
+- **The API mirrors Lustre — `text.s1(attrs, children)`, enforced in the type
+  system.** Like every Lustre element (`html.span(attrs, children)`), a helper
   takes a `List(Attr(msg))` then children; the common case is an empty list. We
   chose this over a `Props` *record* (briefly tried) because it's the ecosystem
   idiom — `lustre/attribute` and every element work this way — and it has the
   least boilerplate (no `text.props()` / no `Props(..props(), …)` record-update,
   which Gleam's lack of default args makes verbose):
   ```gleam
-  text.h1([], [html.text("Heading")])                          // defaults
-  text.h1([text.color(text.Muted), text.align(text.Center)], […])
+  text.s1([], [html.text("Heading")])                          // defaults
+  text.s1([text.color(text.Muted), text.align(text.Center)], […])
   ```
   `Attr` is **opaque** with deliberately **no `class`/`style` constructor**, so
   off-token / off-scale text *can't be expressed* — the guarantee a recipe page
@@ -236,29 +236,35 @@ a deliberate divergence, justified by the platform:
 
 Shape of it:
 
-- **A closed, *numeric* `Style` scale** — `h1 … h7` (the way a designer names a
-  text style in Figma: "set h5, it maps to the DS"; semantic names like
-  `Body`/`Large`/`Lead` were "harder to remember what to apply"). Each member
-  bundles size + weight + leading + tracking + family as *one* decision. **Weight
-  variants are baked enum members** — `H4M` (medium), `H4B` (bold), `H5M`, `H6M`,
-  `H6B` — a *curated allow-list* with the terse `h4_m`/`h4_b` helper convention
-  from the Latitude `Text`. We **rejected a `weight()` modifier**: it would permit
-  off-scale combos (h1 + thin) and need override machinery, whereas baked members
-  only allow sanctioned styles (stronger enforcement, 1:1 with named Figma
-  styles, simpler CSS). Element default: `h1–h4` → `<h1>–<h4>`; `h5–h7` → neutral
-  `<p>` (a body-sized `<h6>` would pollute the a11y outline).
+- **A closed, numeric *size* scale — `s1 … s7` (`s1` = largest), not headings.**
+  It's a type-size ramp the way a designer picks a step in Figma; semantic names
+  (`Body`/`Large`/`Lead`) were "harder to remember what to apply." Crucially the
+  number means **size only — no element semantics** (we renamed away from `h1…h7`
+  precisely because the `h` falsely implied a heading element). shadcn is
+  web-app-first, where semantic headings matter far less than on marketing pages;
+  the few places they matter use `render_as`. Each member bundles size + weight +
+  leading + tracking + family as *one* decision. **Weight variants are baked enum
+  members** — `S4M` (medium), `S4B` (bold), `S5M`, `S6M`, `S6B` — a *curated
+  allow-list* (terse `s4_m`/`s4_b` helpers). We **rejected a `weight()`
+  modifier**: it would permit off-scale combos (s1 + thin) and need override
+  machinery; baked members only allow sanctioned styles (stronger enforcement,
+  1:1 with named Figma styles, simpler CSS).
+- **Element is decoupled — default `<span>`, `render_as` for semantics.** Every
+  step renders a neutral inline **`<span>`** (the common case in app UIs; inline
+  is the flexible default). When you want a semantic element —
+  `text.s1([text.render_as(html.h1)], …)` for a real heading on a public page, or
+  `text.s6([text.render_as(html.p)], …)` for a block paragraph — opt in. Because
+  the number is size-only, there's no dual-meaning and no "looks-like-a-heading
+  but isn't" trap: it's *always* just a `<span>` unless you say otherwise.
 - **Tokenized modifiers, every one a closed enum, all `Attr` constructors.** The
   Latitude `Text` prop set — but typed: `color` (default `Foreground`), `align`,
   `transform`, `decoration`, `italic`, `truncate` (`Ellipsis` | `Lines(n)`, n
   clamped 1–6), `whitespace`, `word_break`, `wrap` (balance/pretty), `opacity`,
   `selectable`. Omit the `Attr` ⇒ that class isn't emitted.
 - **`render_as` + a11y/events live in the same list — no raw `class` anywhere.**
-  `text.render_as(html.h3)` renders the style on a *different*, real Lustre
-  element (the asChild / `useRender` analogue) — so an H1 *look* on a semantic
-  `<h3>` is `text.h1([text.render_as(html.h3)], …)`, no `import html` + merge
-  dance, and never the Latitude `Text.H1`-renders-`<span>` footgun. `text.id` /
-  `text.aria` / `text.data` / `text.on_click` cover a11y + interaction. All are
-  the same opaque `Attr`, none can carry `class`.
+  `text.id` / `text.aria` / `text.data` / `text.on_click` cover a11y +
+  interaction, alongside `render_as`. All are the same opaque `Attr`, none can
+  carry `class`.
 - **No headless layer.** Text has no behavior/ARIA beyond the element, so (like
   `icon`) it lives only in `gg_ui/ui/`. Emits `cn-text-*`. The **whole recipe**
   (scale + color + modifiers) lives once in the **universal `styles/text.css`**
@@ -269,12 +275,39 @@ Shape of it:
   Story: `Components/Text` — a kitchen-sink `Playground` (every axis a control)
   plus `Scale` / `Colors` / `AsElement` showcases.
 
+### The honest part: this is a bet, and the API alternative we'd switch to
+
+Shipping a `text` component at all is a **design bet we did not measure**, not a
+proven win. Stated precisely:
+
+> In Gleam, an *element-owning* `text` component (`text.s1(attrs, children)`,
+> where the helper owns the element + children) is worth more than a typed
+> *attrs-helper* (`html.span(text.s1(attrs), children)`, where the **caller**
+> owns the element) — because owning the element/children is more ergonomic, and
+> the cost (a default element you might not want) is cheap now that the scale is
+> size-only.
+
+What we **did** clearly beat: the naive "just ship recipes" option
+(`html.span([attribute.class("cn-text-s1")], …)`). Magic-string class names are
+fine in React/Tailwind but anti-idiomatic in Gleam — typos compile and render
+unstyled, modifiers become hand-assembled strings, zero discoverability. Against
+*that*, the typed component (or the attrs-helper) wins decisively, and that win
+is real, not motivated reasoning.
+
+The **named fallback** if the element-owning shape ever chafes — e.g. the default
+`<span>` is wrong often enough to be annoying — is the **attrs-helper API**:
+`html.span(text.s1([text.color(text.Muted)]), [html.text("…")])`. The caller
+always names the element, so there's *no* default element at all (the most
+honest version), at the cost of naming the tag every time. We chose
+element-owning for ergonomics; this is the documented switch, not a mistake to
+fix. (We do **not** keep both — one API surface.)
+
 **Status: spike.** Open points: whether the curated `Attr` set needs typed
-**events** (currently id/aria/data only — events go through the escape hatch);
-and a **shared size ramp** so other sized components (button, input, …) draw
-their text size from the same scale instead of picking utilities ad-hoc (the
-"feels less random" idea — likely a documented `--text-*`/named ramp; deliberate
-cross-component pass).
+**events** (currently id/aria/data/on_click); and a **shared size ramp** so other
+sized components (button, input, …) draw their text size from the same scale
+instead of picking utilities ad-hoc (the "feels less random" idea — *not* new
+materialized tokens; just a documented mapping onto Tailwind's `--text-*`, which
+button already uses, kept shadcn-faithful).
 
 ## Two philosophies, side by side
 
@@ -287,12 +320,12 @@ argument for the right-hand column.
 | --- | --- | --- |
 | **Ships a typography component?** | **No.** Typography is a docs page of utility-class recipes. | **Yes** — `gg_ui/ui/text.gleam`, a real typed component. |
 | **Core principle** | *Recipes, not abstractions.* You own the markup + classes. | *Enforcement, not documentation.* The API can't express off-token/off-scale text. |
-| **How you style an h1** | `<h1 className="scroll-m-20 text-4xl font-extrabold …">` — a string you copy. | `text.h1([], […])` — mirrors Lustre's `html.h1(attrs, children)`; the recipe lives in a `cn-*` fragment. |
-| **The scale** | Open: any Tailwind utilities, any combination. | Closed numeric `h1…h7` enum + curated baked weight members (`h4_m`/`h4_b`). |
+| **How you size text** | `<h1 className="scroll-m-20 text-4xl font-extrabold …">` — a string you copy. | `text.s1([], […])` — mirrors Lustre's `html.span(attrs, children)`; the recipe lives in a `cn-*` fragment. |
+| **The scale** | Open: any Tailwind utilities, any combination. | Closed numeric **size** ramp `s1…s7` + curated baked weight members (`s4_m`/`s4_b`). |
 | **Off-scale text** | Possible by design (you can write anything). | Impossible to express — the opaque `Attr` has no `class`/`style` constructor. |
 | **Color / modifiers** | Raw utilities (`text-muted-foreground`, `uppercase`, `line-clamp-2`). | Tokenized `Attr`s (`text.color(Muted)`, `text.transform(Uppercase)`, `text.truncate(Lines(2))`). |
 | **tailwind-merge** | Needed (many class sources can conflict). | **None** — `cn-*` names never conflict; pure join, dual-target. |
-| **Element vs style** | The recipe is applied to whatever element you write. | Decoupled: helpers default a tag (h1–h4 headings, h5–h7 `<p>`); `text.render_as(html.h3)` puts any style on any element. |
+| **Element vs size** | The recipe is applied to whatever element you write. | Decoupled: size carries no semantics, default `<span>`; `text.render_as(html.h1)` opts into a semantic element. |
 | **Escape valves** | n/a — it's all open. | `text.render_as` (element) + `text.id`/`aria`/`data`/`on_click` (a11y/events) — same opaque `Attr` list; none can carry `class`. |
 | **Why this fits** | A *public registry you copy and own* → transparency > consistency; no abstraction to fight. | A *kit consumed as typed Gleam* → consistency > transparency; utility-string juggling is awkward and a closed API guarantees the scale. |
 
@@ -304,9 +337,12 @@ keep shadcn's foundations (token-driven color via the Base Color / Theme axes,
 the `cn-*` + per-shape-fragment authoring model, ejectability) and only swap the
 *surface*: a typed component instead of a recipe page. The Latitude `Text` atom
 (the user's own prior art) sat at the far end of this axis — we took its
-ergonomics but dropped its `className` hole, its `<span>`-as-`H1` footgun, and
-its open `size`/`weight` axes, all of which leaked the consistency a design
-system is supposed to enforce.
+ergonomics but dropped its `className` hole and its open `size`/`weight` axes,
+which leaked the consistency a design system is supposed to enforce. We kept its
+**`<span>` default**, but it's not the footgun it was there: Latitude's `Text.H1`
+rendered a `<span>` while *named* like a heading (a lie); our `text.s1` is named
+a **size**, so a `<span>` is exactly what it says — and `render_as` is the
+honest, visible opt-in when you want real heading semantics.
 
 ## Open questions
 
