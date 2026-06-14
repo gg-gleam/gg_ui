@@ -1,0 +1,9 @@
+---
+version: 1.5.5
+title: gg_base_ui combobox option — disabled
+file: ./test/combobox_test.gleam
+test_name: render_option_disabled_test
+---
+<div aria-disabled="true" aria-selected="false" data-disabled id="cb-listbox-option-2" role="option">
+  Soldout
+</div>

@@ -4,13 +4,19 @@
 //// highlight, and listbox ARIA must run in a `Model`/`Msg`/`update`/`view`
 //// component. See [`dev-docs/stateful-components.md`](../../../../dev-docs/stateful-components.md).
 ////
-//// This module is the **pure core** (PR 1 of the port): the state record and the
-//// pure transitions over it — filtering and highlight navigation — with **no
-//// DOM, no effects, no ARIA**. It compiles and behaves identically on JS and the
-//// BEAM (rule 3), and is exhaustively unit-tested, because the cross-target risk
-//// lives here. The effectful shell (the Lustre component: `update` wiring,
-//// listbox/option ARIA, the scroll-into-view / focus / anchor-width FFI) layers
-//// on top in a later PR and is the *only* place DOM enters.
+//// The module has two clearly-separated halves (see
+//// [`dev-docs/stateful-components.md`](../../../../dev-docs/stateful-components.md)):
+////
+//// 1. **Pure core** — the state record and the pure transitions over it
+////    (filtering, highlight navigation, open/close/query/select) with **no DOM,
+////    no effects, no ARIA**. It behaves identically on JS and the BEAM (rule 3)
+////    and is where the cross-target risk lives, so it's exhaustively unit-tested.
+//// 2. **Effectful shell** — the Lustre component: `Anatomy`, `Msg`, `update`
+////    (core transition + DOM effect), and the listbox/option `view` parts with
+////    their ARIA. This is the **only** place DOM enters — event wiring, native
+////    popover show/hide, and the scroll-into-view / focus FFI. The host embeds it
+////    as an MVU module (its model holds a `Model(value)` + an `Anatomy`; its
+////    update threads `Msg` through `update`).
 ////
 //// Base UI mapping (the parts this core feeds, added later): `Root` owns this
 //// `Model`; `Input` dispatches `set_query`; `List`/`Item` render `visible`;
@@ -20,9 +26,18 @@
 //// chips come in a later PR. `SelectionMode` is declared so the shell and the
 //// styled facade can pin the axis from the start.
 
+import gg_base_ui/helpers/id_gen/id_gen
+import gg_base_ui/positioning/positioning.{type Placement}
+import gleam/dynamic/decode
+import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/string
+import lustre/attribute.{type Attribute}
+import lustre/effect.{type Effect}
+import lustre/element.{type Element}
+import lustre/element/html
+import lustre/event
 
 // --- Items ---------------------------------------------------------------
 
@@ -264,4 +279,327 @@ pub fn is_selected(model: Model(value), value: value) -> Bool {
 /// Whether the visible list is empty (drives the `Empty` part).
 pub fn is_empty(model: Model(value)) -> Bool {
   visible_count(model) == 0
+}
+
+// =========================================================================
+// EFFECTFUL SHELL — the Lustre component (Anatomy / Msg / update / view)
+// =========================================================================
+//
+// The only place DOM enters. Drives the pure core above and adds event wiring,
+// listbox/option ARIA, native-popover show/hide, and the scroll/focus FFI.
+
+// --- Anatomy -------------------------------------------------------------
+
+/// The stable ids the parts share. Mint **once** (the `useId` analogue) and keep
+/// it in the host model; never recompute per render.
+pub type Anatomy {
+  Anatomy(input_id: String, listbox_id: String, label_id: String)
+}
+
+/// Build an `Anatomy` with a fresh, collision-free base id (the default).
+pub fn anatomy() -> Anatomy {
+  anatomy_with_id(id_gen.generate_with_prefix("combobox"))
+}
+
+/// Build an `Anatomy` from an explicit base id — for tests or pinning across a
+/// server/client render boundary. The caller owns uniqueness.
+pub fn anatomy_with_id(id: String) -> Anatomy {
+  Anatomy(
+    input_id: id <> "-input",
+    listbox_id: id <> "-listbox",
+    label_id: id <> "-label",
+  )
+}
+
+/// Stable id for the option at visible position `pos` — the target of the
+/// input's `aria-activedescendant` and the option's own `id`.
+pub fn option_id(anatomy: Anatomy, pos: Int) -> String {
+  anatomy.listbox_id <> "-option-" <> int.to_string(pos)
+}
+
+// --- Msg -----------------------------------------------------------------
+
+/// What the component handles. The host threads these through `update`; it never
+/// constructs them by hand (the view parts wire the events), so a styled facade
+/// can keep `Msg` opaque.
+pub type Msg {
+  /// The input's text changed (`on_input`): re-filter + open.
+  InputChanged(String)
+  /// ArrowDown — highlight the next visible option (opening if closed).
+  MoveNext
+  /// ArrowUp — highlight the previous visible option.
+  MovePrevious
+  /// Home — highlight the first visible option.
+  MoveFirst
+  /// End — highlight the last visible option.
+  MoveLast
+  /// Enter — select the highlighted option.
+  ChooseActive
+  /// Escape — close without selecting.
+  Dismissed
+  /// A pointer click on the visible option at this position.
+  OptionChosen(Int)
+  /// Hover moved onto the visible option at this position (highlight follows).
+  OptionHighlighted(Int)
+  /// The native popover's `toggle` fired (`True` open / `False` closed) — keeps
+  /// the model in sync when the browser light-dismisses.
+  ListToggled(Bool)
+  /// The input gained focus / was clicked — open the list.
+  OpenRequested
+}
+
+// --- update --------------------------------------------------------------
+
+/// Map a `Msg` to a pure core transition plus any DOM effect (native popover
+/// show/hide, scroll the active option into view, focus the input). Returns the
+/// new model and its effect; the host inspects `model.selected` for the choice.
+pub fn update(
+  anatomy: Anatomy,
+  model: Model(value),
+  msg: Msg,
+) -> #(Model(value), Effect(Msg)) {
+  case msg {
+    InputChanged(text) -> #(set_query(model, text), show(anatomy))
+    MoveNext -> navigated(anatomy, model, Next)
+    MovePrevious -> navigated(anatomy, model, Previous)
+    MoveFirst -> navigated(anatomy, model, First)
+    MoveLast -> navigated(anatomy, model, Last)
+    ChooseActive -> {
+      let #(next, _) = select_active(model)
+      #(next, hide(anatomy))
+    }
+    Dismissed -> #(close(model), hide(anatomy))
+    OptionChosen(pos) -> {
+      let #(next, _) = select_active(Model(..model, active_index: Some(pos)))
+      #(next, hide(anatomy))
+    }
+    OptionHighlighted(pos) -> #(
+      Model(..model, active_index: Some(pos)),
+      effect.none(),
+    )
+    ListToggled(True) -> #(open(model), effect.none())
+    ListToggled(False) -> #(close(model), effect.none())
+    OpenRequested -> #(
+      open(model),
+      effect.batch([show(anatomy), focus(anatomy)]),
+    )
+  }
+}
+
+// Arrow / Home / End: open (if needed), move the highlight, then show + scroll
+// the now-active option into view.
+fn navigated(
+  anatomy: Anatomy,
+  model: Model(value),
+  nav: Nav,
+) -> #(Model(value), Effect(Msg)) {
+  let next = move(open(model), nav)
+  #(next, effect.batch([show(anatomy), scroll_active(anatomy, next)]))
+}
+
+fn scroll_active(anatomy: Anatomy, model: Model(value)) -> Effect(Msg) {
+  case model.active_index {
+    Some(pos) ->
+      effect.from(fn(_dispatch) {
+        scroll_option_into_view(option_id(anatomy, pos))
+      })
+    None -> effect.none()
+  }
+}
+
+fn show(anatomy: Anatomy) -> Effect(Msg) {
+  effect.from(fn(_dispatch) { show_listbox(anatomy.listbox_id) })
+}
+
+fn hide(anatomy: Anatomy) -> Effect(Msg) {
+  effect.from(fn(_dispatch) { hide_listbox(anatomy.listbox_id) })
+}
+
+fn focus(anatomy: Anatomy) -> Effect(Msg) {
+  effect.from(fn(_dispatch) { focus_input(anatomy.input_id) })
+}
+
+// --- view parts ----------------------------------------------------------
+
+/// The combobox `<input>` — `role="combobox"` wired to the listbox + the active
+/// option, with the text + keyboard behaviour. Merge styling via `attrs`. The
+/// anchor for the listbox's positioning is this element.
+pub fn input(
+  anatomy: Anatomy,
+  model: Model(value),
+  attrs: List(Attribute(Msg)),
+) -> Element(Msg) {
+  html.input(
+    list.flatten([
+      [
+        attribute.id(anatomy.input_id),
+        attribute.attribute("role", "combobox"),
+        attribute.attribute("aria-autocomplete", "list"),
+        attribute.attribute("aria-expanded", bool_attr(model.open)),
+        attribute.attribute("aria-controls", anatomy.listbox_id),
+        attribute.value(model.input_value),
+        positioning.anchor_style(anatomy.input_id),
+        event.on_input(InputChanged),
+        event.advanced("keydown", keydown_handler()),
+        event.on_focus(OpenRequested),
+      ],
+      active_descendant(anatomy, model),
+      attrs,
+    ]),
+  )
+}
+
+/// The popup `role="listbox"`, a native `popover="auto"` anchored to the input
+/// (top layer + light-dismiss for free). `placement` / `side_offset` reuse
+/// `gg_base_ui/positioning`. Pass the `option`s as children.
+pub fn listbox(
+  anatomy: Anatomy,
+  placement: Placement,
+  side_offset: Int,
+  attrs: List(Attribute(Msg)),
+  options: List(Element(Msg)),
+) -> Element(Msg) {
+  html.div(
+    list.flatten([
+      [
+        attribute.id(anatomy.listbox_id),
+        attribute.attribute("role", "listbox"),
+        attribute.attribute("popover", "auto"),
+        attribute.attribute(
+          "data-side",
+          positioning.side_to_string(placement.side),
+        ),
+        attribute.attribute(
+          "data-align",
+          positioning.align_to_string(placement.align),
+        ),
+        event.on("toggle", toggle_decoder()),
+      ],
+      positioning.positioned_style(anatomy.input_id, placement, side_offset),
+      attrs,
+    ]),
+    options,
+  )
+}
+
+/// One `role="option"` at visible position `pos`. Carries `aria-selected`,
+/// `data-highlighted` when active, and `data-disabled`/`aria-disabled`; clicking
+/// selects, hovering highlights. `children` is the label (+ any indicator).
+pub fn option(
+  anatomy: Anatomy,
+  model: Model(value),
+  pos: Int,
+  item: Item(value),
+  attrs: List(Attribute(Msg)),
+  children: List(Element(Msg)),
+) -> Element(Msg) {
+  html.div(
+    list.flatten([
+      [
+        attribute.id(option_id(anatomy, pos)),
+        attribute.attribute("role", "option"),
+        attribute.attribute(
+          "aria-selected",
+          bool_attr(is_selected(model, item.value)),
+        ),
+        event.on_click(OptionChosen(pos)),
+        event.on_mouse_enter(OptionHighlighted(pos)),
+      ],
+      highlighted_attr(model, pos),
+      disabled_attr(item),
+      attrs,
+    ]),
+    children,
+  )
+}
+
+fn active_descendant(
+  anatomy: Anatomy,
+  model: Model(value),
+) -> List(Attribute(Msg)) {
+  case model.open, model.active_index {
+    True, Some(pos) -> [
+      attribute.attribute("aria-activedescendant", option_id(anatomy, pos)),
+    ]
+    _, _ -> []
+  }
+}
+
+fn highlighted_attr(model: Model(value), pos: Int) -> List(Attribute(Msg)) {
+  case model.active_index == Some(pos) {
+    True -> [attribute.attribute("data-highlighted", "")]
+    False -> []
+  }
+}
+
+fn disabled_attr(item: Item(value)) -> List(Attribute(Msg)) {
+  case item.disabled {
+    True -> [
+      attribute.attribute("data-disabled", ""),
+      attribute.attribute("aria-disabled", "true"),
+    ]
+    False -> []
+  }
+}
+
+fn bool_attr(value: Bool) -> String {
+  case value {
+    True -> "true"
+    False -> "false"
+  }
+}
+
+fn keydown_handler() -> decode.Decoder(event.Handler(Msg)) {
+  use key <- decode.field("key", decode.string)
+  // Nav keys dispatch + preventDefault (stop the caret/page from also moving);
+  // any other key fails the decoder, so typing flows through untouched.
+  case key {
+    "ArrowDown" -> decode.success(nav_handler(MoveNext))
+    "ArrowUp" -> decode.success(nav_handler(MovePrevious))
+    "Home" -> decode.success(nav_handler(MoveFirst))
+    "End" -> decode.success(nav_handler(MoveLast))
+    "Enter" -> decode.success(nav_handler(ChooseActive))
+    "Escape" ->
+      decode.success(event.handler(
+        dispatch: Dismissed,
+        prevent_default: False,
+        stop_propagation: False,
+      ))
+    _ -> decode.failure(nav_handler(Dismissed), "combobox-ignored-key")
+  }
+}
+
+fn nav_handler(msg: Msg) -> event.Handler(Msg) {
+  event.handler(dispatch: msg, prevent_default: True, stop_propagation: False)
+}
+
+fn toggle_decoder() -> decode.Decoder(Msg) {
+  use new_state <- decode.field("newState", decode.string)
+  decode.success(ListToggled(new_state == "open"))
+}
+
+// --- FFI -----------------------------------------------------------------
+//
+// JS-only; the Erlang fallbacks never run (effects execute client-side), so an
+// SSR render produces the markup with no client effect. Keep export names in
+// sync with `combobox_ffi.ts`.
+
+@external(javascript, "./combobox_ffi.ts", "showPopover")
+fn show_listbox(_listbox_id: String) -> Nil {
+  Nil
+}
+
+@external(javascript, "./combobox_ffi.ts", "hidePopover")
+fn hide_listbox(_listbox_id: String) -> Nil {
+  Nil
+}
+
+@external(javascript, "./combobox_ffi.ts", "scrollOptionIntoView")
+fn scroll_option_into_view(_option_id: String) -> Nil {
+  Nil
+}
+
+@external(javascript, "./combobox_ffi.ts", "focusInput")
+fn focus_input(_input_id: String) -> Nil {
+  Nil
 }
