@@ -1,16 +1,33 @@
 # Icons
 
-How a consuming Gleam project gets icons, how registry source stays
-icon-set-agnostic, and how the (future) CLI rewrites placeholders at
-`gg-ui add` time.
+How a consuming Gleam project gets icons, how a component picks a default set,
+and how the (future) CLI rewrites the icon imports at `gg-ui add` time.
 
-The model copies **shadcn's ergonomics** (a placeholder in source + a
-transformer at install time) but inverts shadcn's **source of truth**: where
-shadcn re-exports SVG from npm packages it doesn't own, we **bake the SVG into
-Gleam** so it works on both Lustre targets. The icon geometry lives in
-**per-set Hex packages we own** (`gg_icons_lucide`, `gg_icons_tabler`, …),
-each with its own **pure-Gleam generator**, all conforming to one shared
-interface so any set is consumed identically.
+The model copies **shadcn's ergonomics** — a **default icon set referenced
+directly in the component source**, swapped by a transformer at install time —
+but inverts shadcn's **source of truth**: where shadcn re-exports SVG from npm
+packages it doesn't own, we **bake the SVG into Gleam** so it works on both
+Lustre targets. The icon geometry lives in **per-set Hex packages we own**
+(`gg_icons_lucide`, `gg_icons_tabler`, …), each with its own **pure-Gleam
+generator**, all conforming to one shared interface so any set is consumed
+identically.
+
+> **What components actually do today (see `gg_ui/ui/combobox`).** A component's
+> *structural* glyphs (a combobox's chevron / check / clear ✕) are built in from
+> the **default set, lucide** — `gg_ui` depends on `gg_icons_lucide` and the
+> component `import`s it **directly** (`lu_c.chevron_down(...)`). This mirrors
+> shadcn's *real* shipped mechanism (a concrete `lucide-react` import in source,
+> see below). The future CLI rewrites that import to the user's `components.json`
+> set at eject (name-mapped), so an ejected app installs only its chosen set —
+> nobody is forced onto lucide, exactly as with shadcn.
+>
+> **⚠️ Open reconciliation.** The later section *"The placeholder — our
+> equivalent"* sketches an alternative where components reference a `gg_icon`
+> *placeholder* function that the CLI compiles away (gg_ui's own
+> `<IconPlaceholder>`-style indirection). The combobox does **not** use that — it
+> imports lucide directly. The two need to be reconciled into one model (direct
+> default import vs. placeholder indirection) before the CLI is built; the
+> direct-import path is what currently ships.
 
 **Variants are first-class.** A *set* (lucide, tabler, …) is a family of one or
 more *variants* — a variant is a single rendering style with its own geometry
@@ -47,34 +64,30 @@ pub fn chevron_down(attrs: List(Attribute(msg))) -> Element(msg) {
 
 ## How shadcn does it (for reference)
 
-Four parts — and the key fact is that **shadcn never owns icon geometry**; it
-lives in whichever npm package you chose.
+The key fact is that **shadcn never owns icon geometry**; it lives in whichever
+npm package you chose. Verified against `shadcn-ui` (new-york-v4):
 
-1. **`<IconPlaceholder>`** — a component in **registry source** with one prop per
-   supported library: `<IconPlaceholder lucide="ChevronDown" tabler="IconChevronDown"
-   hugeicons="ArrowDown01Icon" className="size-4" />`. It is **not in the user's
-   final code** (see #3).
-2. **`iconLibraries` table** (`packages/shadcn/src/icons/libraries.ts`) — per
-   library: which npm packages to install, the `import` line, and a `usage`
-   template. Each library renders differently (`<ICON/>` for lucide,
-   `<HugeiconsIcon icon={ICON} strokeWidth={2}/>` for hugeicons) — which is why
-   they can't be unified into one renderer.
-3. **`transformIcons`** (`transform-icons.ts`) — a `ts-morph` AST pass that runs
-   at `shadcn add`. Reads `components.json → iconLibrary`, finds every
-   `<IconPlaceholder>`, keeps the prop for the chosen library, rewrites the
-   element via that library's `usage` template, strips the other props + the
-   placeholder import, and adds the real `import { ChevronDown } from
-   "lucide-react"`. **After this pass the placeholder is gone** — the file on
-   disk imports the concrete library. One-time rewrite, zero runtime cost.
-4. **The docs-site loader** — a *runtime* re-implementation of `IconPlaceholder`
-   (`create-icon-loader.tsx`, `lazy`/`Suspense`, reads a search param) that
-   powers the "preview in lucide / tabler / phosphor" toggle on ui.shadcn.com.
-   **Docs-only; never shipped to user code.**
+1. **The shipped registry source imports a default library directly.** E.g.
+   `apps/v4/registry/new-york-v4/ui/combobox.tsx` opens with `import { CheckIcon,
+   ChevronDownIcon, XIcon } from "lucide-react"`. There is **no `<IconPlaceholder>`
+   in the shipped component** — lucide is the concrete default.
+2. **`transform-icons.ts`** — a `ts-morph` AST pass that runs at `shadcn add`.
+   Reads `components.json → iconLibrary`; if it isn't lucide, it **rewrites the
+   real `lucide-react` import** to the chosen library (e.g. `import { CheckIcon }
+   from "@radix-ui/react-icons"`) using a **name-mapping table** (lucide name →
+   target name). One-time rewrite, zero runtime cost. So you install **only the
+   set you chose** — lucide is never added if you picked radix.
+3. **`IconPlaceholder`** (`apps/v4/app/(create)/components/icon-placeholder.tsx`)
+   — a **docs-site / `create`-app preview** component only. It powers the
+   "preview in lucide / tabler / …" toggle on ui.shadcn.com. **It is not in the
+   shipped registry components and never reaches user code.**
 
-> **So what is the placeholder *for*?** Two roles, same name: (a) the
-> authoring-time indirection in **registry source** that the transformer
-> compiles away, and (b) a **docs preview** shim. The user's installed code
-> contains neither — only the concrete icon call.
+> **Correction (was wrong here before):** earlier this doc described
+> `<IconPlaceholder>` as shadcn's *shipped* registry-source mechanism with the
+> transformer compiling it away. That's inaccurate — `IconPlaceholder` is
+> docs-preview-only; the shipped components import a concrete default (lucide)
+> and `transform-icons` rewrites that import. `gg_ui` follows the *real*
+> mechanism (default-set import + CLI swap), per the note at the top.
 
 `apps/v4/scripts/build-icons.ts` scans registry source for placeholder usage and
 generates `__lucide__.ts` etc. — but those are just **re-exports**

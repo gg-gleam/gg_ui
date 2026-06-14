@@ -217,6 +217,13 @@ pub fn close(model: Model(value)) -> Model(value) {
   Model(..model, open: False, active_index: None)
 }
 
+/// Reset to the empty state — drop the selection, the typed text, and the
+/// highlight (the open state is left as-is). Backs the clear affordance; unrelated
+/// to selection mode (a single-select can be clearable).
+pub fn clear(model: Model(value)) -> Model(value) {
+  Model(..model, selected: None, input_value: "", query: "", active_index: None)
+}
+
 /// The user typed: set the filter `query` and the displayed `input_value` to the
 /// text, open the list, and re-seat the highlight. `auto_highlight` lands on the
 /// first match; otherwise the highlight clears (a stale index would point at the
@@ -342,10 +349,17 @@ pub type Msg {
   /// Hover moved onto the visible option at this position (highlight follows).
   OptionHighlighted(Int)
   /// The native popover's `toggle` fired (`True` open / `False` closed) — keeps
-  /// the model in sync when the browser light-dismisses.
+  /// the model in sync.
   ListToggled(Bool)
-  /// The input gained focus / was clicked — open the list.
+  /// The input gained focus or was clicked — open the list.
   OpenRequested
+  /// The trigger (chevron) was clicked — toggle the list open/closed.
+  ToggleRequested
+  /// The clear affordance was pressed — drop the selection + typed text.
+  Cleared
+  /// No-op — carries a `preventDefault` on the popup's mousedown so a click
+  /// inside the list doesn't blur the input (and so close it) before it lands.
+  Noop
 }
 
 // --- update --------------------------------------------------------------
@@ -383,6 +397,14 @@ pub fn update(
       open(model),
       effect.batch([show(anatomy), focus(anatomy)]),
     )
+    ToggleRequested ->
+      case model.open {
+        True -> #(close(model), hide(anatomy))
+        False -> #(open(model), effect.batch([show(anatomy), focus(anatomy)]))
+      }
+    // Clearing keeps focus so the user can keep typing.
+    Cleared -> #(clear(model), focus(anatomy))
+    Noop -> #(model, effect.none())
   }
 }
 
@@ -421,9 +443,19 @@ fn focus(anatomy: Anatomy) -> Effect(Msg) {
 
 // --- view parts ----------------------------------------------------------
 
+/// The positioning anchor for the listbox. Put it on the **field** — the element
+/// whose width the popup should match. For a bare input that's the input itself;
+/// when the input is wrapped (e.g. in an input-group with a trailing chevron) put
+/// it on the *wrapper*, so `anchor-size(width)` matches the whole field rather
+/// than the narrower inner input.
+pub fn anchor(anatomy: Anatomy) -> Attribute(msg) {
+  positioning.anchor_style(anatomy.input_id)
+}
+
 /// The combobox `<input>` — `role="combobox"` wired to the listbox + the active
-/// option, with the text + keyboard behaviour. Merge styling via `attrs`. The
-/// anchor for the listbox's positioning is this element.
+/// option, with the text + keyboard behaviour. Merge styling via `attrs`. Place
+/// `anchor` on the field element (this input, or its wrapper) so the popup can
+/// tether + size to it.
 pub fn input(
   anatomy: Anatomy,
   model: Model(value),
@@ -438,10 +470,15 @@ pub fn input(
         attribute.attribute("aria-expanded", bool_attr(model.open)),
         attribute.attribute("aria-controls", anatomy.listbox_id),
         attribute.value(model.input_value),
-        positioning.anchor_style(anatomy.input_id),
         event.on_input(InputChanged),
         event.advanced("keydown", keydown_handler()),
         event.on_focus(OpenRequested),
+        // Click an already-focused input to reopen (focus won't refire).
+        event.on_click(OpenRequested),
+        // Outside-click dismissal: losing focus closes the list. Clicks inside
+        // the popup keep focus (the listbox's mousedown preventDefault below), so
+        // this only fires for a genuine click-away or Tab-out.
+        event.on_blur(Dismissed),
       ],
       active_descendant(anatomy, model),
       attrs,
@@ -449,9 +486,16 @@ pub fn input(
   )
 }
 
-/// The popup `role="listbox"`, a native `popover="auto"` anchored to the input
-/// (top layer + light-dismiss for free). `placement` / `side_offset` reuse
-/// `gg_base_ui/positioning`. Pass the `option`s as children.
+/// The popup `role="listbox"`, anchored to the input via `gg_base_ui/positioning`.
+///
+/// It's a **`popover="manual"`** (not `auto`): we still want the native top layer
+/// (so the list escapes `overflow`/`transform` clipping), but **not** the native
+/// light-dismiss — `auto` would close the list on the very click that opened it,
+/// because our trigger is an `<input>`, not an associated invoker button. The
+/// combobox owns dismissal instead (input blur + Escape), the way Base UI's
+/// `useDismiss` does. The mousedown `preventDefault` keeps a click *inside* the
+/// popup from blurring the input (which would close it before an option's click
+/// lands). `placement` / `side_offset` reuse `gg_base_ui/positioning`.
 pub fn listbox(
   anatomy: Anatomy,
   placement: Placement,
@@ -464,7 +508,7 @@ pub fn listbox(
       [
         attribute.id(anatomy.listbox_id),
         attribute.attribute("role", "listbox"),
-        attribute.attribute("popover", "auto"),
+        attribute.attribute("popover", "manual"),
         attribute.attribute(
           "data-side",
           positioning.side_to_string(placement.side),
@@ -474,6 +518,7 @@ pub fn listbox(
           positioning.align_to_string(placement.align),
         ),
         event.on("toggle", toggle_decoder()),
+        event.advanced("mousedown", keep_focus_handler()),
       ],
       positioning.positioned_style(anatomy.input_id, placement, side_offset),
       attrs,
@@ -511,6 +556,31 @@ pub fn option(
     ]),
     children,
   )
+}
+
+/// Behaviour for a clear/reset control (shadcn's `ComboboxClear`): clicking it
+/// drops the selection + typed text. The mousedown `preventDefault` keeps the
+/// input focused so the list doesn't blur-close. Merge onto your clear `<button>`.
+pub fn clear_attributes() -> List(Attribute(Msg)) {
+  [
+    attribute.attribute("type", "button"),
+    event.on_click(Cleared),
+    event.advanced("mousedown", keep_focus_handler()),
+  ]
+}
+
+/// Behaviour for the dropdown trigger (shadcn's `ComboboxTrigger`): clicking it
+/// toggles the list. It's `tabindex="-1"` — the input is the focusable control —
+/// and the mousedown `preventDefault` keeps focus on the input. Merge onto your
+/// chevron `<button>`.
+pub fn trigger_attributes() -> List(Attribute(Msg)) {
+  [
+    attribute.attribute("type", "button"),
+    attribute.attribute("tabindex", "-1"),
+    attribute.attribute("aria-label", "Toggle suggestions"),
+    event.on_click(ToggleRequested),
+    event.advanced("mousedown", keep_focus_handler()),
+  ]
 }
 
 fn active_descendant(
@@ -576,6 +646,17 @@ fn nav_handler(msg: Msg) -> event.Handler(Msg) {
 fn toggle_decoder() -> decode.Decoder(Msg) {
   use new_state <- decode.field("newState", decode.string)
   decode.success(ListToggled(new_state == "open"))
+}
+
+// Always preventDefault the popup's mousedown so the focused input isn't blurred
+// by a click inside the list (which `on_blur` would otherwise read as a
+// click-away and close). Dispatches `Noop` — the preventDefault is the point.
+fn keep_focus_handler() -> decode.Decoder(event.Handler(Msg)) {
+  decode.success(event.handler(
+    dispatch: Noop,
+    prevent_default: True,
+    stop_propagation: False,
+  ))
 }
 
 // --- FFI -----------------------------------------------------------------

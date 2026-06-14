@@ -4,4 +4,4 @@ title: gg_base_ui combobox listbox — role + popover + position
 file: ./test/combobox_test.gleam
 test_name: render_listbox_test
 ---
-<div data-align="start" data-side="bottom" id="cb-listbox" popover="auto" role="listbox" style="position-anchor:--gg-cb-input;position-area:block-end span-inline-end;inset:auto;position-try-fallbacks:flip-block, flip-inline, flip-block flip-inline, flip-start, flip-block flip-start, flip-inline flip-start, flip-block flip-inline flip-start;margin-inline:0;margin-block:4px;"></div>
+<div data-align="start" data-side="bottom" id="cb-listbox" popover="manual" role="listbox" style="position-anchor:--gg-cb-input;position-area:block-end span-inline-end;inset:auto;position-try-fallbacks:flip-block, flip-inline, flip-block flip-inline, flip-start, flip-block flip-start, flip-inline flip-start, flip-block flip-inline flip-start;margin-inline:0;margin-block:4px;"></div>

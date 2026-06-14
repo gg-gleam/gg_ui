@@ -17,59 +17,60 @@
  * typed `text.Attr`, so callers never write the raw class themselves.
  */
 
-/* --- the numeric size scale (s1 = largest; the larger steps use the
- *     `--font-heading` display face) ---------------------------------------- */
+/* --- the numeric size scale (s1 = largest) -------------------------------- *
+ * A PURE SIZE RAMP: size + leading + tracking only, at NORMAL weight and the
+ * neutral body font. No `font-heading`, no baked `font-*` weight — emphasis is
+ * the orthogonal `cn-text-weight-*` axis below. This is what makes s1…s7 a size
+ * scale and not a heading scale. */
 
 .cn-text {
-  @apply font-sans;
+  @apply font-sans font-normal;
 }
 
 .cn-text-s1 {
-  @apply font-heading text-4xl font-extrabold tracking-tight text-balance;
+  @apply text-4xl tracking-tight;
 }
 
 .cn-text-s2 {
-  @apply font-heading text-3xl font-semibold tracking-tight;
+  @apply text-3xl tracking-tight;
 }
 
 .cn-text-s3 {
-  @apply font-heading text-2xl font-semibold tracking-tight;
+  @apply text-2xl tracking-tight;
 }
 
 .cn-text-s4 {
-  @apply font-heading text-xl font-semibold tracking-tight;
-}
-
-.cn-text-s4-m {
-  @apply font-heading text-xl font-medium tracking-tight;
-}
-
-.cn-text-s4-b {
-  @apply font-heading text-xl font-bold tracking-tight;
+  @apply text-xl tracking-tight;
 }
 
 .cn-text-s5 {
-  @apply text-lg font-semibold;
-}
-
-.cn-text-s5-m {
-  @apply text-lg font-medium;
+  @apply text-lg;
 }
 
 .cn-text-s6 {
   @apply text-base leading-7;
 }
 
-.cn-text-s6-m {
-  @apply text-base leading-7 font-medium;
-}
-
-.cn-text-s6-b {
-  @apply text-base leading-7 font-semibold;
-}
-
 .cn-text-s7 {
-  @apply text-sm leading-none font-medium;
+  @apply text-sm leading-none;
+}
+
+/* --- weight (orthogonal; the scale bakes in none) ------------------------- */
+
+.cn-text-weight-normal {
+  @apply font-normal;
+}
+
+.cn-text-weight-medium {
+  @apply font-medium;
+}
+
+.cn-text-weight-semibold {
+  @apply font-semibold;
+}
+
+.cn-text-weight-bold {
+  @apply font-bold;
 }
 
 /* --- color (orthogonal; a style never bakes in a color) ------------------- */

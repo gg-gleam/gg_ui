@@ -84,6 +84,14 @@ declare module "*.gleam" {
   export const mount_input_group_alignments: MountWithIcons
   export const mount_input_group_invalid: MountWithIcons
 
+  // combobox story — stateful (lustre.application); side/align controls + icons.
+  export const mount_combobox_playground: (
+    selector: string,
+    side: string,
+    align: string,
+    clearable: boolean,
+  ) => void
+
   // button stories
   export const mount_variants: MountStatic
   export const mount_as_link: MountStatic
@@ -104,6 +112,7 @@ declare module "*.gleam" {
     selector: string,
     style: string,
     color: string,
+    weight: string,
     align: string,
     transform: string,
     decoration: string,
@@ -119,6 +128,7 @@ declare module "*.gleam" {
   ) => void
   export const mount_scale: MountStatic
   export const mount_colors: MountStatic
+  export const mount_weights: MountStatic
   export const mount_as_element: MountStatic
 
   // icon catalog stories

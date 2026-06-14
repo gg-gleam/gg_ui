@@ -242,13 +242,23 @@ Shape of it:
   number means **size only — no element semantics** (we renamed away from `h1…h7`
   precisely because the `h` falsely implied a heading element). shadcn is
   web-app-first, where semantic headings matter far less than on marketing pages;
-  the few places they matter use `render_as`. Each member bundles size + weight +
-  leading + tracking + family as *one* decision. **Weight variants are baked enum
-  members** — `S4M` (medium), `S4B` (bold), `S5M`, `S6M`, `S6B` — a *curated
-  allow-list* (terse `s4_m`/`s4_b` helpers). We **rejected a `weight()`
-  modifier**: it would permit off-scale combos (s1 + thin) and need override
-  machinery; baked members only allow sanctioned styles (stronger enforcement,
-  1:1 with named Figma styles, simpler CSS).
+  the few places they matter use `render_as`. Each step sets **size + leading +
+  tracking only, at normal weight** — a *pure size ramp*.
+  **Weight is the orthogonal `Weight` axis** (`text.weight(text.Semibold)`),
+  default `Normal` — *nothing is bold/medium/semibold by default*. A heading is
+  just a large size you opt into bold + `render_as(html.h1)`.
+
+  > **Reversed bet (was: "rejected a `weight()` modifier").** The scale used to
+  > bake weight into each step (`S4M`/`S4B`/`S5M`/`S6M`/`S6B`, plus `font-heading`
+  > + `font-semibold` on the display steps), on the theory that baked members
+  > enforce sanctioned Figma styles. In practice it **contradicted this doc's own
+  > "size scale, not a heading scale" claim** — a "size" step silently carried
+  > weight *and* a different font face — and made the common "small, normal-weight
+  > caption" un-expressible. So weight is now a normal tokenized modifier like
+  > `color`/`align`. Off-scale risk (s1 + thin) is acceptable: it's the same
+  > freedom `color` already grants, and the size ramp stays clean. The
+  > `s4_m`/`s4_b`/`s5_m`/`s6_m`/`s6_b` helpers are **kept as convenience sugar**
+  > but now just *compose* the base size with a weight modifier.
 - **Element is decoupled — default `<span>`, `render_as` for semantics.** Every
   step renders a neutral inline **`<span>`** (the common case in app UIs; inline
   is the flexible default). When you want a semantic element —
@@ -257,10 +267,11 @@ Shape of it:
   the number is size-only, there's no dual-meaning and no "looks-like-a-heading
   but isn't" trap: it's *always* just a `<span>` unless you say otherwise.
 - **Tokenized modifiers, every one a closed enum, all `Attr` constructors.** The
-  Latitude `Text` prop set — but typed: `color` (default `Foreground`), `align`,
-  `transform`, `decoration`, `italic`, `truncate` (`Ellipsis` | `Lines(n)`, n
-  clamped 1–6), `whitespace`, `word_break`, `wrap` (balance/pretty), `opacity`,
-  `selectable`. Omit the `Attr` ⇒ that class isn't emitted.
+  Latitude `Text` prop set — but typed: `color` (default `Foreground`), `weight`
+  (default `Normal`), `align`, `transform`, `decoration`, `italic`, `truncate`
+  (`Ellipsis` | `Lines(n)`, n clamped 1–6), `whitespace`, `word_break`, `wrap`
+  (balance/pretty), `opacity`, `selectable`. Omit the `Attr` ⇒ that class isn't
+  emitted.
 - **`render_as` + a11y/events live in the same list — no raw `class` anywhere.**
   `text.id` / `text.aria` / `text.data` / `text.on_click` cover a11y +
   interaction, alongside `render_as`. All are the same opaque `Attr`, none can

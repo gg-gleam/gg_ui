@@ -35,8 +35,21 @@
 //// a11y/event attr, or `render_as`. There is deliberately **no `class`/`style`
 //// constructor**, so off-token / off-scale text can't be expressed (and no
 //// tailwind-merge is needed). `color` defaults to `Foreground`; other modifiers
-//// default to "normal" (omit the attr). Weight variants are baked members
-//// (`S4M` = medium, `S4B` = bold) — a curated allow-list, not a free axis.
+//// default to "normal" (omit the attr).
+////
+//// ## Size and weight are orthogonal — nothing is bold by default
+////
+//// The size ramp `s1…s7` sets **only** size + leading + tracking; **every step
+//// is normal weight** (and the neutral body font). Emphasis is a separate,
+//// opt-in axis — `text.weight(text.Semibold)` — exactly like `color` or `align`.
+//// This keeps the scale a pure *size* ramp (resolving the "size scale, not a
+//// heading scale" intent): a heading is just a large size you optionally make
+//// bold and `render_as(html.h1)`, not a step that secretly carries weight.
+////
+//// For the common emphasised sizes there are **convenience shortcuts** — `s4_m`
+//// / `s4_b` / `s5_m` / `s6_m` / `s6_b` — that simply *compose* the base size with
+//// a weight (`s4_m(attrs, kids)` ≡ `s4([text.weight(text.Medium), ..attrs],
+//// kids)`). They're sugar over the orthogonal axis, not separate scale members.
 ////
 //// Emits `cn-*` names; the whole recipe (scale + color + modifiers) lives once
 //// in the universal `styles/text.css` — shadcn doesn't vary the type recipe per
@@ -55,24 +68,17 @@ import lustre/event
 // --- the size scale ----------------------------------------------------------
 
 /// The closed, **numeric size scale** — `s1…s7` (`s1` = largest), a type-size
-/// ramp a designer picks a step from. It carries **no element semantics**; the
-/// rendered element is always a neutral `<span>` unless `render_as` overrides it.
-/// Each member bundles size + weight + leading + tracking + family as ONE
-/// decision. **Weight variants are baked members** (`S4M` = medium, `S4B` =
-/// bold) — a curated allow-list, NOT a free `weight` axis. Add a member only
-/// when the design system defines it.
+/// ramp a designer picks a step from. It carries **no element semantics** (always
+/// a neutral `<span>` unless `render_as` overrides it) and **no weight**: each
+/// step sets only size + leading + tracking, at normal weight. Emphasis is the
+/// orthogonal `Weight` axis (`text.weight`), not a baked-in member.
 pub type Style {
   S1
   S2
   S3
   S4
-  S4M
-  S4B
   S5
-  S5M
   S6
-  S6M
-  S6B
   S7
 }
 
@@ -85,6 +91,16 @@ pub type Color {
   Muted
   Primary
   Destructive
+}
+
+/// Font weight — the orthogonal emphasis axis. `Normal` is the default (omit
+/// `text.weight`); the size scale bakes in no weight, so a heading is just a
+/// large size you opt into `Semibold`/`Bold`.
+pub type Weight {
+  Normal
+  Medium
+  Semibold
+  Bold
 }
 
 /// Logical text alignment.
@@ -151,6 +167,7 @@ pub type Opacity {
 /// `style` constructor**, so an off-token styling override can't be expressed.
 pub opaque type Attr(msg) {
   AttrColor(Color)
+  AttrWeight(Weight)
   AttrAlign(Align)
   AttrTransform(Transform)
   AttrDecoration(Decoration)
@@ -168,6 +185,11 @@ pub opaque type Attr(msg) {
 /// Override the text color (default `Foreground`).
 pub fn color(value: Color) -> Attr(msg) {
   AttrColor(value)
+}
+
+/// Set the font weight (default `Normal` — the scale bakes in none).
+pub fn weight(value: Weight) -> Attr(msg) {
+  AttrWeight(value)
 }
 
 /// Set the text alignment (default `Start`).
@@ -281,18 +303,20 @@ pub fn s4(
   render(S4, attrs, children)
 }
 
+/// `s4` at medium weight — sugar for `s4([text.weight(text.Medium), ..attrs], …)`.
 pub fn s4_m(
   attrs attrs: List(Attr(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  render(S4M, attrs, children)
+  render(S4, [weight(Medium), ..attrs], children)
 }
 
+/// `s4` at bold weight — sugar for `s4([text.weight(text.Bold), ..attrs], …)`.
 pub fn s4_b(
   attrs attrs: List(Attr(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  render(S4B, attrs, children)
+  render(S4, [weight(Bold), ..attrs], children)
 }
 
 pub fn s5(
@@ -302,11 +326,12 @@ pub fn s5(
   render(S5, attrs, children)
 }
 
+/// `s5` at medium weight — sugar for `s5([text.weight(text.Medium), ..attrs], …)`.
 pub fn s5_m(
   attrs attrs: List(Attr(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  render(S5M, attrs, children)
+  render(S5, [weight(Medium), ..attrs], children)
 }
 
 pub fn s6(
@@ -316,18 +341,20 @@ pub fn s6(
   render(S6, attrs, children)
 }
 
+/// `s6` at medium weight — sugar for `s6([text.weight(text.Medium), ..attrs], …)`.
 pub fn s6_m(
   attrs attrs: List(Attr(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  render(S6M, attrs, children)
+  render(S6, [weight(Medium), ..attrs], children)
 }
 
+/// `s6` at bold weight — sugar for `s6([text.weight(text.Bold), ..attrs], …)`.
 pub fn s6_b(
   attrs attrs: List(Attr(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  render(S6B, attrs, children)
+  render(S6, [weight(Bold), ..attrs], children)
 }
 
 pub fn s7(
@@ -380,6 +407,7 @@ fn resolve(attrs: List(Attr(msg))) -> Resolved(msg) {
     AttrColor(c) -> Resolved(..acc, color: c)
     AttrRenderAs(e) -> Resolved(..acc, render_as: Some(e))
     AttrHtml(a) -> Resolved(..acc, html: [a, ..acc.html])
+    AttrWeight(w) -> push(acc, weight_class(w))
     AttrItalic -> push(acc, "cn-text-italic")
     AttrSelectable(False) -> push(acc, "cn-text-select-none")
     AttrSelectable(True) -> acc
@@ -404,14 +432,18 @@ fn style_class(style: Style) -> String {
     S2 -> "cn-text-s2"
     S3 -> "cn-text-s3"
     S4 -> "cn-text-s4"
-    S4M -> "cn-text-s4-m"
-    S4B -> "cn-text-s4-b"
     S5 -> "cn-text-s5"
-    S5M -> "cn-text-s5-m"
     S6 -> "cn-text-s6"
-    S6M -> "cn-text-s6-m"
-    S6B -> "cn-text-s6-b"
     S7 -> "cn-text-s7"
+  }
+}
+
+fn weight_class(weight: Weight) -> String {
+  case weight {
+    Normal -> "cn-text-weight-normal"
+    Medium -> "cn-text-weight-medium"
+    Semibold -> "cn-text-weight-semibold"
+    Bold -> "cn-text-weight-bold"
   }
 }
 

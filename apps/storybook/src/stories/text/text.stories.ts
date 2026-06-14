@@ -5,6 +5,7 @@ import {
   mount_colors,
   mount_scale,
   mount_text_playground,
+  mount_weights,
 } from "./text.gleam"
 
 // The styled `Text` component (gg_ui/ui/text) — gg_ui's typed, tokenized
@@ -16,6 +17,7 @@ import {
 interface TextArgs {
   style: string
   color: string
+  weight: string
   align: string
   transform: string
   decoration: string
@@ -40,6 +42,7 @@ const meta: Meta<TextArgs> = {
   args: {
     style: "s6",
     color: "foreground",
+    weight: "normal",
     align: "start",
     transform: "none",
     decoration: "none",
@@ -55,21 +58,9 @@ const meta: Meta<TextArgs> = {
       "The quick brown fox jumps over the lazy dog, and then keeps on running well past the edge of the line.",
   },
   argTypes: {
-    style: select([
-      "s1",
-      "s2",
-      "s3",
-      "s4",
-      "s4_m",
-      "s4_b",
-      "s5",
-      "s5_m",
-      "s6",
-      "s6_m",
-      "s6_b",
-      "s7",
-    ]),
+    style: select(["s1", "s2", "s3", "s4", "s5", "s6", "s7"]),
     color: select(["foreground", "muted", "primary", "destructive"]),
+    weight: select(["normal", "medium", "semibold", "bold"]),
     align: select(["start", "center", "end"]),
     transform: select(["none", "uppercase", "lowercase", "capitalize"]),
     decoration: select(["none", "underline", "line-through"]),
@@ -97,6 +88,7 @@ export const Playground: Story = {
         selector,
         a.style,
         a.color,
+        a.weight,
         a.align,
         a.transform,
         a.decoration,
@@ -123,6 +115,12 @@ export const Scale: Story = {
 export const Colors: Story = {
   parameters: { controls: { disable: true } },
   render: () => mountLustre(mount_colors),
+}
+
+/** The orthogonal Weight axis — nothing is bold by default; emphasis is opt-in. */
+export const Weights: Story = {
+  parameters: { controls: { disable: true } },
+  render: () => mountLustre(mount_weights),
 }
 
 /** Element-agnostic styling: an H1 look on a semantic `<h3>` (the asChild
