@@ -87,6 +87,30 @@ declare module "*.gleam" {
     iconVariant: string,
   ) => void
 
+  // text component stories
+  // Playground: kitchen sink — one arg per tokenized axis (all strings except
+  // italic/selectable booleans and lines).
+  export const mount_text_playground: (
+    selector: string,
+    style: string,
+    color: string,
+    align: string,
+    transform: string,
+    decoration: string,
+    italic: boolean,
+    truncate: string,
+    lines: number,
+    whitespace: string,
+    wordBreak: string,
+    wrap: string,
+    opacity: string,
+    selectable: boolean,
+    content: string,
+  ) => void
+  export const mount_scale: MountStatic
+  export const mount_colors: MountStatic
+  export const mount_as_element: MountStatic
+
   // icon catalog stories
   export const mount_with_icon: MountWithIcons // button (decorative glyphs)
   export const mount_gallery: MountWithIcons // icons/gallery
@@ -94,3 +118,7 @@ declare module "*.gleam" {
 }
 
 declare module "*.css"
+
+// @fontsource-variable/* packages are CSS-only (side-effect imports inject
+// @font-face); they ship no JS/types. See .storybook/fonts.ts.
+declare module "@fontsource-variable/*"

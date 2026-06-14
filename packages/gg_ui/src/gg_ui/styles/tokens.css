@@ -9,12 +9,39 @@
  * *invalid*, and arbitrary utilities like `rounded-[min(var(--radius-md),10px)]`
  * (used by the xs/sm button sizes) would collapse to a 0 radius. All themes ship
  * the same value, so a single root definition is lossless.
+ *
+ * Font custom props live here for the same reason: the `@theme inline` font
+ * tokens below reference them by name (shadcn's `--font-sans: var(--font-sans)`
+ * pattern), and `inline` means Tailwind does NOT emit its own `--font-*`, so the
+ * value has to come from `:root`. These are only **system-stack fallbacks** so
+ * the utilities resolve before any font is chosen. Font *family* selection is a
+ * consumer concern (shadcn picks a family at create time and writes these vars +
+ * installs the font; `font` is not even a `components.json` field). The library
+ * bundles no font files: a consumer overrides `--font-sans` / `--font-heading`
+ * (`--font-heading` defaults to the body face) — e.g. the Storybook app loads
+ * real families (`@fontsource`) and sets these vars from its Font toolbars.
  */
 :root {
   --radius: 0.625rem;
+
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji";
+  --font-heading: var(--font-sans);
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
 }
 
 @theme inline {
+  /* Font tokens — `inline` so the utilities resolve to the `--font-*` custom
+   * props at use-site (overridable by the consumer) rather than baking a static
+   * value. `font-heading` is the gg_ui-specific utility for display text. */
+  --font-sans: var(--font-sans);
+  --font-heading: var(--font-heading);
+  --font-mono: var(--font-mono);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
