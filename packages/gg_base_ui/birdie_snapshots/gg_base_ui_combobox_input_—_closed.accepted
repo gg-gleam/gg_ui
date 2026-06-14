@@ -1,0 +1,7 @@
+---
+version: 1.5.5
+title: gg_base_ui combobox input — closed
+file: ./test/combobox_test.gleam
+test_name: render_input_closed_test
+---
+<input aria-autocomplete="list" aria-controls="cb-listbox" aria-expanded="false" id="cb-input" role="combobox" style="anchor-name:--gg-cb-input;" value>

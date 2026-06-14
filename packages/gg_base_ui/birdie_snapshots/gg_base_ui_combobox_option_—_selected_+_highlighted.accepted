@@ -1,0 +1,9 @@
+---
+version: 1.5.5
+title: gg_base_ui combobox option — selected + highlighted
+file: ./test/combobox_test.gleam
+test_name: render_option_selected_active_test
+---
+<div aria-selected="true" data-highlighted id="cb-listbox-option-0" role="option">
+  Apple
+</div>
