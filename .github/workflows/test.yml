@@ -23,6 +23,24 @@ jobs:
           node-version: "22"
           cache: "pnpm"
 
+      # Cache the hex deps (~/.cache/gleam) and the per-project incremental build
+      # output. `restore-keys` falls back to the nearest prior build/ on a key
+      # miss (source changed), so `gleam build` recompiles only what changed
+      # instead of starting cold — this is what keeps the storybook warm-up + the
+      # four compile-bearing steps fast. The toolchain version is baked into the
+      # key (keep in sync with setup-beam above); bump it to bust a bad cache.
+      - name: Cache Gleam (hex deps + incremental build)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/gleam
+            packages/gg_base_ui/build
+            packages/gg_ui/build
+            apps/storybook/build
+          key: gleam-${{ runner.os }}-otp28-gleam1.16.0-${{ hashFiles('**/manifest.toml') }}
+          restore-keys: |
+            gleam-${{ runner.os }}-otp28-gleam1.16.0-
+
       - name: Check Gleam formatting
         run: pnpm format:check
 

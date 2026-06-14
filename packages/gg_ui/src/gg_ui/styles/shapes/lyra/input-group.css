@@ -1,0 +1,46 @@
+/* lyra · input-group — shape recipe, translated from shadcn input-group.tsx.
+ * A fragment; no tailwind import.
+ *
+ * Faithful to shadcn's named-group technique: descendants react to the group via
+ * `group-*` variants (`group-data-…/input-group`, `group-has-…/input-group`),
+ * which compile fine inside `@apply`. The one piece that can't live here is the
+ * `group/input-group` *marker* — it's a relationship class, not an applyable
+ * utility — so it's emitted in the markup by `ui/input_group.gleam` (exactly
+ * where shadcn puts it, in the component's class list). */
+.style-lyra {
+  .cn-input-group {
+    @apply relative flex h-9 w-full min-w-0 items-center rounded-none border border-input bg-clip-padding shadow-xs transition-[color,box-shadow] outline-none has-[>textarea]:h-auto has-[>[data-align=inline-start]]:[&>input]:pl-2 has-[>[data-align=inline-end]]:[&>input]:pr-2 has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col has-[>[data-align=block-start]]:[&>input]:pb-3 has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-end]]:[&>input]:pt-3 has-[[data-slot=input-group-control]:focus-visible]:border-ring has-[[data-slot=input-group-control]:focus-visible]:ring-3 has-[[data-slot=input-group-control]:focus-visible]:ring-ring/50 has-[[data-slot][aria-invalid=true]]:border-destructive has-[[data-slot][aria-invalid=true]]:ring-destructive/20 dark:bg-input/30 dark:has-[[data-slot][aria-invalid=true]]:ring-destructive/40;
+  }
+
+  .cn-input-group-addon {
+    @apply flex h-auto cursor-text items-center justify-center gap-2 py-1.5 text-sm font-medium text-muted-foreground select-none group-data-[disabled=true]/input-group:opacity-50 [&>svg:not([class*='size-'])]:size-4;
+  }
+
+  .cn-input-group-addon-align-inline-start {
+    @apply order-first pl-3 has-[>button]:ml-[-0.45rem];
+  }
+
+  .cn-input-group-addon-align-inline-end {
+    @apply order-last pr-3 has-[>button]:mr-[-0.45rem];
+  }
+
+  .cn-input-group-addon-align-block-start {
+    @apply order-first w-full justify-start px-3 pt-3 group-has-[>input]/input-group:pt-2.5;
+  }
+
+  .cn-input-group-addon-align-block-end {
+    @apply order-last w-full justify-start px-3 pb-3 group-has-[>input]/input-group:pb-2.5;
+  }
+
+  .cn-input-group-button {
+    @apply text-sm shadow-none;
+  }
+
+  .cn-input-group-input {
+    @apply flex h-9 w-full min-w-0 flex-1 border-0 bg-transparent px-3 py-1 text-base text-foreground shadow-none outline-none placeholder:text-muted-foreground focus-visible:ring-0 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-transparent;
+  }
+
+  .cn-input-group-text {
+    @apply flex items-center gap-2 text-sm text-muted-foreground [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4;
+  }
+}

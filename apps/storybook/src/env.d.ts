@@ -74,6 +74,16 @@ declare module "*.gleam" {
     iconVariant: string,
   ) => void
 
+  // input-group stories — addon glyphs follow the icon globals.
+  export const mount_input_group_playground: (
+    selector: string,
+    align: string,
+    iconSet: string,
+    iconVariant: string,
+  ) => void
+  export const mount_input_group_alignments: MountWithIcons
+  export const mount_input_group_invalid: MountWithIcons
+
   // button stories
   export const mount_variants: MountStatic
   export const mount_as_link: MountStatic

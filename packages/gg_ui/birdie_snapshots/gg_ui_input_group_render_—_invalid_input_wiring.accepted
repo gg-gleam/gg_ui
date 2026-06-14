@@ -1,0 +1,9 @@
+---
+version: 1.5.5
+title: gg_ui input_group render — invalid input wiring
+file: ./test/input_group_test.gleam
+test_name: render_invalid_input_test
+---
+<div class="cn-input-group group/input-group" data-slot="input-group" role="group">
+  <input aria-invalid="true" class="cn-input-group-input" data-slot="input-group-control">
+</div>
