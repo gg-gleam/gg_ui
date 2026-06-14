@@ -16,9 +16,6 @@ export default defineConfig({
   plugins: [...sharedPlugins, storybookTest({ configDir: ".storybook" })],
   test: {
     name: "storybook",
-    // Warm the Gleam→JS build once before any transform (see the setup file):
-    // keeps vite-plugin-gleam's in-test compile incremental, under its 5s cap.
-    globalSetup: ["./vitest.global-setup.ts"],
     deps: {
       optimizer: {
         web: {
