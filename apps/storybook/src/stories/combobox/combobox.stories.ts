@@ -196,6 +196,16 @@ export const Multiple: Story = {
       ),
     )
 
+    // Layout: the input shares the chips' row (shadcn-style inline wrap) instead
+    // of being pushed onto its own — the field's `w-auto` input override. With
+    // two short chips there's room, so the input sits to their right: it overlaps
+    // the chips' row vertically rather than starting below it.
+    const chipRect = canvas
+      .getByRole("button", { name: "Remove Remix" })
+      .getBoundingClientRect()
+    const inputRect = input.getBoundingClientRect()
+    expect(inputRect.top).toBeLessThan(chipRect.bottom)
+
     // Remove the Remix chip via its button.
     await userEvent.click(canvas.getByRole("button", { name: "Remove Remix" }))
     await waitFor(() =>

@@ -48,8 +48,11 @@
     @apply contents;
   }
 
+  /* The base input recipe is `w-full`, which would claim a whole row in the
+   * wrapping field; drop to `w-auto` so the input sizes to the space left on the
+   * chips' row (and wraps only when narrower than `min-w-24`). */
   .cn-combobox-chips ~ .cn-combobox-input {
-    @apply min-w-24 flex-1;
+    @apply w-auto min-w-24 flex-1;
   }
 
   .cn-combobox-chip {
