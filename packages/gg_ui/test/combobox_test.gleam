@@ -86,6 +86,7 @@ pub fn content_items_test() {
     side: positioning.Bottom,
     align: positioning.Start,
     empty_label: "No fruit found.",
+    loading_label: "Loading…",
   )
   |> element.to_readable_string
   |> birdie.snap(title: "gg_ui combobox content — items + check indicator")
@@ -100,6 +101,7 @@ pub fn content_selected_option_test() {
     side: positioning.Bottom,
     align: positioning.Start,
     empty_label: "No fruit found.",
+    loading_label: "Loading…",
   )
   |> element.to_readable_string
   |> birdie.snap(title: "gg_ui combobox content — selected option")
@@ -112,9 +114,99 @@ pub fn content_empty_test() {
     side: positioning.Bottom,
     align: positioning.Start,
     empty_label: "No fruit found.",
+    loading_label: "Loading…",
   )
   |> element.to_readable_string
   |> birdie.snap(title: "gg_ui combobox content — empty message")
+}
+
+// --- multiple-select: chips + multiselectable ----------------------------
+
+fn multi_config() -> combobox.Config {
+  combobox.Config(loop: True, auto_highlight: False, mode: combobox.Multiple)
+}
+
+// A multiple-select model with Apple + Banana already picked.
+fn multi_selected() -> combobox.Model(Int) {
+  let a = anatomy()
+  let m = combobox.init(items: fruits(), config: multi_config())
+  let #(m, _) = combobox.update(a, m, base_combobox.ListToggled(True))
+  let #(m, _) = combobox.update(a, m, base_combobox.OptionChosen(0))
+  let #(m, _) = combobox.update(a, m, base_combobox.OptionChosen(2))
+  m
+}
+
+pub fn input_chips_test() {
+  // Multiple mode with selections → the chips render leading, each with a remove
+  // button; the trailing affordance stays the chevron (nothing typed).
+  combobox.input(
+    anatomy(),
+    multi_selected(),
+    placeholder: "Search…",
+    clearable: False,
+    attrs: [],
+  )
+  |> element.to_readable_string
+  |> birdie.snap(title: "gg_ui combobox input — multiple-select chips")
+}
+
+pub fn content_multiselectable_test() {
+  // The listbox advertises multi-select; the picked options are aria-selected.
+  combobox.content(
+    anatomy(),
+    multi_selected(),
+    side: positioning.Bottom,
+    align: positioning.Start,
+    empty_label: "No fruit found.",
+    loading_label: "Loading…",
+  )
+  |> element.to_readable_string
+  |> birdie.snap(title: "gg_ui combobox content — multiselectable + selected")
+}
+
+// --- grouped list --------------------------------------------------------
+
+fn grouped() -> combobox.Model(Int) {
+  combobox.init_grouped(
+    groups: [
+      combobox.Group(label: "Citrus", items: [
+        combobox.Item(value: 1, label: "Lemon", disabled: False),
+        combobox.Item(value: 2, label: "Lime", disabled: False),
+      ]),
+      combobox.Group(label: "Berries", items: [
+        combobox.Item(value: 3, label: "Strawberry", disabled: False),
+      ]),
+    ],
+    config: combobox.config(),
+  )
+}
+
+pub fn content_grouped_test() {
+  combobox.content(
+    anatomy(),
+    grouped(),
+    side: positioning.Bottom,
+    align: positioning.Start,
+    empty_label: "No fruit found.",
+    loading_label: "Loading…",
+  )
+  |> element.to_readable_string
+  |> birdie.snap(title: "gg_ui combobox content — grouped sections")
+}
+
+// --- async status --------------------------------------------------------
+
+pub fn content_loading_test() {
+  combobox.content(
+    anatomy(),
+    combobox.set_loading(model(), True),
+    side: positioning.Bottom,
+    align: positioning.Start,
+    empty_label: "No fruit found.",
+    loading_label: "Loading…",
+  )
+  |> element.to_readable_string
+  |> birdie.snap(title: "gg_ui combobox content — loading status")
 }
 
 // --- assembled widget ----------------------------------------------------
@@ -128,6 +220,7 @@ pub fn combobox_widget_test() {
     align: positioning.Start,
     clearable: False,
     empty_label: "No fruit found.",
+    loading_label: "Loading…",
   )
   |> element.to_readable_string
   |> birdie.snap(title: "gg_ui combobox widget — field + popup")

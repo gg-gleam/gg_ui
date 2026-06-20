@@ -6,19 +6,22 @@
 //// input on top of `input_group`. Behaviour + a11y stay in the headless layer.
 ////
 //// **Facade (rule 2).** The caller-constructed surface is gg_ui's own: `Item` /
-//// `Config` / `SelectionMode` are gg_ui types mapped to the headless layer via
-//// private `*_to_base`. The opaque handles the caller only *threads* — `Model`,
-//// `Msg`, `Anatomy` — are plain aliases (the sanctioned exception: the host never
-//// constructs their variants). So a consumer/story imports **only `gg_ui/…`**.
+//// `Group` / `Config` / `SelectionMode` are gg_ui types mapped to the headless
+//// layer via private `*_to_base`. The opaque handles the caller only *threads* —
+//// `Model`, `Msg`, `Anatomy` — are plain aliases (the sanctioned exception: the
+//// host never constructs their variants). So a consumer/story imports **only
+//// `gg_ui/…`**.
 ////
 //// **Icons are not a public-API concern.** The structural glyphs (dropdown
-//// chevron, selected check, clear ✕) are built in from **lucide** — the source
-//// of truth, matching shadcn's lucide default — not passed by the caller. So
-//// `gg_ui` depends on `gg_icons_lucide`; the future CLI rewrites that import to
-//// the user's `components.json` icon set at eject (name-mapped), so an ejected
-//// app installs only its chosen set. See [`dev-docs/icons.md`](../../../../dev-docs/icons.md).
+//// chevron, selected check, clear ✕, chip remove ✕) are built in from **lucide** —
+//// the source of truth, matching shadcn's lucide default — not passed by the
+//// caller. So `gg_ui` depends on `gg_icons_lucide`; the future CLI rewrites that
+//// import to the user's `components.json` icon set at eject (name-mapped), so an
+//// ejected app installs only its chosen set. See [`dev-docs/icons.md`](../../../../dev-docs/icons.md).
 ////
-//// Single-select only for now; multiple / chips arrive with a later headless PR.
+//// Both selection modes are wired: `Single` (replace + close) and `Multiple`
+//// (toggle + stay open, picks surfaced as chips). Grouped lists, and a polite
+//// `role=status` empty/loading announcer, are supported.
 
 import gg_base_ui/combobox/combobox as base_combobox
 import gg_icon/icon
@@ -28,7 +31,7 @@ import gg_ui/helpers/cn
 import gg_ui/positioning.{type Align, type Side}
 import gg_ui/ui/input_group
 import gleam/list
-import gleam/option.{type Option, is_some}
+import gleam/option.{type Option}
 import lustre/attribute.{type Attribute}
 import lustre/effect.{type Effect}
 import lustre/element.{type Element}
@@ -36,8 +39,9 @@ import lustre/element/html
 
 // --- Handles (opaque aliases — threaded, never constructed by the caller) ---
 
-/// The combobox state. Build it with `init`; read `selected` / `input_value` /
-/// `is_open`. Threaded through `update` and the view parts.
+/// The combobox state. Build it with `init` / `init_grouped`; read `selected` /
+/// `selected_values` / `input_value` / `is_open`. Threaded through `update` and
+/// the view parts.
 pub type Model(value) =
   base_combobox.Model(value)
 
@@ -59,32 +63,51 @@ pub type Item(value) {
   Item(value: value, label: String, disabled: Bool)
 }
 
-/// Behaviour switches (Base UI's defaults via `config`). `loop` wraps arrow
-/// navigation; `auto_highlight` highlights the first match as you type.
-pub type Config {
-  Config(loop: Bool, auto_highlight: Bool)
+/// A labelled section of the list (for `init_grouped`): a `label` over its
+/// `items`. Empty groups (everything filtered out) hide automatically.
+pub type Group(value) {
+  Group(label: String, items: List(Item(value)))
 }
 
-/// Selection mode. Only `Single` is wired today; `Multiple` is reserved.
+/// Behaviour switches (Base UI's defaults via `config`). `loop` wraps arrow
+/// navigation; `auto_highlight` highlights the first match as you type; `mode`
+/// is the selection axis.
+pub type Config {
+  Config(loop: Bool, auto_highlight: Bool, mode: SelectionMode)
+}
+
+/// Selection mode. `Single` replaces the selection and closes on pick; `Multiple`
+/// toggles membership, keeps the list open, and renders the picks as chips.
 pub type SelectionMode {
   Single
   Multiple
 }
 
-/// Base UI's defaults: looping navigation, no auto-highlight.
+/// Base UI's defaults: looping navigation, no auto-highlight, single-select.
 pub fn config() -> Config {
-  Config(loop: True, auto_highlight: False)
+  Config(loop: True, auto_highlight: False, mode: Single)
 }
 
 // --- Lifecycle wrappers ----------------------------------------------------
 
-/// A fresh, closed, empty-query model over `items`.
+/// A fresh, closed, empty-query model over a flat `items` list.
 pub fn init(
   items items: List(Item(value)),
   config config: Config,
 ) -> Model(value) {
   base_combobox.init(
     items: list.map(items, item_to_base),
+    config: config_to_base(config),
+  )
+}
+
+/// A fresh model over **grouped** items — one `Group` per labelled section.
+pub fn init_grouped(
+  groups groups: List(Group(value)),
+  config config: Config,
+) -> Model(value) {
+  base_combobox.init_grouped(
+    groups: list.map(groups, group_to_base),
     config: config_to_base(config),
   )
 }
@@ -108,9 +131,20 @@ pub fn update(
   base_combobox.update(anatomy, model, msg)
 }
 
-/// The currently selected value, if any.
+/// Toggle the async loading state — drives the `status` live-region announcement.
+pub fn set_loading(model: Model(value), loading: Bool) -> Model(value) {
+  base_combobox.set_loading(model, loading)
+}
+
+/// The sole selected value, if any (single-select convenience — the first of the
+/// selection in multiple mode).
 pub fn selected(model: Model(value)) -> Option(value) {
-  model.selected
+  base_combobox.selected_value(model)
+}
+
+/// All selected values, in selection order (the chips, in multiple mode).
+pub fn selected_values(model: Model(value)) -> List(value) {
+  base_combobox.selected_values(model)
 }
 
 /// The text shown in the input (the typed query, or the chosen label).
@@ -125,13 +159,13 @@ pub fn is_open(model: Model(value)) -> Bool {
 
 // --- Styled parts ----------------------------------------------------------
 
-/// The field: an `input_group` wrapping the headless `role=combobox` input plus
-/// a trailing affordance — the lucide chevron, or (when `clearable` and something
-/// is selected) a clear ✕ button. `placeholder` is the hint.
+/// The field: an `input_group` wrapping the headless `role=combobox` input plus a
+/// trailing affordance — the lucide chevron, or (when `clearable` and something is
+/// selected) a clear ✕ button. In `Multiple` mode the selected chips render
+/// leading, inside the field. `placeholder` is the hint.
 ///
 /// The positioning anchor sits on the **group**, not the inner input, so the
-/// popup's `anchor-size(width)` matches the whole field (input + addon), not just
-/// the narrower input.
+/// popup's `anchor-size(width)` matches the whole field (chips + input + addon).
 pub fn input(
   anatomy: Anatomy,
   model: Model(value),
@@ -145,25 +179,63 @@ pub fn input(
       attribute.attribute("data-slot", "combobox"),
       ..attrs
     ],
-    [
-      base_combobox.input(anatomy, model, [
-        attribute.class(cn.cn(["cn-input-group-input", "cn-combobox-input"])),
-        attribute.attribute("data-slot", "input-group-control"),
-        attribute.placeholder(placeholder),
-      ]),
-      input_group.addon(
-        input_group.InlineEnd,
-        [],
-        end_affordance(model, clearable),
-      ),
-    ],
+    list.flatten([
+      chips(model),
+      [
+        base_combobox.input(anatomy, model, [
+          attribute.class(cn.cn(["cn-input-group-input", "cn-combobox-input"])),
+          attribute.attribute("data-slot", "input-group-control"),
+          attribute.placeholder(placeholder),
+        ]),
+        input_group.addon(
+          input_group.InlineEnd,
+          [],
+          end_affordance(model, clearable),
+        ),
+      ],
+    ]),
   )
+}
+
+// The selected chips, leading the input in `Multiple` mode (Base UI's
+// `Combobox.Chips`). Nothing in `Single` mode or with no selection.
+fn chips(model: Model(value)) -> List(Element(Msg)) {
+  case base_combobox.selection_mode(model), base_combobox.has_selection(model) {
+    base_combobox.Multiple, True -> [
+      html.div(
+        [
+          attribute.class(cn.cn(["cn-combobox-chips"])),
+          attribute.attribute("data-slot", "combobox-chips"),
+          attribute.attribute("role", "group"),
+          attribute.attribute("aria-label", "Selected"),
+        ],
+        list.index_map(base_combobox.selected_items(model), chip),
+      ),
+    ]
+    _, _ -> []
+  }
+}
+
+// One chip: the label + a built-in lucide ✕ remove button (behaviour from the
+// headless `chip_remove_attributes`, keyed by the chip's index in the selection).
+fn chip(item: base_combobox.Item(value), index: Int) -> Element(Msg) {
+  html.span([attribute.class(cn.cn(["cn-combobox-chip"]))], [
+    html.span([attribute.class(cn.cn(["cn-combobox-chip-label"]))], [
+      html.text(item.label),
+    ]),
+    html.button(
+      list.append(base_combobox.chip_remove_attributes(index, item.label), [
+        attribute.class(cn.cn(["cn-combobox-chip-remove"])),
+      ]),
+      [chip_remove_glyph()],
+    ),
+  ])
 }
 
 // The trailing affordance: a clear button when `clearable` and a value is set
 // (shadcn replaces the chevron with clear), otherwise the decorative chevron.
 fn end_affordance(model: Model(value), clearable: Bool) -> List(Element(Msg)) {
-  case clearable && is_some(model.selected) {
+  case clearable && base_combobox.has_selection(model) {
     True -> [
       input_group.button(
         input_group.IconXs,
@@ -205,33 +277,108 @@ fn clear_glyph() -> Element(msg) {
   lu_x.x([icon.size(icon.Md)])
 }
 
+fn chip_remove_glyph() -> Element(msg) {
+  lu_x.x([icon.size(icon.Sm)])
+}
+
 /// The popup: the headless `role=listbox` (native `popover`, positioned) holding
-/// one `item` per visible option, or an empty message when nothing matches.
+/// the visible options — flat, or re-sectioned under `role=group` headers for a
+/// grouped list — plus a polite `role=status` region that announces the loading /
+/// empty state. `aria-multiselectable` is set in `Multiple` mode.
 pub fn content(
   anatomy: Anatomy,
   model: Model(value),
   side side: Side,
   align align: Align,
   empty_label empty_label: String,
+  loading_label loading_label: String,
 ) -> Element(Msg) {
-  let options =
-    base_combobox.visible(model)
-    |> list.index_map(fn(pair, pos) { item(anatomy, model, pos, pair.1) })
-  let children = case base_combobox.is_empty(model) {
-    True -> [empty(empty_label)]
-    False -> options
+  let body = case base_combobox.is_empty(model) {
+    True -> []
+    False ->
+      case base_combobox.visible_groups(model) {
+        [] -> flat_options(anatomy, model)
+        groups -> grouped_options(anatomy, model, groups)
+      }
   }
-  base_combobox.listbox(
+  base_combobox.popup(
     anatomy,
     positioning.to_base(side, align),
     6,
     [attribute.class(cn.cn(["cn-combobox-content"]))],
+    [
+      base_combobox.list(
+        anatomy,
+        base_combobox.selection_mode(model),
+        [attribute.class(cn.cn(["cn-combobox-list"]))],
+        body,
+      ),
+      status(model, empty_label, loading_label),
+    ],
+  )
+}
+
+// A flat (ungrouped) list of styled options, keyed by visible position.
+fn flat_options(anatomy: Anatomy, model: Model(value)) -> List(Element(Msg)) {
+  base_combobox.visible(model)
+  |> list.index_map(fn(pair, pos) { item(anatomy, model, pos, pair.1) })
+}
+
+// Grouped options: one `role=group` per non-empty section, each with its label
+// header and the section's options (still keyed by their flat visible position).
+fn grouped_options(
+  anatomy: Anatomy,
+  model: Model(value),
+  groups: List(#(String, List(#(Int, base_combobox.Item(value))))),
+) -> List(Element(Msg)) {
+  list.index_map(groups, fn(group, gi) {
+    let #(label, entries) = group
+    base_combobox.group(
+      anatomy,
+      gi,
+      [attribute.class(cn.cn(["cn-combobox-group"]))],
+      [
+        base_combobox.group_label(
+          anatomy,
+          gi,
+          [attribute.class(cn.cn(["cn-combobox-group-label"]))],
+          [html.text(label)],
+        ),
+        ..list.map(entries, fn(entry) { item(anatomy, model, entry.0, entry.1) })
+      ],
+    )
+  })
+}
+
+// The polite live region (Base UI's `Status`/`Empty`). Always mounted so the
+// announcement fires consistently; its children toggle — the loading line when
+// `loading`, the empty message when nothing matches, nothing otherwise.
+fn status(
+  model: Model(value),
+  empty_label: String,
+  loading_label: String,
+) -> Element(Msg) {
+  let children = case model.loading, base_combobox.is_empty(model) {
+    True, _ -> [
+      html.div([attribute.class(cn.cn(["cn-combobox-loading"]))], [
+        html.text(loading_label),
+      ]),
+    ]
+    False, True -> [
+      html.div([attribute.class(cn.cn(["cn-combobox-empty"]))], [
+        html.text(empty_label),
+      ]),
+    ]
+    False, False -> []
+  }
+  base_combobox.status(
+    [attribute.class(cn.cn(["cn-combobox-status"]))],
     children,
   )
 }
 
 /// The whole widget in one call: the field + the popup, assembled from `model`.
-/// The common case for a single-select combobox.
+/// The common case for a combobox.
 pub fn combobox(
   anatomy anatomy: Anatomy,
   model model: Model(value),
@@ -240,16 +387,17 @@ pub fn combobox(
   align align: Align,
   clearable clearable: Bool,
   empty_label empty_label: String,
+  loading_label loading_label: String,
 ) -> Element(Msg) {
   html.div([attribute.class(cn.cn(["cn-combobox-root"]))], [
     input(anatomy, model, placeholder:, clearable:, attrs: []),
-    content(anatomy, model, side:, align:, empty_label:),
+    content(anatomy, model, side:, align:, empty_label:, loading_label:),
   ])
 }
 
-// One styled `role=option`: the label + a built-in lucide check indicator (CSS
-// shows it only when `aria-selected`). Private — its `base_combobox.Item`
-// parameter must not surface in the public API.
+// One styled `role="option"` at visible position `pos`: the label + a built-in
+// lucide check indicator (CSS shows it only when `aria-selected`). Private — its
+// `base_combobox.Item` parameter must not surface in the public API.
 fn item(
   anatomy: Anatomy,
   model: Model(value),
@@ -273,10 +421,6 @@ fn item(
   )
 }
 
-fn empty(label: String) -> Element(Msg) {
-  html.div([attribute.class(cn.cn(["cn-combobox-empty"]))], [html.text(label)])
-}
-
 // --- Mappings to the headless layer ----------------------------------------
 
 fn item_to_base(item: Item(value)) -> base_combobox.Item(value) {
@@ -287,6 +431,24 @@ fn item_to_base(item: Item(value)) -> base_combobox.Item(value) {
   )
 }
 
+fn group_to_base(group: Group(value)) -> base_combobox.Group(value) {
+  base_combobox.Group(
+    label: group.label,
+    items: list.map(group.items, item_to_base),
+  )
+}
+
 fn config_to_base(config: Config) -> base_combobox.Config {
-  base_combobox.Config(loop: config.loop, auto_highlight: config.auto_highlight)
+  base_combobox.Config(
+    loop: config.loop,
+    auto_highlight: config.auto_highlight,
+    mode: mode_to_base(config.mode),
+  )
+}
+
+fn mode_to_base(mode: SelectionMode) -> base_combobox.SelectionMode {
+  case mode {
+    Single -> base_combobox.Single
+    Multiple -> base_combobox.Multiple
+  }
 }

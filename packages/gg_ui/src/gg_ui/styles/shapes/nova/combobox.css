@@ -35,4 +35,43 @@
   .cn-combobox-clear {
     @apply text-muted-foreground hover:text-foreground;
   }
+
+  /* Multiple-select: the field wraps to hold the leading chips. */
+  .cn-input-group:has(.cn-combobox-chips) {
+    @apply h-auto flex-wrap items-center gap-1 py-1;
+  }
+
+  .cn-combobox-chips {
+    @apply flex flex-wrap items-center gap-1;
+  }
+
+  .cn-combobox-chips ~ .cn-combobox-input {
+    @apply min-w-24 flex-1;
+  }
+
+  .cn-combobox-chip {
+    @apply inline-flex items-center gap-1 rounded-md border border-border bg-secondary py-0.5 pr-0.5 pl-2 text-xs text-secondary-foreground;
+  }
+
+  .cn-combobox-chip-label {
+    @apply max-w-32 truncate;
+  }
+
+  .cn-combobox-chip-remove {
+    @apply inline-flex size-4 items-center justify-center rounded-sm text-muted-foreground hover:bg-accent hover:text-foreground;
+  }
+
+  /* Grouped sections. */
+  .cn-combobox-group {
+    @apply py-1;
+  }
+
+  .cn-combobox-group-label {
+    @apply px-2 py-1.5 text-xs font-medium text-muted-foreground;
+  }
+
+  /* Async loading line (shares the empty message's centred muted look). */
+  .cn-combobox-loading {
+    @apply py-6 text-center text-sm text-muted-foreground;
+  }
 }

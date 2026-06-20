@@ -1,7 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/html-vite"
 import { expect, userEvent, waitFor, within } from "storybook/test"
 import { mountLustre } from "../../../.storybook/lustre-mount"
-import { mount_combobox_playground } from "./combobox.gleam"
+import {
+  mount_combobox_async,
+  mount_combobox_grouped,
+  mount_combobox_multiple,
+  mount_combobox_playground,
+} from "./combobox.gleam"
 
 type SideArg = "top" | "right" | "bottom" | "left"
 type AlignArg = "start" | "center" | "end"
@@ -52,9 +57,15 @@ const testOnly =
     }
   }
 
-// The popup is the headless `role=listbox` rendered with `popover="manual"`. It
-// lives in the DOM under the mounted host (and is promoted to the top layer when
-// open), so it's reachable from `canvasElement`.
+// The popup is the headless container rendered with `popover="manual"` — the
+// top-layer box that flips to `:popover-open`. The `role=listbox` lives *inside*
+// it (sibling to the status region). Both are reachable from `canvasElement`.
+function popup(canvasElement: HTMLElement): HTMLElement {
+  const el = canvasElement.querySelector<HTMLElement>("[popover]")
+  if (!el) throw new Error("combobox popup not mounted")
+  return el
+}
+
 function listbox(canvasElement: HTMLElement): HTMLElement {
   const el = canvasElement.querySelector<HTMLElement>("[role='listbox']")
   if (!el) throw new Error("combobox listbox not mounted")
@@ -62,7 +73,13 @@ function listbox(canvasElement: HTMLElement): HTMLElement {
 }
 
 const isOpen = (canvasElement: HTMLElement): boolean =>
-  listbox(canvasElement).matches(":popover-open")
+  popup(canvasElement).matches(":popover-open")
+
+const statusRegion = (canvasElement: HTMLElement): HTMLElement => {
+  const el = canvasElement.querySelector<HTMLElement>("[role='status']")
+  if (!el) throw new Error("combobox status region not mounted")
+  return el
+}
 
 /** Type to filter, arrow/Enter to pick, click an option, Escape to dismiss.
  *  Chevron / check / clear icons are built in (lucide), not story-supplied. */
@@ -79,7 +96,9 @@ export const Playground: Story = {
     // same click that opens it must NOT immediately light-dismiss it.
     await userEvent.click(input)
     await waitFor(() => expect(isOpen(canvasElement)).toBe(true))
-    await expect(input).toHaveAttribute("aria-expanded", "true")
+    // `aria-expanded` tracks the model; the VDOM patch can trail the native
+    // popover open by a frame, so wait for it rather than asserting eagerly.
+    await waitFor(() => expect(input).toHaveAttribute("aria-expanded", "true"))
     // Still open a tick later — not auto-dismissed by the opening click.
     await new Promise((r) => setTimeout(r, 50))
     await expect(isOpen(canvasElement)).toBe(true)
@@ -102,7 +121,7 @@ export const Playground: Story = {
     await userEvent.keyboard("{Enter}")
     await waitFor(() => expect(input.value).toBe("Remix"))
     await waitFor(() => expect(isOpen(canvasElement)).toBe(false))
-    await expect(input).toHaveAttribute("aria-expanded", "false")
+    await waitFor(() => expect(input).toHaveAttribute("aria-expanded", "false"))
 
     // Re-open, then Escape dismisses (the headless keydown handler, not native
     // light-dismiss — a `manual` popover doesn't close on Escape on its own).
@@ -148,5 +167,98 @@ export const Clearable: Story = {
     await expect(
       canvas.queryByRole("button", { name: /clear selection/i }),
     ).toBeNull()
+  }),
+}
+
+/** Multiple-select: picks accumulate as chips and the list stays open. Each chip
+ *  has a remove ✕, and Backspace in the empty input pops the last chip. */
+export const Multiple: Story = {
+  parameters: { controls: { disable: true } },
+  render: ({ side, align }) =>
+    mountLustre((selector) => mount_combobox_multiple(selector, side, align)),
+  play: testOnly(async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const input = canvas.getByRole<HTMLInputElement>("combobox")
+
+    await userEvent.click(input)
+    await waitFor(() => expect(isOpen(canvasElement)).toBe(true))
+
+    // Pick two — the list stays open across both (multiple-select semantics).
+    await userEvent.click(await canvas.findByRole("option", { name: "Remix" }))
+    await expect(isOpen(canvasElement)).toBe(true)
+    await userEvent.click(await canvas.findByRole("option", { name: "Astro" }))
+    await expect(isOpen(canvasElement)).toBe(true)
+
+    // Two chips, each with a labelled remove button.
+    await waitFor(() =>
+      expect(canvas.getAllByRole("button", { name: /^Remove/ })).toHaveLength(
+        2,
+      ),
+    )
+
+    // Remove the Remix chip via its button.
+    await userEvent.click(canvas.getByRole("button", { name: "Remove Remix" }))
+    await waitFor(() =>
+      expect(canvas.queryByRole("button", { name: "Remove Remix" })).toBeNull(),
+    )
+
+    // Backspace in the (empty) input pops the last remaining chip (Astro).
+    await userEvent.click(input)
+    await userEvent.keyboard("{Backspace}")
+    await waitFor(() =>
+      expect(canvas.queryByRole("button", { name: "Remove Astro" })).toBeNull(),
+    )
+  }),
+}
+
+/** A grouped list: options sit under labelled `role=group` sections; empty
+ *  groups (everything filtered out) disappear. */
+export const Grouped: Story = {
+  parameters: { controls: { disable: true } },
+  render: ({ side, align }) =>
+    mountLustre((selector) => mount_combobox_grouped(selector, side, align)),
+  play: testOnly(async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const input = canvas.getByRole<HTMLInputElement>("combobox")
+
+    await userEvent.click(input)
+    await waitFor(() => expect(isOpen(canvasElement)).toBe(true))
+
+    // Sections live inside the listbox (role=group), labelled by their headers.
+    const list = within(listbox(canvasElement))
+    await waitFor(() => expect(list.getAllByRole("group")).toHaveLength(4))
+    await waitFor(() => expect(list.getByText("React")).toBeVisible())
+    await waitFor(() =>
+      expect(list.getByRole("option", { name: "Next.js" })).toBeVisible(),
+    )
+
+    // Filter to "nuxt" → only the Vue group survives; the rest drop out.
+    await userEvent.type(input, "nuxt")
+    await waitFor(() => expect(list.getAllByRole("group")).toHaveLength(1))
+    await waitFor(() => expect(list.getByText("Vue")).toBeVisible())
+  }),
+}
+
+/** Async: the button toggles the combobox's `role=status` loading announcement —
+ *  a polite live region that stays mounted while its message changes. */
+export const Async: Story = {
+  parameters: { controls: { disable: true } },
+  render: ({ side, align }) =>
+    mountLustre((selector) => mount_combobox_async(selector, side, align)),
+  play: testOnly(async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const status = statusRegion(canvasElement)
+    await expect(status).toHaveAttribute("aria-live", "polite")
+    await expect(status.textContent?.trim()).toBe("")
+
+    const toggle = canvas.getByRole("button", { name: /simulate loading/i })
+    await userEvent.click(toggle)
+    await waitFor(() =>
+      expect(status.textContent).toContain("Loading frameworks"),
+    )
+
+    // The same live region clears when loading stops (no remount).
+    await userEvent.click(canvas.getByRole("button", { name: /stop loading/i }))
+    await waitFor(() => expect(status.textContent?.trim()).toBe(""))
   }),
 }

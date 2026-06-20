@@ -1,0 +1,40 @@
+---
+version: 1.5.5
+title: gg_ui combobox input — multiple-select chips
+file: ./test/combobox_test.gleam
+test_name: input_chips_test
+---
+<div class="cn-input-group group/input-group" data-slot="combobox" data-slot="input-group" role="group" style="anchor-name:--gg-cb-input;">
+  <div aria-label="Selected" class="cn-combobox-chips" data-slot="combobox-chips" role="group">
+    <span class="cn-combobox-chip">
+      <span class="cn-combobox-chip-label">
+        Apple
+      </span>
+      <button aria-label="Remove Apple" class="cn-combobox-chip-remove" tabindex="-1" type="button">
+        <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="cn-icon cn-icon-size-sm" data-slot="icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M18 6 6 18"></path>
+          <path d="m6 6 12 12"></path>
+        </svg>
+      </button>
+    </span>
+    <span class="cn-combobox-chip">
+      <span class="cn-combobox-chip-label">
+        Banana
+      </span>
+      <button aria-label="Remove Banana" class="cn-combobox-chip-remove" tabindex="-1" type="button">
+        <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="cn-icon cn-icon-size-sm" data-slot="icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M18 6 6 18"></path>
+          <path d="m6 6 12 12"></path>
+        </svg>
+      </button>
+    </span>
+  </div>
+  <input aria-activedescendant="cb-listbox-option-2" aria-autocomplete="list" aria-controls="cb-listbox" aria-expanded="true" class="cn-input-group-input cn-combobox-input" data-slot="input-group-control" id="cb-input" placeholder="Search…" role="combobox" value>
+  <div class="cn-input-group-addon cn-input-group-addon-align-inline-end" data-align="inline-end" data-slot="input-group-addon" role="group">
+    <button aria-label="Toggle suggestions" class="cn-button cn-button-variant-ghost cn-button-size-icon-xs cn-input-group-button cn-combobox-trigger" data-slot="input-group-button" data-slot="button" tabindex="-1" type="button" type="button">
+      <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="cn-icon cn-icon-size-md" data-slot="icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+        <path d="m6 9 6 6 6-6"></path>
+      </svg>
+    </button>
+  </div>
+</div>

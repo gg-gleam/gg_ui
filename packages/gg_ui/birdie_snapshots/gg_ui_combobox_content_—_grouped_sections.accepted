@@ -1,0 +1,51 @@
+---
+version: 1.5.5
+title: gg_ui combobox content — grouped sections
+file: ./test/combobox_test.gleam
+test_name: content_grouped_test
+---
+<div class="cn-combobox-content" data-align="start" data-side="bottom" id="cb-popup" popover="manual" style="position-anchor:--gg-cb-input;position-area:block-end span-inline-end;inset:auto;position-try-fallbacks:flip-block, flip-inline, flip-block flip-inline, flip-start, flip-block flip-start, flip-inline flip-start, flip-block flip-inline flip-start;margin-inline:0;margin-block:6px;">
+  <div class="cn-combobox-list" id="cb-listbox" role="listbox">
+    <div aria-labelledby="cb-listbox-group-0" class="cn-combobox-group" role="group">
+      <div class="cn-combobox-group-label" id="cb-listbox-group-0">
+        Citrus
+      </div>
+      <div aria-selected="false" class="cn-combobox-item" id="cb-listbox-option-0" role="option">
+        <span class="cn-combobox-item-label">
+          Lemon
+        </span>
+        <span class="cn-combobox-item-indicator">
+          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="cn-icon cn-icon-size-md" data-slot="icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M20 6 9 17l-5-5"></path>
+          </svg>
+        </span>
+      </div>
+      <div aria-selected="false" class="cn-combobox-item" id="cb-listbox-option-1" role="option">
+        <span class="cn-combobox-item-label">
+          Lime
+        </span>
+        <span class="cn-combobox-item-indicator">
+          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="cn-icon cn-icon-size-md" data-slot="icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M20 6 9 17l-5-5"></path>
+          </svg>
+        </span>
+      </div>
+    </div>
+    <div aria-labelledby="cb-listbox-group-1" class="cn-combobox-group" role="group">
+      <div class="cn-combobox-group-label" id="cb-listbox-group-1">
+        Berries
+      </div>
+      <div aria-selected="false" class="cn-combobox-item" id="cb-listbox-option-2" role="option">
+        <span class="cn-combobox-item-label">
+          Strawberry
+        </span>
+        <span class="cn-combobox-item-indicator">
+          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="cn-icon cn-icon-size-md" data-slot="icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M20 6 9 17l-5-5"></path>
+          </svg>
+        </span>
+      </div>
+    </div>
+  </div>
+  <div aria-atomic="true" aria-live="polite" class="cn-combobox-status" role="status"></div>
+</div>
