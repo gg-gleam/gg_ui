@@ -229,9 +229,11 @@ fn chips_field(
   placeholder: String,
   attrs: List(Attribute(Msg)),
 ) -> Element(Msg) {
+  let items = base_combobox.selected_items(model)
+  let chip_count = list.length(items)
   let chips =
-    list.index_map(base_combobox.selected_items(model), fn(item, index) {
-      #("chip-" <> int.to_string(index), chip(item, index))
+    list.index_map(items, fn(item, index) {
+      #("chip-" <> int.to_string(index), chip(anatomy, item, index, chip_count))
     })
   let field_input =
     base_combobox.input(anatomy, model, [
@@ -248,8 +250,9 @@ fn chips_field(
       attribute.class(cn.cn(["cn-combobox-chips"])),
       attribute.class("w-full"),
       attribute.attribute("data-slot", "combobox-chips"),
-      attribute.attribute("role", "group"),
-      attribute.attribute("aria-label", "Selected"),
+      // Base UI sets exactly `role="toolbar"` on the chips container (and no
+      // aria-label) — keeps NVDA in focus mode while arrowing between chips.
+      attribute.attribute("role", "toolbar"),
       ..attrs
     ],
     list.append(chips, [#("combobox-input", field_input)]),
@@ -261,12 +264,21 @@ fn chips_field(
 // renders `ComboboxChipRemove` as `<Button variant=ghost size=icon-xs>`); built
 // here from the button recipe's `cn-*` names so the single `data-slot=combobox-
 // chip-remove` wins (the chip's `has-data-[slot=combobox-chip-remove]:pr-0`).
-fn chip(item: base_combobox.Item(value), index: Int) -> Element(Msg) {
+fn chip(
+  anatomy: Anatomy,
+  item: base_combobox.Item(value),
+  index: Int,
+  chip_count: Int,
+) -> Element(Msg) {
   html.div(
-    [
-      attribute.class(cn.cn(["cn-combobox-chip"])),
-      attribute.attribute("data-slot", "combobox-chip"),
-    ],
+    list.flatten([
+      [
+        attribute.class(cn.cn(["cn-combobox-chip"])),
+        attribute.attribute("data-slot", "combobox-chip"),
+      ],
+      // Roving-focus keydown behaviour (←/→, Delete, Enter → input).
+      base_combobox.chip_attributes(anatomy, index, chip_count),
+    ]),
     [
       html.text(item.label),
       html.button(

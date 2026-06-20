@@ -512,6 +512,12 @@ pub fn group_label_id(anatomy: Anatomy, gi: Int) -> String {
   anatomy.listbox_id <> "-group-" <> int.to_string(gi)
 }
 
+/// Stable id for the chip at selection position `index` — the focus target of
+/// roving chip navigation (the chips are `tabindex="-1"`, focused programmatically).
+pub fn chip_id(anatomy: Anatomy, index: Int) -> String {
+  anatomy.input_id <> "-chip-" <> int.to_string(index)
+}
+
 // --- Msg -----------------------------------------------------------------
 
 /// What the component handles. The host threads these through `update`; it never
@@ -549,6 +555,17 @@ pub type Msg {
   ChipRemoved(Int)
   /// Backspace in an empty input — drop the last selection (multiple mode).
   LastChipRemoved
+  /// Roving chip focus (←/→ on a focused chip) resolved to a target: `Some(i)`
+  /// focuses chip `i`, `None` returns focus to the input.
+  ChipFocusMoved(Option(Int))
+  /// Backspace/Delete on a focused chip — remove it and move focus to the chip
+  /// that takes its place (or the input when none remain).
+  ChipDeleted(Int)
+  /// Enter/Space (`False`) or ArrowDown/ArrowUp (`True`) on a focused chip —
+  /// return focus to the input, opening the list when `True`.
+  ChipReturnedToInput(Bool)
+  /// ArrowLeft at the input's caret-0 with chips present — focus the last chip.
+  ChipFocusLast
   /// No-op — carries a `preventDefault` on the popup's mousedown so a click
   /// inside the list doesn't blur the input (and so close it) before it lands.
   Noop
@@ -581,6 +598,29 @@ pub fn update(
     }
     ChipRemoved(index) -> #(remove_selected_at(model, index), focus(anatomy))
     LastChipRemoved -> #(remove_last_selected(model), focus(anatomy))
+    ChipFocusMoved(target) -> #(model, focus_target(anatomy, target))
+    ChipDeleted(index) -> {
+      let next = remove_selected_at(model, index)
+      let remaining = list.length(next.selected)
+      // Base UI: removing the last chip steps back one, otherwise the same slot
+      // (now the next chip); no chips left → the input.
+      let target = case remaining, index >= list.length(model.selected) - 1 {
+        0, _ -> None
+        _, True -> Some(remaining - 1)
+        _, False -> Some(index)
+      }
+      #(Model(..next, active_index: None), focus_target(anatomy, target))
+    }
+    ChipReturnedToInput(open_list) ->
+      case open_list {
+        True -> #(open(model), effect.batch([show(anatomy), focus(anatomy)]))
+        False -> #(model, focus(anatomy))
+      }
+    ChipFocusLast ->
+      case list.length(model.selected) {
+        0 -> #(model, effect.none())
+        count -> #(model, focus_chip(anatomy, count - 1))
+      }
     OptionHighlighted(pos) -> #(
       Model(..model, active_index: Some(pos)),
       effect.none(),
@@ -644,6 +684,18 @@ fn focus(anatomy: Anatomy) -> Effect(Msg) {
   effect.from(fn(_dispatch) { focus_input(anatomy.input_id) })
 }
 
+fn focus_chip(anatomy: Anatomy, index: Int) -> Effect(Msg) {
+  effect.from(fn(_dispatch) { focus_element(chip_id(anatomy, index)) })
+}
+
+// Focus a chip (`Some(i)`) or fall back to the input (`None`).
+fn focus_target(anatomy: Anatomy, target: Option(Int)) -> Effect(Msg) {
+  case target {
+    Some(i) -> focus_chip(anatomy, i)
+    None -> focus(anatomy)
+  }
+}
+
 // --- view parts ----------------------------------------------------------
 
 /// The positioning anchor for the listbox. Put it on the **field** — the element
@@ -684,7 +736,10 @@ pub fn input(
         event.on_input(InputChanged),
         event.advanced(
           "keydown",
-          keydown_handler(backspace_removes_chip(model)),
+          keydown_handler(
+            backspace_removes_chip(model),
+            chip_nav_enabled(model),
+          ),
         ),
         event.on_focus(OpenRequested),
         // Click an already-focused input to reopen (focus won't refire).
@@ -870,10 +925,98 @@ pub fn clear_attributes() -> List(Attribute(Msg)) {
   ]
 }
 
+/// Roving-focus behaviour for a chip (Base UI's `Combobox.Chip`): the chip is
+/// `tabindex="-1"` (focused programmatically) and its keydown drives ←/→ focus
+/// movement between chips, Backspace/Delete removal, and Enter/Space/typing/arrow
+/// returning to the input. `index` is the chip's selection position; `chip_count`
+/// is how many chips there are (for the right-edge boundary). Merge onto the chip
+/// element. **LTR only** for now — RTL arrow-flipping is a tracked refinement.
+pub fn chip_attributes(
+  anatomy: Anatomy,
+  index: Int,
+  chip_count: Int,
+) -> List(Attribute(Msg)) {
+  [
+    attribute.id(chip_id(anatomy, index)),
+    attribute.attribute("tabindex", "-1"),
+    event.advanced("keydown", chip_keydown_handler(index, chip_count)),
+  ]
+}
+
+fn chip_keydown_handler(
+  index: Int,
+  chip_count: Int,
+) -> decode.Decoder(event.Handler(Msg)) {
+  use key <- decode.field("key", decode.string)
+  case key {
+    // ←/→ move focus; past the start/end returns to the input (None).
+    "ArrowLeft" -> {
+      let target = case index > 0 {
+        True -> Some(index - 1)
+        False -> None
+      }
+      decode.success(event.handler(
+        dispatch: ChipFocusMoved(target),
+        prevent_default: True,
+        stop_propagation: False,
+      ))
+    }
+    "ArrowRight" -> {
+      let target = case index < chip_count - 1 {
+        True -> Some(index + 1)
+        False -> None
+      }
+      decode.success(event.handler(
+        dispatch: ChipFocusMoved(target),
+        prevent_default: True,
+        stop_propagation: False,
+      ))
+    }
+    "Backspace" | "Delete" ->
+      decode.success(event.handler(
+        dispatch: ChipDeleted(index),
+        prevent_default: True,
+        stop_propagation: True,
+      ))
+    "Enter" | " " ->
+      decode.success(event.handler(
+        dispatch: ChipReturnedToInput(False),
+        prevent_default: True,
+        stop_propagation: True,
+      ))
+    "ArrowDown" | "ArrowUp" ->
+      decode.success(event.handler(
+        dispatch: ChipReturnedToInput(True),
+        prevent_default: True,
+        stop_propagation: True,
+      ))
+    // A printable key returns focus to the input so typing continues there.
+    _ ->
+      case string.length(key) == 1 {
+        True ->
+          decode.success(event.handler(
+            dispatch: ChipReturnedToInput(False),
+            prevent_default: False,
+            stop_propagation: False,
+          ))
+        False ->
+          decode.failure(
+            event.handler(ChipReturnedToInput(False), False, False),
+            "combobox-chip-ignored-key",
+          )
+      }
+  }
+}
+
 /// Behaviour for a chip's remove control (Base UI's `Combobox.ChipRemove`):
-/// clicking drops the selection at `index`. Labelled `Remove <label>` for screen
-/// readers, and the mousedown `preventDefault` keeps the input focused so the
-/// list doesn't blur-close. Merge onto the chip's remove `<button>`.
+/// clicking drops the selection at `index`. The mousedown `preventDefault` keeps
+/// the input focused so the list doesn't blur-close. Merge onto the chip's remove
+/// `<button>`.
+///
+/// **Deliberate divergence from Base UI/shadcn:** their `ChipRemove` is an
+/// icon-only button with *no accessible name*. We add `aria-label="Remove
+/// <label>"` — an intentional a11y improvement (and what our axe gate requires);
+/// the one place we knowingly beat shadcn's output.
 pub fn chip_remove_attributes(
   index: Int,
   label: String,
@@ -946,8 +1089,15 @@ fn backspace_removes_chip(model: Model(value)) -> Bool {
   && has_selection(model)
 }
 
+// ArrowLeft can jump from the input into the chips (focus the last chip) only in
+// multiple mode with chips present; the caret-at-0 check happens in the handler.
+fn chip_nav_enabled(model: Model(value)) -> Bool {
+  model.config.mode == Multiple && has_selection(model)
+}
+
 fn keydown_handler(
   backspace_removes_chip: Bool,
+  chip_nav: Bool,
 ) -> decode.Decoder(event.Handler(Msg)) {
   use key <- decode.field("key", decode.string)
   // Nav keys dispatch + preventDefault (stop the caret/page from also moving);
@@ -966,6 +1116,20 @@ fn keydown_handler(
       ))
     "Backspace" if backspace_removes_chip ->
       decode.success(nav_handler(LastChipRemoved))
+    // ArrowLeft at the very start of the input enters chip navigation (focus the
+    // last chip). Read the caret here so other keys never depend on it.
+    "ArrowLeft" if chip_nav ->
+      decode.subfield(["target", "selectionStart"], decode.int, fn(caret) {
+        case caret {
+          0 ->
+            decode.success(event.handler(
+              dispatch: ChipFocusLast,
+              prevent_default: True,
+              stop_propagation: False,
+            ))
+          _ -> decode.failure(nav_handler(Dismissed), "combobox-caret-not-zero")
+        }
+      })
     _ -> decode.failure(nav_handler(Dismissed), "combobox-ignored-key")
   }
 }
@@ -1013,5 +1177,10 @@ fn scroll_option_into_view(_option_id: String) -> Nil {
 
 @external(javascript, "./combobox_ffi.ts", "focusInput")
 fn focus_input(_input_id: String) -> Nil {
+  Nil
+}
+
+@external(javascript, "./combobox_ffi.ts", "focusElement")
+fn focus_element(_id: String) -> Nil {
   Nil
 }

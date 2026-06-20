@@ -76,22 +76,10 @@
 /* Story scaffolding — shared scroll-canvas surface (see the file's header). */
 @import "./css/story-canvas.css";
 
-/* Shared menu/listbox infra (shadcn defines this in its globals.css; combobox —
- * and later select/command — `@apply no-scrollbar` on their scroll areas). A
- * consumer-entry utility, not a per-shape fragment, so the CLI must emit it
- * alongside Tailwind for ejected apps. Declared after the `@import`s (which must
- * come first) and before the Tailwind directives. */
-@utility no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-
-  /* stylelint-disable-next-line nesting-selector-no-missing-scoping-root --
-   * `&` resolves to the utility's target inside `@utility` (Tailwind v4);
-   * stylelint can't see that scoping root. shadcn's globals.css is identical. */
-  &::-webkit-scrollbar {
-    display: none;
-  }
-}
+/* Global base + shared utilities (no-scrollbar, neutral focus ring). A shippable
+ * package fragment so the CLI emits it for ejected apps — not app-only. Imported
+ * LAST: it carries `@utility`/`@layer` (which must follow every `@import`). */
+@import "../../../packages/gg_ui/src/gg_ui/styles/base.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 

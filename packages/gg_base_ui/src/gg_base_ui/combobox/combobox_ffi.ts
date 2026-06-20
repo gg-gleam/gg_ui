@@ -35,3 +35,12 @@ export function focusInput(inputId: string): void {
     el.focus()
   }
 }
+
+// Focus any element by id — used to move roving focus onto a chip (which is
+// `tabindex="-1"`, so it's only focusable programmatically).
+export function focusElement(id: string): void {
+  const el = document.getElementById(id)
+  if (el instanceof HTMLElement) {
+    el.focus()
+  }
+}

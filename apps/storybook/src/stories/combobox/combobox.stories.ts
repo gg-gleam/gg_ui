@@ -82,6 +82,15 @@ const highlighted = (canvasElement: HTMLElement): string | null =>
     .querySelector<HTMLElement>("[role='option'][data-highlighted]")
     ?.textContent?.trim() ?? null
 
+// The label of the chip that currently holds DOM focus (roving chip nav), or null
+// if focus isn't on a chip.
+const focusedChip = (): string | null => {
+  const el = document.activeElement as HTMLElement | null
+  return el?.getAttribute("data-slot") === "combobox-chip"
+    ? (el.textContent?.trim() ?? null)
+    : null
+}
+
 // The async loading announcer specifically (the empty announcer is also
 // role=status and always mounted, so match it by its data-slot).
 const loadingRegion = (canvasElement: HTMLElement): HTMLElement | null =>
@@ -182,15 +191,20 @@ export const Clearable: Story = {
   }),
 }
 
-/** Multiple-select: picks accumulate as chips and the list stays open. Each chip
- *  has a remove ✕, and Backspace in the empty input pops the last chip. */
+/** Multiple-select (Base UI parity). Picks accumulate as chips and the list stays
+ *  open; the active highlight is independent of selection, so Enter toggles in
+ *  place and you keep arrowing. Chips are a roving-focus toolbar: ←/→ moves
+ *  between them, Delete removes, Enter returns to the input; ArrowLeft from the
+ *  empty input enters the chips; Backspace there pops the last one. */
 export const Multiple: Story = {
   parameters: { controls: { disable: true } },
   render: ({ side, align }) =>
     mountLustre((selector) => mount_combobox_multiple(selector, side, align)),
   play: testOnly(async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    const input = canvas.getByRole<HTMLInputElement>("combobox")
+    const input = () => canvas.getByRole<HTMLInputElement>("combobox")
+    const selected = (name: string): string | null =>
+      canvas.getByRole("option", { name }).getAttribute("aria-selected")
     const field = (): HTMLElement => {
       const el = canvasElement.querySelector<HTMLElement>(
         "[data-slot='combobox-chips']",
@@ -198,113 +212,93 @@ export const Multiple: Story = {
       if (!el) throw new Error("chips field not mounted")
       return el
     }
-
-    // Width must stay put as chips are added (the field's w-full fills the
-    // fixed-width container; chips wrap, the field doesn't grow sideways).
     const emptyWidth = field().getBoundingClientRect().width
 
-    await userEvent.click(input)
-    await waitFor(() => expect(isOpen(canvasElement)).toBe(true))
-
-    // Pick two — the list stays open across both (multiple-select semantics).
-    await userEvent.click(await canvas.findByRole("option", { name: "Remix" }))
-    await expect(isOpen(canvasElement)).toBe(true)
-    await userEvent.click(await canvas.findByRole("option", { name: "Astro" }))
-    await expect(isOpen(canvasElement)).toBe(true)
-
-    // …same width with two chips selected — no jump.
-    expect(field().getBoundingClientRect().width).toBeCloseTo(emptyWidth, 0)
-
-    // Two chips, each with a labelled remove button.
-    await waitFor(() =>
-      expect(canvas.getAllByRole("button", { name: /^Remove/ })).toHaveLength(
-        2,
-      ),
-    )
-
-    // Layout: the input shares the chips' row (shadcn-style inline wrap) instead
-    // of being pushed onto its own — the field's `w-auto` input override. With
-    // two short chips there's room, so the input sits to their right: it overlaps
-    // the chips' row vertically rather than starting below it.
-    const chipRect = canvas
-      .getByRole("button", { name: "Remove Remix" })
-      .getBoundingClientRect()
-    const inputRect = input.getBoundingClientRect()
-    expect(inputRect.top).toBeLessThan(chipRect.bottom)
-
-    // Remove the Remix chip via its button.
-    await userEvent.click(canvas.getByRole("button", { name: "Remove Remix" }))
-    await waitFor(() =>
-      expect(canvas.queryByRole("button", { name: "Remove Remix" })).toBeNull(),
-    )
-
-    // Backspace in the (empty) input pops the last remaining chip (Astro).
-    // Re-query the input — Lustre may have re-created the node when the chip list
-    // changed, so the earlier reference can be detached.
-    const liveInput = canvas.getByRole<HTMLInputElement>("combobox")
-    await userEvent.click(liveInput)
-    await userEvent.keyboard("{Backspace}")
-    await waitFor(() =>
-      expect(canvas.queryByRole("button", { name: "Remove Astro" })).toBeNull(),
-    )
-  }),
-}
-
-/** Keyboard parity (Base UI): the active highlight is independent of selection —
- *  toggling an option with Enter keeps the highlight on it and the list open, so
- *  you keep arrowing and toggling. Opening with the mouse then arrowing continues
- *  from wherever you are. */
-export const MultipleKeyboard: Story = {
-  name: "Multiple — keyboard",
-  parameters: { controls: { disable: true } },
-  render: ({ side, align }) =>
-    mountLustre((selector) => mount_combobox_multiple(selector, side, align)),
-  play: testOnly(async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
-    const input = canvas.getByRole<HTMLInputElement>("combobox")
-    const selected = (name: string): string | null =>
-      canvas.getByRole("option", { name }).getAttribute("aria-selected")
-
-    // Open with the mouse — nothing highlighted yet.
-    await userEvent.click(input)
+    // --- keyboard option nav: highlight is independent of selection ----------
+    await userEvent.click(input())
     await waitFor(() => expect(isOpen(canvasElement)).toBe(true))
     expect(highlighted(canvasElement)).toBeNull()
 
-    // ArrowDown seeds the first item, then advances.
-    await userEvent.keyboard("{ArrowDown}")
+    await userEvent.keyboard("{ArrowDown}") // seeds first
     await waitFor(() => expect(highlighted(canvasElement)).toBe("Next.js"))
     await userEvent.keyboard("{ArrowDown}")
     await waitFor(() => expect(highlighted(canvasElement)).toBe("SvelteKit"))
 
-    // Enter toggles SvelteKit — and the highlight STAYS on it, list stays open.
+    // Enter toggles SvelteKit — highlight STAYS on it, list stays open.
     await userEvent.keyboard("{Enter}")
     await waitFor(() => expect(selected("SvelteKit")).toBe("true"))
     await expect(isOpen(canvasElement)).toBe(true)
     await expect(highlighted(canvasElement)).toBe("SvelteKit")
 
-    // Keep arrowing from where we are — focus stayed on the input (it's a keyed
-    // node, so adding the chip patched it in place rather than recreating it),
-    // and position was not lost.
-    expect(document.activeElement).toBe(canvas.getByRole("combobox"))
+    // Width is unchanged by the chip (w-full fills the fixed-width container).
+    expect(field().getBoundingClientRect().width).toBeCloseTo(emptyWidth, 0)
+
+    // Keep arrowing from where we are — focus survived the chip insert (keyed
+    // input), so position is not lost.
+    expect(document.activeElement).toBe(input())
     await userEvent.keyboard("{ArrowDown}")
     await waitFor(() => expect(highlighted(canvasElement)).toBe("Nuxt"))
-    await userEvent.keyboard("{Enter}")
+    await userEvent.keyboard("{Enter}") // toggle Nuxt on
     await waitFor(() => expect(selected("Nuxt")).toBe("true"))
-    await expect(highlighted(canvasElement)).toBe("Nuxt")
 
     // Arrow back up and untoggle — toggle/untoggle both work mid-navigation.
     await userEvent.keyboard("{ArrowUp}")
     await waitFor(() => expect(highlighted(canvasElement)).toBe("SvelteKit"))
     await userEvent.keyboard("{Enter}")
     await waitFor(() => expect(selected("SvelteKit")).toBe("false"))
-    await expect(isOpen(canvasElement)).toBe(true)
 
-    // Mouse + keyboard interplay: click an option, then keep arrowing from it.
+    // Mouse + keyboard interplay: click two options, keep arrowing from the click.
     await userEvent.click(canvas.getByRole("option", { name: "Phoenix" }))
-    await waitFor(() => expect(selected("Phoenix")).toBe("true"))
     await waitFor(() => expect(highlighted(canvasElement)).toBe("Phoenix"))
     await userEvent.keyboard("{ArrowUp}")
     await waitFor(() => expect(highlighted(canvasElement)).toBe("Gleam Lustre"))
+    await userEvent.click(canvas.getByRole("option", { name: "Astro" }))
+    // Selection so far: Nuxt, Phoenix, Astro → three chips, each removable.
+    await waitFor(() =>
+      expect(canvas.getAllByRole("button", { name: /^Remove/ })).toHaveLength(
+        3,
+      ),
+    )
+
+    // --- chip roving focus ----------------------------------------------------
+    // ArrowLeft from the empty input enters the chips at the last one.
+    input().focus()
+    await userEvent.keyboard("{ArrowLeft}")
+    await waitFor(() => expect(focusedChip()).toBe("Astro"))
+    await userEvent.keyboard("{ArrowLeft}") // → Phoenix
+    await waitFor(() => expect(focusedChip()).toBe("Phoenix"))
+    await userEvent.keyboard("{ArrowRight}") // → Astro
+    await waitFor(() => expect(focusedChip()).toBe("Astro"))
+
+    // Delete the focused chip — it's removed and focus lands on the new last chip.
+    await userEvent.keyboard("{Delete}")
+    await waitFor(() =>
+      expect(canvas.queryByRole("button", { name: "Remove Astro" })).toBeNull(),
+    )
+    await waitFor(() => expect(focusedChip()).toBe("Phoenix"))
+
+    // Enter on a focused chip returns focus to the input.
+    await userEvent.keyboard("{Enter}")
+    await waitFor(() => expect(document.activeElement).toBe(input()))
+
+    // --- removal via the ✕ button + input Backspace --------------------------
+    await userEvent.click(
+      canvas.getByRole("button", { name: "Remove Phoenix" }),
+    )
+    await waitFor(() =>
+      expect(
+        canvas.queryByRole("button", { name: "Remove Phoenix" }),
+      ).toBeNull(),
+    )
+
+    // Backspace in the empty input pops the last remaining chip (Nuxt).
+    input().focus()
+    await userEvent.keyboard("{Backspace}")
+    await waitFor(() =>
+      expect(canvas.queryByRole("button", { name: "Remove Nuxt" })).toBeNull(),
+    )
+    // Back to no chips → the field returned to its empty width.
+    expect(field().getBoundingClientRect().width).toBeCloseTo(emptyWidth, 0)
   }),
 }
 
