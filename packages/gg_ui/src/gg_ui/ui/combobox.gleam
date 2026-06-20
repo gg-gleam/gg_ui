@@ -377,24 +377,19 @@ fn chip_remove_glyph() -> Element(msg) {
   lu_x.x([icon.size(icon.Sm)])
 }
 
-/// The popup: the native-popover container (`cn-combobox-content`, carrying the
-/// `group/combobox-content` marker + `data-empty` when nothing matches) holding
-/// the always-mounted empty/loading announcers and the `role=listbox`. The list
-/// holds the visible options — flat, or re-sectioned under `role=group` headers
-/// for a grouped list. `aria-multiselectable` is set in `Multiple` mode.
+/// The popup container (shadcn's `ComboboxContent`) — the native-popover box
+/// (`cn-combobox-content`, the `group/combobox-content` marker + `data-empty`
+/// when nothing matches). You **compose** what goes inside: an `empty`, an
+/// optional `loading`, and a `list`. `side`/`align` position it; `attrs` and
+/// `children` are merged.
 pub fn content(
   anatomy: Anatomy,
   model: Model(value),
   side side: Side,
   align align: Align,
-  empty_label empty_label: String,
-  loading_label loading_label: String,
+  attrs attrs: List(Attribute(Msg)),
+  children children: List(Element(Msg)),
 ) -> Element(Msg) {
-  let empty = base_combobox.is_empty(model)
-  let body = case base_combobox.visible_groups(model) {
-    [] -> flat_options(anatomy, model)
-    groups -> grouped_options(anatomy, model, groups)
-  }
   base_combobox.popup(
     anatomy,
     positioning.to_base(side, align),
@@ -405,26 +400,84 @@ pub fn content(
         attribute.class("group/combobox-content"),
         attribute.attribute("data-slot", "combobox-content"),
       ],
-      empty_marker(empty),
+      empty_marker(is_empty(model)),
+      attrs,
     ]),
-    list.flatten([
-      announcers(model, empty_label, loading_label),
-      [
-        base_combobox.list(
-          anatomy,
-          base_combobox.selection_mode(model),
-          list.flatten([
-            [
-              attribute.class(cn.cn(["cn-combobox-list"])),
-              attribute.attribute("data-slot", "combobox-list"),
-            ],
-            empty_marker(empty),
-          ]),
-          body,
-        ),
-      ],
-    ]),
+    children,
   )
+}
+
+/// The `role=listbox` (shadcn's `ComboboxList`) — `aria-multiselectable` in
+/// `Multiple` mode, `data-empty` when there's nothing to show. Fill it with
+/// `options` / `items` (flat) or `groups` (sectioned), plus any footer (e.g. a
+/// pagination sentinel). A sibling of `empty`/`loading` inside `content`.
+pub fn list(
+  anatomy: Anatomy,
+  model: Model(value),
+  attrs attrs: List(Attribute(Msg)),
+  children children: List(Element(Msg)),
+) -> Element(Msg) {
+  base_combobox.list(
+    anatomy,
+    base_combobox.selection_mode(model),
+    list.flatten([
+      [
+        attribute.class(cn.cn(["cn-combobox-list"])),
+        attribute.attribute("data-slot", "combobox-list"),
+      ],
+      empty_marker(is_empty(model)),
+      attrs,
+    ]),
+    children,
+  )
+}
+
+/// The empty announcer (shadcn's `ComboboxEmpty`) — a polite `role=status` region
+/// CSS-revealed only when `content` carries `data-empty`. `children` is **any UI**
+/// (text, an icon, interpolated copy). Keep it mounted so the announcement fires.
+pub fn empty(
+  attrs attrs: List(Attribute(Msg)),
+  children children: List(Element(Msg)),
+) -> Element(Msg) {
+  base_combobox.status(
+    list.flatten([
+      [
+        attribute.class(cn.cn(["cn-combobox-empty"])),
+        attribute.attribute("data-slot", "combobox-empty"),
+      ],
+      attrs,
+    ]),
+    children,
+  )
+}
+
+/// The loading announcer (Base UI's `Status`) — a polite `role=status` region for
+/// async work. `children` is **any UI** (a spinner + text). Render it conditionally
+/// on `is_loading`; it sits as a sibling of `empty`/`list` inside `content`.
+pub fn loading(
+  attrs attrs: List(Attribute(Msg)),
+  children children: List(Element(Msg)),
+) -> Element(Msg) {
+  base_combobox.status(
+    list.flatten([
+      [
+        attribute.class(cn.cn(["cn-combobox-loading"])),
+        attribute.attribute("data-slot", "combobox-status"),
+      ],
+      attrs,
+    ]),
+    children,
+  )
+}
+
+/// Whether the visible list is empty (gate the `empty`/`list` composition).
+pub fn is_empty(model: Model(value)) -> Bool {
+  base_combobox.is_empty(model)
+}
+
+/// Whether the async loading state is on (gate the `loading` part).
+pub fn is_loading(model: Model(value)) -> Bool {
+  model.loading
 }
 
 // `data-empty` on the content + list (shadcn's `data-empty:p-0` / the empty's
@@ -436,105 +489,36 @@ fn empty_marker(empty: Bool) -> List(Attribute(msg)) {
   }
 }
 
-// The empty + loading announcers — Base UI's `Empty`/`Status`: always mounted
-// (so the announcement fires consistently) and `role=status aria-live`. The empty
-// message is CSS-hidden unless the content carries `data-empty`; the loading line
-// shows only while `set_loading` is on (our async extension).
-fn announcers(
-  model: Model(value),
-  empty_label: String,
-  loading_label: String,
-) -> List(Element(Msg)) {
-  let loading = case model.loading {
-    True -> [
-      base_combobox.status(
-        [
-          attribute.class(cn.cn(["cn-combobox-loading"])),
-          attribute.attribute("data-slot", "combobox-status"),
-        ],
-        [html.text(loading_label)],
-      ),
-    ]
-    False -> []
-  }
-  list.append(loading, [
-    base_combobox.status(
-      [
-        attribute.class(cn.cn(["cn-combobox-empty"])),
-        attribute.attribute("data-slot", "combobox-empty"),
-      ],
-      [html.text(empty_label)],
-    ),
-  ])
+// --- Options + groups (composition sugars) ---------------------------------
+
+/// The default options — one label-only `option` per visible item, keyed by its
+/// visible position. The ergonomic flat-list filler: `list(.., options(..))`.
+pub fn options(anatomy: Anatomy, model: Model(value)) -> List(Element(Msg)) {
+  items(model, fn(it, pos) { option(anatomy, model, pos, it) })
 }
 
-// A flat (ungrouped) list of styled options, keyed by visible position.
-fn flat_options(anatomy: Anatomy, model: Model(value)) -> List(Element(Msg)) {
+/// Map the visible items to elements with your own per-item renderer (custom item
+/// content — an avatar, secondary text, …). `render` gets the `Item` and its
+/// visible position. Pair with `item` for the styled option shell.
+pub fn items(
+  model: Model(value),
+  render render: fn(Item(value), Int) -> Element(Msg),
+) -> List(Element(Msg)) {
   base_combobox.visible(model)
-  |> list.index_map(fn(pair, pos) { item(anatomy, model, pos, pair.1) })
+  |> list.index_map(fn(pair, pos) { render(item_from_base(pair.1), pos) })
 }
 
-// Grouped options: one `role=group` per non-empty section, each with its label
-// header and the section's options (still keyed by their flat visible position).
-fn grouped_options(
-  anatomy: Anatomy,
-  model: Model(value),
-  groups: List(#(String, List(#(Int, base_combobox.Item(value))))),
-) -> List(Element(Msg)) {
-  list.index_map(groups, fn(group, gi) {
-    let #(label, entries) = group
-    base_combobox.group(
-      anatomy,
-      gi,
-      [
-        attribute.class(cn.cn(["cn-combobox-group"])),
-        attribute.attribute("data-slot", "combobox-group"),
-      ],
-      [
-        base_combobox.group_label(
-          anatomy,
-          gi,
-          [
-            attribute.class(cn.cn(["cn-combobox-label"])),
-            attribute.attribute("data-slot", "combobox-label"),
-          ],
-          [html.text(label)],
-        ),
-        ..list.map(entries, fn(entry) { item(anatomy, model, entry.0, entry.1) })
-      ],
-    )
-  })
-}
-
-/// The whole widget in one call: the field + the popup, assembled from `model`.
-/// The common case for a combobox.
-pub fn combobox(
-  anatomy anatomy: Anatomy,
-  model model: Model(value),
-  placeholder placeholder: String,
-  side side: Side,
-  align align: Align,
-  clearable clearable: Bool,
-  empty_label empty_label: String,
-  loading_label loading_label: String,
-) -> Element(Msg) {
-  html.div([attribute.class(cn.cn(["cn-combobox-root"]))], [
-    input(anatomy, model, placeholder:, clearable:, attrs: []),
-    content(anatomy, model, side:, align:, empty_label:, loading_label:),
-  ])
-}
-
-// One styled `role="option"` at visible position `pos`: the label text directly,
-// then a built-in lucide check **indicator rendered only when selected** (Base
-// UI's `ItemIndicator`). Private — its `base_combobox.Item` parameter must not
-// surface in the public API.
-fn item(
+/// One styled `role=option` (shadcn's `ComboboxItem`) at visible position `pos`.
+/// `children` is the item's content; a lucide check **indicator is appended only
+/// when the item is selected** (Base UI's `ItemIndicator`). Clicking selects.
+pub fn item(
   anatomy: Anatomy,
   model: Model(value),
   pos: Int,
-  it: base_combobox.Item(value),
+  item: Item(value),
+  children: List(Element(Msg)),
 ) -> Element(Msg) {
-  let indicator = case base_combobox.is_selected(model, it.value) {
+  let indicator = case base_combobox.is_selected(model, item.value) {
     True -> [
       html.span([attribute.class(cn.cn(["cn-combobox-item-indicator"]))], [
         check_glyph(),
@@ -546,12 +530,82 @@ fn item(
     anatomy,
     model,
     pos,
-    it,
+    item_to_base(item),
     [
       attribute.class(cn.cn(["cn-combobox-item"])),
       attribute.attribute("data-slot", "combobox-item"),
     ],
-    [html.text(it.label), ..indicator],
+    list.append(children, indicator),
+  )
+}
+
+/// A label-only `item` — the common case (`combobox.option(anatomy, model, pos, it)`).
+pub fn option(
+  anatomy: Anatomy,
+  model: Model(value),
+  pos: Int,
+  it: Item(value),
+) -> Element(Msg) {
+  item(anatomy, model, pos, it, [html.text(it.label)])
+}
+
+/// Map the visible **groups** to elements with your own per-section renderer:
+/// `render` gets the group label, its entries (`#(visible_position, Item)` — the
+/// flat positions `item` keys off), and the group index. Empty groups drop out.
+/// Compose each section with `group` + `label` + `item`.
+pub fn groups(
+  model: Model(value),
+  render render: fn(String, List(#(Int, Item(value))), Int) -> Element(Msg),
+) -> List(Element(Msg)) {
+  base_combobox.visible_groups(model)
+  |> list.index_map(fn(g, gi) {
+    let #(lbl, entries) = g
+    let entries = list.map(entries, fn(e) { #(e.0, item_from_base(e.1)) })
+    render(lbl, entries, gi)
+  })
+}
+
+/// A labelled section (shadcn's `ComboboxGroup`) — `role=group` wired to its
+/// `label` by `gi`. `children` is the `label` then the section's `item`s.
+pub fn group(
+  anatomy: Anatomy,
+  gi: Int,
+  attrs: List(Attribute(Msg)),
+  children: List(Element(Msg)),
+) -> Element(Msg) {
+  base_combobox.group(
+    anatomy,
+    gi,
+    list.flatten([
+      [
+        attribute.class(cn.cn(["cn-combobox-group"])),
+        attribute.attribute("data-slot", "combobox-group"),
+      ],
+      attrs,
+    ]),
+    children,
+  )
+}
+
+/// A group's label (shadcn's `ComboboxLabel`) — the `aria-labelledby` target for
+/// `group gi`. Place it first in the group.
+pub fn label(
+  anatomy: Anatomy,
+  gi: Int,
+  attrs: List(Attribute(Msg)),
+  children: List(Element(Msg)),
+) -> Element(Msg) {
+  base_combobox.group_label(
+    anatomy,
+    gi,
+    list.flatten([
+      [
+        attribute.class(cn.cn(["cn-combobox-label"])),
+        attribute.attribute("data-slot", "combobox-label"),
+      ],
+      attrs,
+    ]),
+    children,
   )
 }
 
@@ -561,6 +615,10 @@ fn item_to_base(item: Item(value)) -> base_combobox.Item(value) {
     label: item.label,
     disabled: item.disabled,
   )
+}
+
+fn item_from_base(item: base_combobox.Item(value)) -> Item(value) {
+  Item(value: item.value, label: item.label, disabled: item.disabled)
 }
 
 fn group_to_base(group: Group(value)) -> base_combobox.Group(value) {

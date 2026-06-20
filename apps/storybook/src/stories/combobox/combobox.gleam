@@ -125,17 +125,7 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
 }
 
 fn view(model: Model) -> Element(Msg) {
-  let widget =
-    combobox.combobox(
-      anatomy: model.anatomy,
-      model: model.cb,
-      placeholder: "Search framework…",
-      side: model.flags.side,
-      align: model.flags.align,
-      clearable: model.flags.clearable,
-      empty_label: "No framework found.",
-      loading_label: "Loading frameworks…",
-    )
+  let widget = element.map(combobox_widget(model), ComboboxMsg)
   let toggle = case model.flags.async {
     True -> [async_toggle(model.loading)]
     False -> []
@@ -151,12 +141,58 @@ fn view(model: Model) -> Element(Msg) {
       // same way at the call site (`w-full max-w-xs` inside a framed preview).
       attribute.class("flex min-h-72 w-80 flex-col gap-3 text-foreground"),
     ],
-    list.flatten([
-      [element.map(widget, ComboboxMsg)],
-      toggle,
-      [selected_line(model)],
-    ]),
+    list.flatten([[widget], toggle, [selected_line(model)]]),
   )
+}
+
+// Assemble the combobox from parts (the composition API, shadcn-style): the field
+// + a popup holding the empty announcer, an optional loading announcer, and the
+// list (sectioned for the grouped variants, flat otherwise).
+fn combobox_widget(model: Model) -> Element(combobox.Msg) {
+  let a = model.anatomy
+  let cb = model.cb
+  let loading = case combobox.is_loading(cb) {
+    True -> [
+      combobox.loading([], [html.text("Loading frameworks…")]),
+    ]
+    False -> []
+  }
+  let body = case model.flags.variant {
+    VGrouped | VGroupedMultiple ->
+      combobox.groups(cb, fn(label, entries, gi) {
+        combobox.group(
+          a,
+          gi,
+          [],
+          list.flatten([
+            [combobox.label(a, gi, [], [html.text(label)])],
+            list.map(entries, fn(e) { combobox.option(a, cb, e.0, e.1) }),
+          ]),
+        )
+      })
+    _ -> combobox.options(a, cb)
+  }
+  html.div([], [
+    combobox.input(
+      a,
+      cb,
+      placeholder: "Search framework…",
+      clearable: model.flags.clearable,
+      attrs: [],
+    ),
+    combobox.content(
+      a,
+      cb,
+      side: model.flags.side,
+      align: model.flags.align,
+      attrs: [],
+      children: list.flatten([
+        loading,
+        [combobox.empty([], [html.text("No framework found.")])],
+        [combobox.list(a, cb, [], body)],
+      ]),
+    ),
+  ])
 }
 
 // The async demo's control: flips the combobox's `role=status` loading state.

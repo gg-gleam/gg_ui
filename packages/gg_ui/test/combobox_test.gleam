@@ -14,7 +14,9 @@ import birdie
 import gg_base_ui/combobox/combobox as base_combobox
 import gg_ui/positioning
 import gg_ui/ui/combobox
+import gleam/list
 import lustre/element
+import lustre/element/html
 
 fn fruits() -> List(combobox.Item(Int)) {
   [
@@ -49,6 +51,45 @@ fn no_matches() -> combobox.Model(Int) {
   m
 }
 
+// Compose the parts the way a consumer would — popup = loading? + empty + list,
+// the list filled flat (`options`) or sectioned (`groups`). One helper so the
+// content snapshots keep pinning the assembled output across the variants.
+fn assemble(model: combobox.Model(Int)) -> element.Element(combobox.Msg) {
+  let a = anatomy()
+  let grouped =
+    combobox.groups(model, fn(lbl, entries, gi) {
+      combobox.group(
+        a,
+        gi,
+        [],
+        list.flatten([
+          [combobox.label(a, gi, [], [html.text(lbl)])],
+          list.map(entries, fn(e) { combobox.option(a, model, e.0, e.1) }),
+        ]),
+      )
+    })
+  let body = case grouped {
+    [] -> combobox.options(a, model)
+    _ -> grouped
+  }
+  let loading = case combobox.is_loading(model) {
+    True -> [combobox.loading([], [html.text("Loading…")])]
+    False -> []
+  }
+  combobox.content(
+    a,
+    model,
+    side: positioning.Bottom,
+    align: positioning.Start,
+    attrs: [],
+    children: list.flatten([
+      loading,
+      [combobox.empty([], [html.text("No fruit found.")])],
+      [combobox.list(a, model, [], body)],
+    ]),
+  )
+}
+
 // --- input affordance: chevron vs clear ----------------------------------
 
 pub fn input_chevron_affordance_test() {
@@ -80,14 +121,7 @@ pub fn input_clear_affordance_test() {
 // --- popup content: items, selected indicator, empty ---------------------
 
 pub fn content_items_test() {
-  combobox.content(
-    anatomy(),
-    model(),
-    side: positioning.Bottom,
-    align: positioning.Start,
-    empty_label: "No fruit found.",
-    loading_label: "Loading…",
-  )
+  assemble(model())
   |> element.to_readable_string
   |> birdie.snap(title: "gg_ui combobox content — items + check indicator")
 }
@@ -95,27 +129,13 @@ pub fn content_items_test() {
 pub fn content_selected_option_test() {
   // Apple selected → its option carries `aria-selected="true"` (CSS reveals the
   // built-in check indicator off that).
-  combobox.content(
-    anatomy(),
-    with_selection(),
-    side: positioning.Bottom,
-    align: positioning.Start,
-    empty_label: "No fruit found.",
-    loading_label: "Loading…",
-  )
+  assemble(with_selection())
   |> element.to_readable_string
   |> birdie.snap(title: "gg_ui combobox content — selected option")
 }
 
 pub fn content_empty_test() {
-  combobox.content(
-    anatomy(),
-    no_matches(),
-    side: positioning.Bottom,
-    align: positioning.Start,
-    empty_label: "No fruit found.",
-    loading_label: "Loading…",
-  )
+  assemble(no_matches())
   |> element.to_readable_string
   |> birdie.snap(title: "gg_ui combobox content — empty message")
 }
@@ -152,14 +172,7 @@ pub fn input_chips_test() {
 
 pub fn content_multiselectable_test() {
   // The listbox advertises multi-select; the picked options are aria-selected.
-  combobox.content(
-    anatomy(),
-    multi_selected(),
-    side: positioning.Bottom,
-    align: positioning.Start,
-    empty_label: "No fruit found.",
-    loading_label: "Loading…",
-  )
+  assemble(multi_selected())
   |> element.to_readable_string
   |> birdie.snap(title: "gg_ui combobox content — multiselectable + selected")
 }
@@ -182,14 +195,7 @@ fn grouped() -> combobox.Model(Int) {
 }
 
 pub fn content_grouped_test() {
-  combobox.content(
-    anatomy(),
-    grouped(),
-    side: positioning.Bottom,
-    align: positioning.Start,
-    empty_label: "No fruit found.",
-    loading_label: "Loading…",
-  )
+  assemble(grouped())
   |> element.to_readable_string
   |> birdie.snap(title: "gg_ui combobox content — grouped sections")
 }
@@ -222,14 +228,7 @@ fn grouped_multi() -> combobox.Model(Int) {
 pub fn content_grouped_multiselectable_test() {
   // Grouped sections AND `aria-multiselectable`, with the picks `aria-selected`
   // across groups — the two axes compose.
-  combobox.content(
-    anatomy(),
-    grouped_multi(),
-    side: positioning.Bottom,
-    align: positioning.Start,
-    empty_label: "No fruit found.",
-    loading_label: "Loading…",
-  )
+  assemble(grouped_multi())
   |> element.to_readable_string
   |> birdie.snap(
     title: "gg_ui combobox content — grouped + multiselectable + selected",
@@ -253,31 +252,25 @@ pub fn input_grouped_multi_chips_test() {
 // --- async status --------------------------------------------------------
 
 pub fn content_loading_test() {
-  combobox.content(
-    anatomy(),
-    combobox.set_loading(model(), True),
-    side: positioning.Bottom,
-    align: positioning.Start,
-    empty_label: "No fruit found.",
-    loading_label: "Loading…",
-  )
+  assemble(combobox.set_loading(model(), True))
   |> element.to_readable_string
   |> birdie.snap(title: "gg_ui combobox content — loading status")
 }
 
-// --- assembled widget ----------------------------------------------------
+// --- assembled widget (composition: field + popup) -----------------------
 
 pub fn combobox_widget_test() {
-  combobox.combobox(
-    anatomy: anatomy(),
-    model: model(),
-    placeholder: "Search…",
-    side: positioning.Bottom,
-    align: positioning.Start,
-    clearable: False,
-    empty_label: "No fruit found.",
-    loading_label: "Loading…",
-  )
+  let m = model()
+  html.div([], [
+    combobox.input(
+      anatomy(),
+      m,
+      placeholder: "Search…",
+      clearable: False,
+      attrs: [],
+    ),
+    assemble(m),
+  ])
   |> element.to_readable_string
   |> birdie.snap(title: "gg_ui combobox widget — field + popup")
 }

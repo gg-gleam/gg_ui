@@ -4,7 +4,7 @@ title: gg_ui combobox widget — field + popup
 file: ./test/combobox_test.gleam
 test_name: combobox_widget_test
 ---
-<div class="cn-combobox-root">
+<div>
   <div class="cn-input-group group/input-group cn-combobox-input" data-slot="input-group" role="group" style="anchor-name:--gg-cb-input;">
     <input aria-autocomplete="list" aria-controls="cb-listbox" aria-expanded="false" autocapitalize="none" autocomplete="off" autocorrect="off" class="cn-input-group-input" data-slot="input-group-control" id="cb-input" placeholder="Search…" role="combobox" spellcheck="false" value>
     <div class="cn-input-group-addon cn-input-group-addon-align-inline-end" data-align="inline-end" data-slot="input-group-addon" role="group">
