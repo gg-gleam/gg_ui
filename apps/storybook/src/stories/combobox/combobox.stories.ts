@@ -75,6 +75,11 @@ function listbox(canvasElement: HTMLElement): HTMLElement {
 const isOpen = (canvasElement: HTMLElement): boolean =>
   popup(canvasElement).matches(":popover-open")
 
+// The async loading announcer specifically (the empty announcer is also
+// role=status and always mounted, so match it by its data-slot).
+const loadingRegion = (canvasElement: HTMLElement): HTMLElement | null =>
+  canvasElement.querySelector<HTMLElement>("[data-slot='combobox-status']")
+
 const statusRegion = (canvasElement: HTMLElement): HTMLElement => {
   const el = canvasElement.querySelector<HTMLElement>("[role='status']")
   if (!el) throw new Error("combobox status region not mounted")
@@ -213,7 +218,10 @@ export const Multiple: Story = {
     )
 
     // Backspace in the (empty) input pops the last remaining chip (Astro).
-    await userEvent.click(input)
+    // Re-query the input — Lustre may have re-created the node when the chip list
+    // changed, so the earlier reference can be detached.
+    const liveInput = canvas.getByRole<HTMLInputElement>("combobox")
+    await userEvent.click(liveInput)
     await userEvent.keyboard("{Backspace}")
     await waitFor(() =>
       expect(canvas.queryByRole("button", { name: "Remove Astro" })).toBeNull(),
@@ -257,18 +265,25 @@ export const Async: Story = {
     mountLustre((selector) => mount_combobox_async(selector, side, align)),
   play: testOnly(async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    const status = statusRegion(canvasElement)
-    await expect(status).toHaveAttribute("aria-live", "polite")
-    await expect(status.textContent?.trim()).toBe("")
-
-    const toggle = canvas.getByRole("button", { name: /simulate loading/i })
-    await userEvent.click(toggle)
-    await waitFor(() =>
-      expect(status.textContent).toContain("Loading frameworks"),
+    // The empty announcer is always mounted (role=status); the loading announcer
+    // (data-slot=combobox-status) appears only while loading.
+    await expect(statusRegion(canvasElement)).toHaveAttribute(
+      "aria-live",
+      "polite",
     )
+    await expect(loadingRegion(canvasElement)).toBeNull()
 
-    // The same live region clears when loading stops (no remount).
+    await userEvent.click(
+      canvas.getByRole("button", { name: /simulate loading/i }),
+    )
+    await waitFor(() => {
+      const region = loadingRegion(canvasElement)
+      expect(region).not.toBeNull()
+      expect(region?.textContent).toContain("Loading frameworks")
+    })
+
+    // It unmounts when loading stops.
     await userEvent.click(canvas.getByRole("button", { name: /stop loading/i }))
-    await waitFor(() => expect(status.textContent?.trim()).toBe(""))
+    await waitFor(() => expect(loadingRegion(canvasElement)).toBeNull())
   }),
 }
