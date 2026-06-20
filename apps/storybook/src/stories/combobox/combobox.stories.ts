@@ -184,6 +184,17 @@ export const Multiple: Story = {
   play: testOnly(async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     const input = canvas.getByRole<HTMLInputElement>("combobox")
+    const field = (): HTMLElement => {
+      const el = canvasElement.querySelector<HTMLElement>(
+        "[data-slot='combobox-chips']",
+      )
+      if (!el) throw new Error("chips field not mounted")
+      return el
+    }
+
+    // Width must stay put as chips are added (the field's w-full fills the
+    // fixed-width container; chips wrap, the field doesn't grow sideways).
+    const emptyWidth = field().getBoundingClientRect().width
 
     await userEvent.click(input)
     await waitFor(() => expect(isOpen(canvasElement)).toBe(true))
@@ -193,6 +204,9 @@ export const Multiple: Story = {
     await expect(isOpen(canvasElement)).toBe(true)
     await userEvent.click(await canvas.findByRole("option", { name: "Astro" }))
     await expect(isOpen(canvasElement)).toBe(true)
+
+    // …same width with two chips selected — no jump.
+    expect(field().getBoundingClientRect().width).toBeCloseTo(emptyWidth, 0)
 
     // Two chips, each with a labelled remove button.
     await waitFor(() =>

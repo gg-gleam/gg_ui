@@ -140,9 +140,14 @@ fn view(model: Model) -> Element(Msg) {
   }
   html.div(
     [
-      attribute.class(
-        "flex min-h-72 w-full max-w-xs flex-col gap-3 text-foreground",
-      ),
+      // A *definite* width (`w-80`, = max-w-xs), not `w-full max-w-xs`: the story
+      // uses Storybook's `layout: "centered"`, so the canvas is shrink-to-fit and
+      // a percentage/max-width collapses to content width — which makes the
+      // multiple-select field grow when the first chip appears (1 chip + input >
+      // bare input). A fixed width gives the field's `w-full` something to fill,
+      // so it stays put and chips wrap. shadcn's example sizes ComboboxChips the
+      // same way at the call site (`w-full max-w-xs` inside a framed preview).
+      attribute.class("flex min-h-72 w-80 flex-col gap-3 text-foreground"),
     ],
     list.flatten([
       [element.map(widget, ComboboxMsg)],
