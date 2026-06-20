@@ -108,6 +108,17 @@ export const Remote: Story = {
     await expect(canvas.queryByText("popular/repo-1")).toBeNull()
     expect(canvas.getAllByRole("option")).toHaveLength(PER_PAGE)
 
+    // The popup has a bounded height and the list scrolls inside it — it doesn't
+    // grow with the items (native `max-block-size: min(18rem, available)`).
+    {
+      const box = popup(canvasElement)
+      const list = listbox(canvasElement)
+      expect(box.getBoundingClientRect().height).toBeLessThanOrEqual(
+        18 * 16 + 1,
+      )
+      expect(list.scrollHeight).toBeGreaterThan(list.clientHeight)
+    }
+
     // Scroll the list to the bottom → the next page auto-appends (no click).
     const list = listbox(canvasElement)
     list.scrollTop = list.scrollHeight
