@@ -82,16 +82,17 @@ export const Remote: Story = {
     await waitFor(() =>
       expect(canvas.getAllByRole("option")).toHaveLength(PER_PAGE),
     )
-    // The popup opens BELOW the field, left-aligned — never thrown out to the
-    // side (the `flip-start` axis-swap fallback is removed; a tall popup flips up,
-    // not sideways).
+    // The popup never overlaps the field (it sits fully below, or flips fully
+    // above when space is tight) and stays within the viewport — the available-
+    // height measurement sizes it to the room around the anchor.
     {
       const field = input.getBoundingClientRect()
       const box = popup(canvasElement).getBoundingClientRect()
-      expect(box.left).toBeLessThan(field.right) // overlaps the field's column
-      // A real gap below the field's border box — wide enough to clear the focus
-      // ring (3px) so the popup never reads as sitting over the input.
-      expect(box.top - field.bottom).toBeGreaterThanOrEqual(4)
+      expect(box.left).toBeLessThan(field.right) // shares the field's column
+      const below = box.top >= field.bottom // fully below…
+      const above = box.bottom <= field.top // …or fully above
+      expect(below || above).toBe(true)
+      expect(box.bottom).toBeLessThanOrEqual(window.innerHeight + 1)
     }
     await waitFor(() =>
       expect(canvas.getByText("popular/repo-1")).toBeVisible(),

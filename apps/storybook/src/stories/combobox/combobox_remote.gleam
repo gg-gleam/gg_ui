@@ -16,7 +16,6 @@ import gg_ui/ui/text
 import gleam/dynamic.{type Dynamic}
 import gleam/dynamic/decode
 import gleam/int
-import gleam/list
 import lustre
 import lustre/attribute
 import lustre/effect.{type Effect}
