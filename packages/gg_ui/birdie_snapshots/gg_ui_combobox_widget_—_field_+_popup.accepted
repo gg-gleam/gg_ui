@@ -1,0 +1,50 @@
+---
+version: 1.5.5
+title: gg_ui combobox widget — field + popup
+file: ./test/combobox_test.gleam
+test_name: combobox_widget_test
+---
+<div class="cn-combobox-root">
+  <div class="cn-input-group group/input-group" data-slot="combobox" data-slot="input-group" role="group" style="anchor-name:--gg-cb-input;">
+    <input aria-autocomplete="list" aria-controls="cb-listbox" aria-expanded="false" class="cn-input-group-input cn-combobox-input" data-slot="input-group-control" id="cb-input" placeholder="Search…" role="combobox" value>
+    <div class="cn-input-group-addon cn-input-group-addon-align-inline-end" data-align="inline-end" data-slot="input-group-addon" role="group">
+      <button aria-label="Toggle suggestions" class="cn-button cn-button-variant-ghost cn-button-size-icon-xs cn-input-group-button cn-combobox-trigger" data-slot="input-group-button" data-slot="button" tabindex="-1" type="button" type="button">
+        <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="cn-icon cn-icon-size-md" data-slot="icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+          <path d="m6 9 6 6 6-6"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+  <div class="cn-combobox-content" data-align="start" data-side="bottom" id="cb-listbox" popover="manual" role="listbox" style="position-anchor:--gg-cb-input;position-area:block-end span-inline-end;inset:auto;position-try-fallbacks:flip-block, flip-inline, flip-block flip-inline, flip-start, flip-block flip-start, flip-inline flip-start, flip-block flip-inline flip-start;margin-inline:0;margin-block:6px;">
+    <div aria-selected="false" class="cn-combobox-item" id="cb-listbox-option-0" role="option">
+      <span class="cn-combobox-item-label">
+        Apple
+      </span>
+      <span class="cn-combobox-item-indicator">
+        <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="cn-icon cn-icon-size-md" data-slot="icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M20 6 9 17l-5-5"></path>
+        </svg>
+      </span>
+    </div>
+    <div aria-selected="false" class="cn-combobox-item" id="cb-listbox-option-1" role="option">
+      <span class="cn-combobox-item-label">
+        Apricot
+      </span>
+      <span class="cn-combobox-item-indicator">
+        <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="cn-icon cn-icon-size-md" data-slot="icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M20 6 9 17l-5-5"></path>
+        </svg>
+      </span>
+    </div>
+    <div aria-selected="false" class="cn-combobox-item" id="cb-listbox-option-2" role="option">
+      <span class="cn-combobox-item-label">
+        Banana
+      </span>
+      <span class="cn-combobox-item-indicator">
+        <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="cn-icon cn-icon-size-md" data-slot="icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M20 6 9 17l-5-5"></path>
+        </svg>
+      </span>
+    </div>
+  </div>
+</div>
