@@ -194,6 +194,62 @@ pub fn content_grouped_test() {
   |> birdie.snap(title: "gg_ui combobox content — grouped sections")
 }
 
+// --- grouped + multiple (composes — independent axes, like Base UI) -------
+
+// A grouped, multiple-select model with Lemon + Strawberry picked across groups.
+fn grouped_multi() -> combobox.Model(Int) {
+  let a = anatomy()
+  let m =
+    combobox.init_grouped(
+      groups: [
+        combobox.Group(label: "Citrus", items: [
+          combobox.Item(value: 1, label: "Lemon", disabled: False),
+          combobox.Item(value: 2, label: "Lime", disabled: False),
+        ]),
+        combobox.Group(label: "Berries", items: [
+          combobox.Item(value: 3, label: "Strawberry", disabled: False),
+        ]),
+      ],
+      config: multi_config(),
+    )
+  let #(m, _) = combobox.update(a, m, base_combobox.ListToggled(True))
+  // Visible positions 0 (Lemon) and 2 (Strawberry) — across the two groups.
+  let #(m, _) = combobox.update(a, m, base_combobox.OptionChosen(0))
+  let #(m, _) = combobox.update(a, m, base_combobox.OptionChosen(2))
+  m
+}
+
+pub fn content_grouped_multiselectable_test() {
+  // Grouped sections AND `aria-multiselectable`, with the picks `aria-selected`
+  // across groups — the two axes compose.
+  combobox.content(
+    anatomy(),
+    grouped_multi(),
+    side: positioning.Bottom,
+    align: positioning.Start,
+    empty_label: "No fruit found.",
+    loading_label: "Loading…",
+  )
+  |> element.to_readable_string
+  |> birdie.snap(
+    title: "gg_ui combobox content — grouped + multiselectable + selected",
+  )
+}
+
+pub fn input_grouped_multi_chips_test() {
+  // The field is the chips field regardless of grouping — the picks from both
+  // groups render as chips.
+  combobox.input(
+    anatomy(),
+    grouped_multi(),
+    placeholder: "Search…",
+    clearable: False,
+    attrs: [],
+  )
+  |> element.to_readable_string
+  |> birdie.snap(title: "gg_ui combobox input — grouped + multiple chips")
+}
+
 // --- async status --------------------------------------------------------
 
 pub fn content_loading_test() {

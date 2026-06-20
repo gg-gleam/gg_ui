@@ -31,6 +31,7 @@ type Variant {
   VSingle
   VMultiple
   VGrouped
+  VGroupedMultiple
 }
 
 type Flags {
@@ -91,7 +92,7 @@ fn framework_groups() -> List(combobox.Group(String)) {
 fn init(flags: Flags) -> #(Model, Effect(Msg)) {
   let anatomy = combobox.anatomy_with_id("combobox-story")
   let config = case flags.variant {
-    VMultiple ->
+    VMultiple | VGroupedMultiple ->
       combobox.Config(
         loop: True,
         auto_highlight: False,
@@ -100,7 +101,8 @@ fn init(flags: Flags) -> #(Model, Effect(Msg)) {
     _ -> combobox.config()
   }
   let cb = case flags.variant {
-    VGrouped -> combobox.init_grouped(framework_groups(), config)
+    VGrouped | VGroupedMultiple ->
+      combobox.init_grouped(framework_groups(), config)
     _ -> combobox.init(frameworks(), config)
   }
   #(Model(cb:, anatomy:, flags:, loading: False), effect.none())
@@ -172,7 +174,7 @@ fn async_toggle(loading: Bool) -> Element(Msg) {
 // `text-sm text-muted-foreground`.
 fn selected_line(model: Model) -> Element(Msg) {
   let label = case model.flags.variant {
-    VMultiple ->
+    VMultiple | VGroupedMultiple ->
       case combobox.selected_values(model.cb) {
         [] -> "Nothing selected"
         values ->
@@ -227,6 +229,17 @@ pub fn mount_combobox_grouped(
 ) -> Nil {
   start(
     Flags(parse_side(side), parse_align(align), False, VGrouped, False),
+    selector,
+  )
+}
+
+pub fn mount_combobox_grouped_multiple(
+  selector: String,
+  side: String,
+  align: String,
+) -> Nil {
+  start(
+    Flags(parse_side(side), parse_align(align), False, VGroupedMultiple, False),
     selector,
   )
 }

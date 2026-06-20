@@ -555,8 +555,6 @@ fn item(
   )
 }
 
-// --- Mappings to the headless layer ----------------------------------------
-
 fn item_to_base(item: Item(value)) -> base_combobox.Item(value) {
   base_combobox.Item(
     value: item.value,

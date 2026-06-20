@@ -99,6 +99,7 @@ declare module "*.gleam" {
   ) => void
   export const mount_combobox_multiple: MountComboboxVariant
   export const mount_combobox_grouped: MountComboboxVariant
+  export const mount_combobox_grouped_multiple: MountComboboxVariant
   export const mount_combobox_async: MountComboboxVariant
 
   // button stories

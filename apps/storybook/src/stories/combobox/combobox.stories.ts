@@ -4,6 +4,7 @@ import { mountLustre } from "../../../.storybook/lustre-mount"
 import {
   mount_combobox_async,
   mount_combobox_grouped,
+  mount_combobox_grouped_multiple,
   mount_combobox_multiple,
   mount_combobox_playground,
 } from "./combobox.gleam"
@@ -327,6 +328,65 @@ export const Grouped: Story = {
     await userEvent.type(input, "nuxt")
     await waitFor(() => expect(list.getAllByRole("group")).toHaveLength(1))
     await waitFor(() => expect(list.getByText("Vue")).toBeVisible())
+  }),
+}
+
+/** Grouped + multiple compose (they're independent axes in Base UI): the popup
+ *  shows labelled `role=group` sections that are `aria-multiselectable`, and the
+ *  field is the chips field — picks from different groups accumulate as chips. */
+export const GroupedMultiple: Story = {
+  name: "Grouped + multiple",
+  parameters: { controls: { disable: true } },
+  render: ({ side, align }) =>
+    mountLustre((selector) =>
+      mount_combobox_grouped_multiple(selector, side, align),
+    ),
+  play: testOnly(async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const input = canvas.getByRole<HTMLInputElement>("combobox")
+
+    await userEvent.click(input)
+    await waitFor(() => expect(isOpen(canvasElement)).toBe(true))
+
+    // Re-query the listbox live each time — toggling re-renders the popup, so a
+    // captured node would go stale (the click would hit a detached element).
+    const option = (name: string): HTMLElement =>
+      within(listbox(canvasElement)).getByRole("option", { name })
+
+    // The list is grouped AND multi-selectable — both axes at once.
+    expect(listbox(canvasElement)).toHaveAttribute(
+      "aria-multiselectable",
+      "true",
+    )
+    await waitFor(() =>
+      expect(within(listbox(canvasElement)).getAllByRole("group")).toHaveLength(
+        4,
+      ),
+    )
+
+    // Pick from two different groups — list stays open, picks become chips.
+    await userEvent.click(option("Next.js")) // React group
+    await expect(isOpen(canvasElement)).toBe(true)
+    await userEvent.click(option("Nuxt")) // Vue group
+    await expect(isOpen(canvasElement)).toBe(true)
+
+    // Both picks are aria-selected in their groups…
+    await waitFor(() =>
+      expect(option("Next.js")).toHaveAttribute("aria-selected", "true"),
+    )
+    await waitFor(() =>
+      expect(option("Nuxt")).toHaveAttribute("aria-selected", "true"),
+    )
+
+    // …and both render as removable chips in the field.
+    await waitFor(() =>
+      expect(
+        canvas.getByRole("button", { name: "Remove Next.js" }),
+      ).toBeVisible(),
+    )
+    await expect(
+      canvas.getByRole("button", { name: "Remove Nuxt" }),
+    ).toBeVisible()
   }),
 }
 
