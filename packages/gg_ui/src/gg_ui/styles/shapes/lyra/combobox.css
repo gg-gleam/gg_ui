@@ -1,19 +1,12 @@
 /* lyra · combobox — ported 1:1 from shadcn style-lyra.css (solid menu surface).
  * Native enter/exit motion lives in styles/motion/combobox.css (rule 4), so shadcn's
  * tw-animate-css `data-open:*`/`slide-in-from-*` utils are stripped from
- * .cn-combobox-content, and the popup is sized with native `anchor-size()` rather
- * than Base UI's JS `--anchor-width`/`--available-height` vars. No tailwind import. */
+ * .cn-combobox-content. The popup's anchor-relative width/height (anchor-size +
+ * the available-space clamp) are emitted inline by the styled layer, not here, so
+ * these recipes stay pure `@apply`. No tailwind import. */
 .style-lyra {
   .cn-combobox-content {
     @apply bg-popover text-popover-foreground ring-foreground/10 *:data-[slot=input-group]:bg-input/30 *:data-[slot=input-group]:border-input/30 flex flex-col min-w-36 overflow-hidden rounded-none shadow-md ring-1 *:data-[slot=input-group]:m-1 *:data-[slot=input-group]:mb-0 *:data-[slot=input-group]:h-8 *:data-[slot=input-group]:shadow-none;
-    width: anchor-size(width);
-    /* Clamp to the smaller of the design max and the available space: the
-     * position-area area is the containing block, so 100% = the room between the
-     * anchor and the viewport edge (native --available-height). The `- 1rem`
-     * reserves the popup's block margins (the side offset) so the sized popup +
-     * its gaps fit the space — without it the popup overflows by the gap and the
-     * browser shoves it back up against the input. */
-    max-block-size: min(18rem, calc(100% - 1rem));
   }
 
   .cn-combobox-label {
