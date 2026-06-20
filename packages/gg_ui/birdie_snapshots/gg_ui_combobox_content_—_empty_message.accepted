@@ -1,0 +1,11 @@
+---
+version: 1.5.5
+title: gg_ui combobox content — empty message
+file: ./test/combobox_test.gleam
+test_name: content_empty_test
+---
+<div class="cn-combobox-content" data-align="start" data-side="bottom" id="cb-listbox" popover="manual" role="listbox" style="position-anchor:--gg-cb-input;position-area:block-end span-inline-end;inset:auto;position-try-fallbacks:flip-block, flip-inline, flip-block flip-inline, flip-start, flip-block flip-start, flip-inline flip-start, flip-block flip-inline flip-start;margin-inline:0;margin-block:6px;">
+  <div class="cn-combobox-empty">
+    No fruit found.
+  </div>
+</div>
