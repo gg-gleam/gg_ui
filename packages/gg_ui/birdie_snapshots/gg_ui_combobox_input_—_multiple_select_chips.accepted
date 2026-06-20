@@ -5,7 +5,7 @@ file: ./test/combobox_test.gleam
 test_name: input_chips_test
 ---
 <div aria-label="Selected" class="cn-combobox-chips w-full" data-slot="combobox-chips" role="group" style="anchor-name:--gg-cb-input;">
-  <div class="cn-combobox-chip" data-slot="combobox-chip">
+  <div data-lustre-key="chip-0" class="cn-combobox-chip" data-slot="combobox-chip">
     Apple
     <button aria-label="Remove Apple" class="cn-button cn-button-variant-ghost cn-button-size-icon-xs cn-combobox-chip-remove" data-slot="combobox-chip-remove" tabindex="-1" type="button">
       <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="cn-icon cn-icon-size-sm" data-slot="icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
@@ -14,7 +14,7 @@ test_name: input_chips_test
       </svg>
     </button>
   </div>
-  <div class="cn-combobox-chip" data-slot="combobox-chip">
+  <div data-lustre-key="chip-1" class="cn-combobox-chip" data-slot="combobox-chip">
     Banana
     <button aria-label="Remove Banana" class="cn-button cn-button-variant-ghost cn-button-size-icon-xs cn-combobox-chip-remove" data-slot="combobox-chip-remove" tabindex="-1" type="button">
       <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="cn-icon cn-icon-size-sm" data-slot="icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
@@ -23,5 +23,5 @@ test_name: input_chips_test
       </svg>
     </button>
   </div>
-  <input aria-activedescendant="cb-listbox-option-2" aria-autocomplete="list" aria-controls="cb-listbox" aria-expanded="true" autocapitalize="none" autocomplete="off" autocorrect="off" class="cn-combobox-chip-input" data-slot="combobox-chip-input" id="cb-input" placeholder="Search…" role="combobox" spellcheck="false" value>
+  <input data-lustre-key="combobox-input" aria-activedescendant="cb-listbox-option-2" aria-autocomplete="list" aria-controls="cb-listbox" aria-expanded="true" autocapitalize="none" autocomplete="off" autocorrect="off" class="cn-combobox-chip-input" data-slot="combobox-chip-input" id="cb-input" placeholder="Search…" role="combobox" spellcheck="false" value>
 </div>

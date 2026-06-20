@@ -30,12 +30,14 @@ import gg_icons_lucide/lucide/x as lu_x
 import gg_ui/helpers/cn
 import gg_ui/positioning.{type Align, type Side}
 import gg_ui/ui/input_group
+import gleam/int
 import gleam/list
 import gleam/option.{type Option}
 import lustre/attribute.{type Attribute}
 import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html
+import lustre/element/keyed
 
 // --- Handles (opaque aliases — threaded, never constructed by the caller) ---
 
@@ -214,13 +216,30 @@ fn single_field(
 
 // Multiple-select field — shadcn's `ComboboxChips`: a bordered container of chips
 // + a bare chip-input. The container is the positioning anchor.
+//
+// Children are **keyed** so the chip-input keeps a stable DOM identity as chips
+// are added/removed: Base UI keeps focus on the one input (virtual focus). With
+// an unkeyed list, Lustre diffs by position and recreates the trailing input
+// node when a chip appears — dropping focus, which would lose the keyboard
+// highlight position after a toggle. A constant key for the input (chips keyed by
+// index) makes Lustre patch it in place, so focus + active-descendant survive.
 fn chips_field(
   anatomy: Anatomy,
   model: Model(value),
   placeholder: String,
   attrs: List(Attribute(Msg)),
 ) -> Element(Msg) {
-  html.div(
+  let chips =
+    list.index_map(base_combobox.selected_items(model), fn(item, index) {
+      #("chip-" <> int.to_string(index), chip(item, index))
+    })
+  let field_input =
+    base_combobox.input(anatomy, model, [
+      attribute.class(cn.cn(["cn-combobox-chip-input"])),
+      attribute.attribute("data-slot", "combobox-chip-input"),
+      attribute.placeholder(placeholder),
+    ])
+  keyed.div(
     [
       base_combobox.anchor(anatomy),
       // `w-full` keeps the field the width of its container (shadcn's example sets
@@ -233,13 +252,7 @@ fn chips_field(
       attribute.attribute("aria-label", "Selected"),
       ..attrs
     ],
-    list.append(list.index_map(base_combobox.selected_items(model), chip), [
-      base_combobox.input(anatomy, model, [
-        attribute.class(cn.cn(["cn-combobox-chip-input"])),
-        attribute.attribute("data-slot", "combobox-chip-input"),
-        attribute.placeholder(placeholder),
-      ]),
-    ]),
+    list.append(chips, [#("combobox-input", field_input)]),
   )
 }
 

@@ -75,6 +75,13 @@ function listbox(canvasElement: HTMLElement): HTMLElement {
 const isOpen = (canvasElement: HTMLElement): boolean =>
   popup(canvasElement).matches(":popover-open")
 
+// The single highlighted (active-descendant) option's label, or null. Base UI's
+// "active index" — independent of selection — surfaces as `data-highlighted`.
+const highlighted = (canvasElement: HTMLElement): string | null =>
+  canvasElement
+    .querySelector<HTMLElement>("[role='option'][data-highlighted]")
+    ?.textContent?.trim() ?? null
+
 // The async loading announcer specifically (the empty announcer is also
 // role=status and always mounted, so match it by its data-slot).
 const loadingRegion = (canvasElement: HTMLElement): HTMLElement | null =>
@@ -240,6 +247,64 @@ export const Multiple: Story = {
     await waitFor(() =>
       expect(canvas.queryByRole("button", { name: "Remove Astro" })).toBeNull(),
     )
+  }),
+}
+
+/** Keyboard parity (Base UI): the active highlight is independent of selection —
+ *  toggling an option with Enter keeps the highlight on it and the list open, so
+ *  you keep arrowing and toggling. Opening with the mouse then arrowing continues
+ *  from wherever you are. */
+export const MultipleKeyboard: Story = {
+  name: "Multiple — keyboard",
+  parameters: { controls: { disable: true } },
+  render: ({ side, align }) =>
+    mountLustre((selector) => mount_combobox_multiple(selector, side, align)),
+  play: testOnly(async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const input = canvas.getByRole<HTMLInputElement>("combobox")
+    const selected = (name: string): string | null =>
+      canvas.getByRole("option", { name }).getAttribute("aria-selected")
+
+    // Open with the mouse — nothing highlighted yet.
+    await userEvent.click(input)
+    await waitFor(() => expect(isOpen(canvasElement)).toBe(true))
+    expect(highlighted(canvasElement)).toBeNull()
+
+    // ArrowDown seeds the first item, then advances.
+    await userEvent.keyboard("{ArrowDown}")
+    await waitFor(() => expect(highlighted(canvasElement)).toBe("Next.js"))
+    await userEvent.keyboard("{ArrowDown}")
+    await waitFor(() => expect(highlighted(canvasElement)).toBe("SvelteKit"))
+
+    // Enter toggles SvelteKit — and the highlight STAYS on it, list stays open.
+    await userEvent.keyboard("{Enter}")
+    await waitFor(() => expect(selected("SvelteKit")).toBe("true"))
+    await expect(isOpen(canvasElement)).toBe(true)
+    await expect(highlighted(canvasElement)).toBe("SvelteKit")
+
+    // Keep arrowing from where we are — focus stayed on the input (it's a keyed
+    // node, so adding the chip patched it in place rather than recreating it),
+    // and position was not lost.
+    expect(document.activeElement).toBe(canvas.getByRole("combobox"))
+    await userEvent.keyboard("{ArrowDown}")
+    await waitFor(() => expect(highlighted(canvasElement)).toBe("Nuxt"))
+    await userEvent.keyboard("{Enter}")
+    await waitFor(() => expect(selected("Nuxt")).toBe("true"))
+    await expect(highlighted(canvasElement)).toBe("Nuxt")
+
+    // Arrow back up and untoggle — toggle/untoggle both work mid-navigation.
+    await userEvent.keyboard("{ArrowUp}")
+    await waitFor(() => expect(highlighted(canvasElement)).toBe("SvelteKit"))
+    await userEvent.keyboard("{Enter}")
+    await waitFor(() => expect(selected("SvelteKit")).toBe("false"))
+    await expect(isOpen(canvasElement)).toBe(true)
+
+    // Mouse + keyboard interplay: click an option, then keep arrowing from it.
+    await userEvent.click(canvas.getByRole("option", { name: "Phoenix" }))
+    await waitFor(() => expect(selected("Phoenix")).toBe("true"))
+    await waitFor(() => expect(highlighted(canvasElement)).toBe("Phoenix"))
+    await userEvent.keyboard("{ArrowUp}")
+    await waitFor(() => expect(highlighted(canvasElement)).toBe("Gleam Lustre"))
   }),
 }
 
