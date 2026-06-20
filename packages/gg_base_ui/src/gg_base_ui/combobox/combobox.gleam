@@ -820,9 +820,11 @@ pub fn popup(
   anatomy: Anatomy,
   placement: Placement,
   side_offset: Int,
+  max_height: String,
   attrs: List(Attribute(Msg)),
   children: List(Element(Msg)),
 ) -> Element(Msg) {
+  let reserve = int.to_string(side_offset * 2) <> "px"
   html.div(
     list.flatten([
       [
@@ -836,6 +838,13 @@ pub fn popup(
           "data-align",
           positioning.align_to_string(placement.align),
         ),
+        attribute.styles([
+          #("width", "anchor-size(width)"),
+          #(
+            "max-block-size",
+            "min(" <> max_height <> ", calc(100% - " <> reserve <> "))",
+          ),
+        ]),
         event.on("toggle", toggle_decoder()),
         event.advanced("mousedown", keep_focus_handler()),
       ],

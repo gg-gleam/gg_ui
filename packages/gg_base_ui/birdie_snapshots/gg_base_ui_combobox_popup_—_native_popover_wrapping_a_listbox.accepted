@@ -4,6 +4,6 @@ title: gg_base_ui combobox popup — native popover wrapping a listbox
 file: ./test/combobox_test.gleam
 test_name: render_popup_test
 ---
-<div data-align="start" data-side="bottom" id="cb-popup" popover="manual" style="position-anchor:--gg-cb-input;position-area:block-end span-inline-end;inset:auto;position-try-fallbacks:flip-block, flip-inline, flip-block flip-inline;margin-inline:0;margin-block:4px;">
+<div data-align="start" data-side="bottom" id="cb-popup" popover="manual" style="width:anchor-size(width);max-block-size:min(18rem, calc(100% - 8px));;position-anchor:--gg-cb-input;position-area:block-end span-inline-end;inset:auto;position-try-fallbacks:flip-block, flip-inline, flip-block flip-inline;margin-inline:0;margin-block:4px;">
   <div id="cb-listbox" role="listbox"></div>
 </div>

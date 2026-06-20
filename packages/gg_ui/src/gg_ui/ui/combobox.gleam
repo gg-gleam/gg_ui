@@ -448,12 +448,12 @@ pub fn content(
     anatomy,
     positioning.to_base(side, align),
     popup_offset,
+    popup_max_height,
     list.flatten([
       [
         attribute.class(cn.cn(["cn-combobox-content"])),
         attribute.class("group/combobox-content"),
         attribute.attribute("data-slot", "combobox-content"),
-        popup_sizing_style(),
       ],
       empty_marker(is_empty(model)),
       attrs,
@@ -462,32 +462,19 @@ pub fn content(
   )
 }
 
-// 8px (shadcn's sideOffset is 6) so the gap clears the field's 3px focus ring —
-// at 6 the ring eats most of the gap and the popup reads as over the input. The
-// single source of truth for the gap: the offset margin and the height reserve
-// below both derive from it.
+// The styled layer's two sizing inputs to the headless `popup`, which turns them
+// into the anchor-relative inline sizing (width = anchor, height = min(cap,
+// available - gap)). `popup_offset` is also the side-offset gap, so it's the
+// single source of truth for both the offset margin and the height reserve.
+//
+// 8px (shadcn's sideOffset is 6) so the gap clears the field's 3px focus ring — at
+// 6 the ring eats most of the gap and the popup reads as over the input.
 const popup_offset = 8
 
-// Anchor-relative sizing for the popup, emitted **inline** alongside the other
-// positioning styles (position-area, the offset margin, …) — deliberately *not*
-// in the `cn-combobox-content` recipe: these are positioning mechanics, not shape
-// styling, and keeping them out of the `@apply` recipe leaves it pure Tailwind so
-// it ejects as utility classes (the recipe CSS that the CLI turns into a
-// component's classes can't carry raw `anchor-size()`/`calc()`).
-//
-// `width` tracks the field; `max-block-size` clamps to the design max OR the
-// available space (the `position-area` area is the popup's containing block, so
-// `100%` = the room between anchor and viewport edge — native `--available-
-// height`), reserving the offset on both block edges so the shrunk popup + its
-// gaps fit. The reserve is `popup_offset * 2`, so it stays the gap, not a magic
-// constant.
-fn popup_sizing_style() -> Attribute(Msg) {
-  let reserve = int.to_string(popup_offset * 2) <> "px"
-  attribute.styles([
-    #("width", "anchor-size(width)"),
-    #("max-block-size", "min(18rem, calc(100% - " <> reserve <> "))"),
-  ])
-}
+// The design max-height cap (shadcn's `max-h-72`); the popup clamps to this or the
+// available space, whichever is smaller. A raw length so the mechanics can stay in
+// the headless layer while this design value lives here.
+const popup_max_height = "18rem"
 
 /// The `role=listbox` (shadcn's `ComboboxList`) — `aria-multiselectable` in
 /// `Multiple` mode, `data-empty` when there's nothing to show. Fill it with

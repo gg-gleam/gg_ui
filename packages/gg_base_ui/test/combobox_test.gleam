@@ -312,7 +312,7 @@ pub fn render_input_open_active_test() {
 }
 
 pub fn render_popup_test() {
-  combobox.popup(anatomy(), placement(), 4, [], [
+  combobox.popup(anatomy(), placement(), 4, "18rem", [], [
     combobox.list(anatomy(), combobox.Single, [], []),
   ])
   |> element.to_readable_string
