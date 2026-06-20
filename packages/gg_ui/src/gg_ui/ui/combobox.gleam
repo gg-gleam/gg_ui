@@ -447,7 +447,9 @@ pub fn content(
   base_combobox.popup(
     anatomy,
     positioning.to_base(side, align),
-    6,
+    // 8px (shadcn's sideOffset is 6) so the gap clears the field's 3px focus ring
+    // — at 6 the ring eats most of the gap and the popup reads as over the input.
+    8,
     list.flatten([
       [
         attribute.class(cn.cn(["cn-combobox-content"])),

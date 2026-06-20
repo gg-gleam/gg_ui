@@ -89,7 +89,9 @@ export const Remote: Story = {
       const field = input.getBoundingClientRect()
       const box = popup(canvasElement).getBoundingClientRect()
       expect(box.left).toBeLessThan(field.right) // overlaps the field's column
-      expect(box.top).toBeGreaterThanOrEqual(field.top) // below (or flipped up — never beside)
+      // A real gap below the field's border box — wide enough to clear the focus
+      // ring (3px) so the popup never reads as sitting over the input.
+      expect(box.top - field.bottom).toBeGreaterThanOrEqual(4)
     }
     await waitFor(() =>
       expect(canvas.getByText("popular/repo-1")).toBeVisible(),
