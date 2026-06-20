@@ -135,7 +135,14 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
             _ -> combobox.append_items(model.cb, items)
           }
           #(
-            Model(..model, cb: combobox.set_loading(cb, False), page:, total:),
+            Model(
+              ..model,
+              cb: combobox.set_loading(cb, False),
+              page:,
+              // GitHub search only serves the first 1000 results, even though
+              // `total_count` reports the full match count.
+              total: int.min(total, 1000),
+            ),
             effect.none(),
           )
         }
@@ -249,9 +256,12 @@ fn view(model: Model) -> Element(Msg) {
 fn widget(model: Model) -> Element(combobox.Msg) {
   let a = model.anatomy
   let cb = model.cb
-  let loading = case combobox.is_loading(cb) {
+  // The loading announcer sits **after** the list (a footer), so toggling it
+  // doesn't shove the list down/up — and the empty message is suppressed while
+  // loading (no "No repositories" flash mid-fetch). The list top stays put.
+  let footer = case combobox.is_loading(cb) {
     True -> [combobox.loading([], [html.text("Searching repositories…")])]
-    False -> []
+    False -> [combobox.empty([], [html.text("No repositories found.")])]
   }
   html.div([], [
     combobox.input(
@@ -267,18 +277,15 @@ fn widget(model: Model) -> Element(combobox.Msg) {
       side: model.side,
       align: model.align,
       attrs: [],
-      children: list.flatten([
-        loading,
-        [combobox.empty([], [html.text("No repositories found.")])],
-        [
-          combobox.list(
-            a,
-            cb,
-            [combobox.on_scroll_end(threshold: 48)],
-            combobox.options(a, cb),
-          ),
-        ],
-      ]),
+      children: [
+        combobox.list(
+          a,
+          cb,
+          [combobox.on_scroll_end(threshold: 48)],
+          combobox.options(a, cb),
+        ),
+        ..footer
+      ],
     ),
   ])
 }

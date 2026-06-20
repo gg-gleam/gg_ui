@@ -4,7 +4,7 @@ title: gg_ui combobox content — empty message
 file: ./test/combobox_test.gleam
 test_name: content_empty_test
 ---
-<div class="cn-combobox-content group/combobox-content" data-align="start" data-empty data-side="bottom" data-slot="combobox-content" id="cb-popup" popover="manual" style="position-anchor:--gg-cb-input;position-area:block-end span-inline-end;inset:auto;position-try-fallbacks:flip-block, flip-inline, flip-block flip-inline, flip-start, flip-block flip-start, flip-inline flip-start, flip-block flip-inline flip-start;margin-inline:0;margin-block:6px;">
+<div class="cn-combobox-content group/combobox-content" data-align="start" data-empty data-side="bottom" data-slot="combobox-content" id="cb-popup" popover="manual" style="position-anchor:--gg-cb-input;position-area:block-end span-inline-end;inset:auto;position-try-fallbacks:flip-block, flip-inline, flip-block flip-inline;margin-inline:0;margin-block:6px;">
   <div aria-atomic="true" aria-live="polite" class="cn-combobox-empty" data-slot="combobox-empty" role="status">
     No fruit found.
   </div>

@@ -82,6 +82,15 @@ export const Remote: Story = {
     await waitFor(() =>
       expect(canvas.getAllByRole("option")).toHaveLength(PER_PAGE),
     )
+    // The popup opens BELOW the field, left-aligned — never thrown out to the
+    // side (the `flip-start` axis-swap fallback is removed; a tall popup flips up,
+    // not sideways).
+    {
+      const field = input.getBoundingClientRect()
+      const box = popup(canvasElement).getBoundingClientRect()
+      expect(box.left).toBeLessThan(field.right) // overlaps the field's column
+      expect(box.top).toBeGreaterThanOrEqual(field.top) // below (or flipped up — never beside)
+    }
     await waitFor(() =>
       expect(canvas.getByText("popular/repo-1")).toBeVisible(),
     )
