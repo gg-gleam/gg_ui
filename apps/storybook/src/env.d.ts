@@ -100,7 +100,9 @@ declare module "*.gleam" {
   export const mount_combobox_multiple: MountComboboxVariant
   export const mount_combobox_grouped: MountComboboxVariant
   export const mount_combobox_grouped_multiple: MountComboboxVariant
-  export const mount_combobox_async: MountComboboxVariant
+  // remote (GitHub-search) combobox — no side/align controls, just a selector.
+  export const mount_combobox_remote_single: (selector: string) => void
+  export const mount_combobox_remote_multiple: (selector: string) => void
 
   // button stories
   export const mount_variants: MountStatic

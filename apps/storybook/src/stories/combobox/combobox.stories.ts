@@ -2,7 +2,6 @@ import type { Meta, StoryObj } from "@storybook/html-vite"
 import { expect, userEvent, waitFor, within } from "storybook/test"
 import { mountLustre } from "../../../.storybook/lustre-mount"
 import {
-  mount_combobox_async,
   mount_combobox_grouped,
   mount_combobox_grouped_multiple,
   mount_combobox_multiple,
@@ -90,17 +89,6 @@ const focusedChip = (): string | null => {
   return el?.getAttribute("data-slot") === "combobox-chip"
     ? (el.textContent?.trim() ?? null)
     : null
-}
-
-// The async loading announcer specifically (the empty announcer is also
-// role=status and always mounted, so match it by its data-slot).
-const loadingRegion = (canvasElement: HTMLElement): HTMLElement | null =>
-  canvasElement.querySelector<HTMLElement>("[data-slot='combobox-status']")
-
-const statusRegion = (canvasElement: HTMLElement): HTMLElement => {
-  const el = canvasElement.querySelector<HTMLElement>("[role='status']")
-  if (!el) throw new Error("combobox status region not mounted")
-  return el
 }
 
 /** Type to filter, arrow/Enter to pick, click an option, Escape to dismiss.
@@ -390,33 +378,6 @@ export const GroupedMultiple: Story = {
   }),
 }
 
-/** Async: the button toggles the combobox's `role=status` loading announcement —
- *  a polite live region that stays mounted while its message changes. */
-export const Async: Story = {
-  parameters: { controls: { disable: true } },
-  render: ({ side, align }) =>
-    mountLustre((selector) => mount_combobox_async(selector, side, align)),
-  play: testOnly(async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
-    // The empty announcer is always mounted (role=status); the loading announcer
-    // (data-slot=combobox-status) appears only while loading.
-    await expect(statusRegion(canvasElement)).toHaveAttribute(
-      "aria-live",
-      "polite",
-    )
-    await expect(loadingRegion(canvasElement)).toBeNull()
-
-    await userEvent.click(
-      canvas.getByRole("button", { name: /simulate loading/i }),
-    )
-    await waitFor(() => {
-      const region = loadingRegion(canvasElement)
-      expect(region).not.toBeNull()
-      expect(region?.textContent).toContain("Loading frameworks")
-    })
-
-    // It unmounts when loading stops.
-    await userEvent.click(canvas.getByRole("button", { name: /stop loading/i }))
-    await waitFor(() => expect(loadingRegion(canvasElement)).toBeNull())
-  }),
-}
+// The async / loading announcer is exercised for real by the remote (GitHub)
+// combobox in `combobox_remote.stories.ts`, which fetches, searches, and
+// paginates — replacing the earlier artificial "toggle loading" demo.

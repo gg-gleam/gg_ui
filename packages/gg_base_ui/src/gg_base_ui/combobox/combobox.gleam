@@ -72,14 +72,30 @@ pub type GroupRange {
 /// Behaviour switches, defaulted to Base UI's. `loop` = arrow navigation wraps
 /// past the ends (`loopFocus`, default on). `auto_highlight` = the first match is
 /// highlighted as you type (`autoHighlight`, default off). `mode` is Base UI's
-/// `selectionMode` (single vs multiple/chips).
+/// `selectionMode` (single vs multiple/chips). `filter` decides who filters the
+/// list (the component, or the host/server — Base UI's `filter={null}`).
 pub type Config {
-  Config(loop: Bool, auto_highlight: Bool, mode: SelectionMode)
+  Config(
+    loop: Bool,
+    auto_highlight: Bool,
+    mode: SelectionMode,
+    filter: FilterMode,
+  )
 }
 
-/// Base UI's defaults: looping navigation, no auto-highlight, single-select.
+/// Who filters the visible list. `Client` (default) = the component substring-
+/// filters `items` by the typed query. `Manual` = the host owns the list (it
+/// fetched already-filtered results); `visible` returns `items` as-is so a
+/// server query isn't re-filtered to nothing. Base UI's `filter={null}`.
+pub type FilterMode {
+  Client
+  Manual
+}
+
+/// Base UI's defaults: looping navigation, no auto-highlight, single-select,
+/// client-side filtering, no input debounce.
 pub fn config() -> Config {
-  Config(loop: True, auto_highlight: False, mode: Single)
+  Config(loop: True, auto_highlight: False, mode: Single, filter: Client)
 }
 
 /// Base UI's `selectionMode`. `Single` replaces the selection and closes on pick;
@@ -181,15 +197,21 @@ pub fn matches(label label: String, query query: String) -> Bool {
   )
 }
 
-/// The visible list: `items` filtered by the current `query`, each paired with
-/// its **original index** in `items` (option ids / value lookup need the stable
-/// index, which filtering would otherwise lose).
+/// The visible list, each entry paired with its **original index** in `items`
+/// (option ids / value lookup need the stable index). In `Client` filter mode the
+/// list is substring-filtered by the current `query`; in `Manual` mode the host
+/// already filtered (a server search), so every item is returned as-is.
 pub fn visible(model: Model(value)) -> List(#(Int, Item(value))) {
-  model.items
-  |> list.index_map(fn(item, index) { #(index, item) })
-  |> list.filter(fn(pair) {
-    matches(label: { pair.1 }.label, query: model.query)
-  })
+  let indexed =
+    model.items
+    |> list.index_map(fn(item, index) { #(index, item) })
+  case model.config.filter {
+    Manual -> indexed
+    Client ->
+      list.filter(indexed, fn(pair) {
+        matches(label: { pair.1 }.label, query: model.query)
+      })
+  }
 }
 
 /// How many entries the visible list has.
@@ -308,6 +330,25 @@ pub fn clear(model: Model(value)) -> Model(value) {
 /// `status` live-region announcement (Base UI's `Combobox.Status`).
 pub fn set_loading(model: Model(value), loading: Bool) -> Model(value) {
   Model(..model, loading:)
+}
+
+/// Replace the whole `items` list (a server search returned a fresh page-one).
+/// Drops the highlight (the list changed) and clears any group sections — for a
+/// `Manual`-filter / remote combobox where the host owns the data.
+pub fn set_items(
+  model: Model(value),
+  items: List(Item(value)),
+) -> Model(value) {
+  Model(..model, items:, groups: [], active_index: None)
+}
+
+/// Append more `items` (the next page of a paginated/remote list). The highlight
+/// is kept, so keyboard position survives a page load.
+pub fn append_items(
+  model: Model(value),
+  items: List(Item(value)),
+) -> Model(value) {
+  Model(..model, items: list.append(model.items, items))
 }
 
 /// The user typed: set the filter `query` and the displayed `input_value` to the
@@ -566,6 +607,9 @@ pub type Msg {
   ChipReturnedToInput(Bool)
   /// ArrowLeft at the input's caret-0 with chips present — focus the last chip.
   ChipFocusLast
+  /// The list scrolled near its bottom (paginated/remote lists) — a no-op for the
+  /// combobox; the host reads `is_reached_end` to fetch the next page.
+  ReachedEnd
   /// No-op — carries a `preventDefault` on the popup's mousedown so a click
   /// inside the list doesn't blur the input (and so close it) before it lands.
   Noop
@@ -638,6 +682,9 @@ pub fn update(
       }
     // Clearing keeps focus so the user can keep typing.
     Cleared -> #(clear(model), focus(anatomy))
+    // The host owns the response to ReachedEnd (fetch the next page); for the
+    // combobox itself it changes nothing.
+    ReachedEnd -> #(model, effect.none())
     Noop -> #(model, effect.none())
   }
 }
@@ -828,6 +875,33 @@ fn list_attributes(mode: SelectionMode) -> List(Attribute(msg)) {
     Multiple -> [attribute.attribute("aria-multiselectable", "true")]
     Single -> []
   }
+}
+
+/// A scroll handler that fires the `ReachedEnd` message when the scroll area (the
+/// `list`) comes within `threshold` px of its bottom — for auto-loading the next
+/// page. Merge onto the `list`. `ReachedEnd` is a no-op for the combobox itself;
+/// the **host** reacts to it (it owns fetching) by checking `is_reached_end` on
+/// the threaded `Msg`. The popup owns the native `toggle` observer, so this stays
+/// a combobox `Msg` rather than a host-generic event.
+pub fn on_scroll_end(threshold threshold: Int) -> Attribute(Msg) {
+  event.on("scroll", scroll_end_decoder(threshold))
+}
+
+fn scroll_end_decoder(threshold: Int) -> decode.Decoder(Msg) {
+  use top <- decode.subfield(["target", "scrollTop"], decode.float)
+  use height <- decode.subfield(["target", "scrollHeight"], decode.float)
+  use client <- decode.subfield(["target", "clientHeight"], decode.float)
+  // Remaining scroll distance to the bottom; fire only inside the threshold.
+  case height -. top -. client <=. int.to_float(threshold) {
+    True -> decode.success(ReachedEnd)
+    False -> decode.failure(ReachedEnd, "combobox-not-at-scroll-end")
+  }
+}
+
+/// Whether `msg` is the paginated-list `ReachedEnd` signal — the host checks this
+/// on the threaded `Msg` to fetch the next page (the combobox stays opaque).
+pub fn is_reached_end(msg: Msg) -> Bool {
+  msg == ReachedEnd
 }
 
 /// A labelled section header + its options (Base UI's `Combobox.Group`):

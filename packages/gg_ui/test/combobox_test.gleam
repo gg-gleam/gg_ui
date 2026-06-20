@@ -143,7 +143,12 @@ pub fn content_empty_test() {
 // --- multiple-select: chips + multiselectable ----------------------------
 
 fn multi_config() -> combobox.Config {
-  combobox.Config(loop: True, auto_highlight: False, mode: combobox.Multiple)
+  combobox.Config(
+    loop: True,
+    auto_highlight: False,
+    mode: combobox.Multiple,
+    filter: combobox.Client,
+  )
 }
 
 // A multiple-select model with Apple + Banana already picked.

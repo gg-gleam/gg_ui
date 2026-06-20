@@ -158,6 +158,7 @@ pub fn set_query_auto_highlight_first_test() {
         loop: True,
         auto_highlight: True,
         mode: combobox.Single,
+        filter: combobox.Client,
       ),
     )
   assert { combobox.set_query(m, "ap") }.active_index == Some(0)
@@ -358,6 +359,7 @@ fn multi() -> combobox.Model(Int) {
       loop: True,
       auto_highlight: False,
       mode: combobox.Multiple,
+      filter: combobox.Client,
     ),
   )
 }
@@ -559,4 +561,62 @@ pub fn render_chip_remove_test() {
   html.button(combobox.chip_remove_attributes(0, "Apple"), [element.text("×")])
   |> element.to_readable_string
   |> birdie.snap(title: "gg_base_ui combobox chip-remove — labelled button")
+}
+
+// =========================================================================
+// Remote / server-driven (Manual filter, set/append items, pagination)
+// =========================================================================
+
+fn remote() -> combobox.Model(Int) {
+  combobox.init(
+    items: [],
+    config: combobox.Config(
+      loop: True,
+      auto_highlight: False,
+      mode: combobox.Single,
+      filter: combobox.Manual,
+    ),
+  )
+}
+
+pub fn manual_filter_does_not_filter_test() {
+  // Manual mode: a typed query does NOT drop items (the server already filtered).
+  let m = combobox.set_items(remote(), fruits()) |> combobox.set_query("zzz")
+  assert combobox.visible_count(m) == 4
+}
+
+pub fn client_filter_still_filters_test() {
+  // Sanity: the default (Client) mode still substring-filters.
+  assert combobox.visible_count(combobox.set_query(model(), "zzz")) == 0
+}
+
+pub fn set_items_replaces_and_drops_highlight_test() {
+  let m =
+    combobox.set_items(remote(), fruits())
+    |> combobox.move(combobox.First)
+  assert m.active_index == Some(0)
+  let next = combobox.set_items(m, [combobox.Item(9, "Mango", False)])
+  assert next.items == [combobox.Item(9, "Mango", False)]
+  assert next.active_index == None
+}
+
+pub fn append_items_keeps_highlight_test() {
+  let m =
+    combobox.set_items(remote(), fruits())
+    |> combobox.move(combobox.First)
+  let next = combobox.append_items(m, [combobox.Item(9, "Mango", False)])
+  assert combobox.visible_count(next) == 5
+  // Highlight survives a page append (keyboard position kept).
+  assert next.active_index == Some(0)
+}
+
+pub fn is_reached_end_test() {
+  assert combobox.is_reached_end(combobox.ReachedEnd)
+  assert !combobox.is_reached_end(combobox.MoveNext)
+}
+
+pub fn update_reached_end_is_noop_test() {
+  let m = combobox.set_items(remote(), fruits())
+  let #(next, _) = combobox.update(anatomy(), m, combobox.ReachedEnd)
+  assert next == m
 }

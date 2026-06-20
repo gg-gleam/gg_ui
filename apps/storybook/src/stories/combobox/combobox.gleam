@@ -7,13 +7,12 @@
 //// toolbar globals.
 ////
 //// One app drives every story variant via `Flags`: single-select (the
-//// playground), multiple-select with chips, a grouped list, and an async demo
-//// whose button toggles the `role=status` loading announcement.
+//// playground), multiple-select with chips, and grouped lists. The realistic
+//// async/paginated selector lives in `combobox_remote.gleam`.
 
 import gg_ui/positioning.{
   type Align, type Side, Bottom, Center, End, Left, Right, Start, Top,
 }
-import gg_ui/ui/button
 import gg_ui/ui/combobox
 import gg_ui/ui/text
 import gleam/int
@@ -25,7 +24,6 @@ import lustre/attribute
 import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html
-import lustre/event
 
 type Variant {
   VSingle
@@ -35,27 +33,15 @@ type Variant {
 }
 
 type Flags {
-  Flags(
-    side: Side,
-    align: Align,
-    clearable: Bool,
-    variant: Variant,
-    async: Bool,
-  )
+  Flags(side: Side, align: Align, clearable: Bool, variant: Variant)
 }
 
 type Model {
-  Model(
-    cb: combobox.Model(String),
-    anatomy: combobox.Anatomy,
-    flags: Flags,
-    loading: Bool,
-  )
+  Model(cb: combobox.Model(String), anatomy: combobox.Anatomy, flags: Flags)
 }
 
 type Msg {
   ComboboxMsg(combobox.Msg)
-  ToggleLoading
 }
 
 fn item(label: String) -> combobox.Item(String) {
@@ -97,6 +83,7 @@ fn init(flags: Flags) -> #(Model, Effect(Msg)) {
         loop: True,
         auto_highlight: False,
         mode: combobox.Multiple,
+        filter: combobox.Client,
       )
     _ -> combobox.config()
   }
@@ -105,7 +92,7 @@ fn init(flags: Flags) -> #(Model, Effect(Msg)) {
       combobox.init_grouped(framework_groups(), config)
     _ -> combobox.init(frameworks(), config)
   }
-  #(Model(cb:, anatomy:, flags:, loading: False), effect.none())
+  #(Model(cb:, anatomy:, flags:), effect.none())
 }
 
 fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
@@ -114,22 +101,11 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
       let #(cb, eff) = combobox.update(model.anatomy, model.cb, cb_msg)
       #(Model(..model, cb:), effect.map(eff, ComboboxMsg))
     }
-    ToggleLoading -> {
-      let loading = !model.loading
-      #(
-        Model(..model, loading:, cb: combobox.set_loading(model.cb, loading)),
-        effect.none(),
-      )
-    }
   }
 }
 
 fn view(model: Model) -> Element(Msg) {
   let widget = element.map(combobox_widget(model), ComboboxMsg)
-  let toggle = case model.flags.async {
-    True -> [async_toggle(model.loading)]
-    False -> []
-  }
   html.div(
     [
       // A *definite* width (`w-80`, = max-w-xs), not `w-full max-w-xs`: the story
@@ -141,7 +117,7 @@ fn view(model: Model) -> Element(Msg) {
       // same way at the call site (`w-full max-w-xs` inside a framed preview).
       attribute.class("flex min-h-72 w-80 flex-col gap-3 text-foreground"),
     ],
-    list.flatten([[widget], toggle, [selected_line(model)]]),
+    [widget, selected_line(model)],
   )
 }
 
@@ -195,17 +171,6 @@ fn combobox_widget(model: Model) -> Element(combobox.Msg) {
   ])
 }
 
-// The async demo's control: flips the combobox's `role=status` loading state.
-fn async_toggle(loading: Bool) -> Element(Msg) {
-  let label = case loading {
-    True -> "Stop loading"
-    False -> "Simulate loading"
-  }
-  button.button(button.Outline, button.Sm, [event.on_click(ToggleLoading)], [
-    html.text(label),
-  ])
-}
-
 // Dogfood the kit (rule 6): the status line is our `text` component, not raw
 // `text-sm text-muted-foreground`.
 fn selected_line(model: Model) -> Element(Msg) {
@@ -242,7 +207,7 @@ pub fn mount_combobox_playground(
   clearable: Bool,
 ) -> Nil {
   start(
-    Flags(parse_side(side), parse_align(align), clearable, VSingle, False),
+    Flags(parse_side(side), parse_align(align), clearable, VSingle),
     selector,
   )
 }
@@ -252,10 +217,7 @@ pub fn mount_combobox_multiple(
   side: String,
   align: String,
 ) -> Nil {
-  start(
-    Flags(parse_side(side), parse_align(align), True, VMultiple, False),
-    selector,
-  )
+  start(Flags(parse_side(side), parse_align(align), True, VMultiple), selector)
 }
 
 pub fn mount_combobox_grouped(
@@ -263,10 +225,7 @@ pub fn mount_combobox_grouped(
   side: String,
   align: String,
 ) -> Nil {
-  start(
-    Flags(parse_side(side), parse_align(align), False, VGrouped, False),
-    selector,
-  )
+  start(Flags(parse_side(side), parse_align(align), False, VGrouped), selector)
 }
 
 pub fn mount_combobox_grouped_multiple(
@@ -275,18 +234,7 @@ pub fn mount_combobox_grouped_multiple(
   align: String,
 ) -> Nil {
   start(
-    Flags(parse_side(side), parse_align(align), False, VGroupedMultiple, False),
-    selector,
-  )
-}
-
-pub fn mount_combobox_async(
-  selector: String,
-  side: String,
-  align: String,
-) -> Nil {
-  start(
-    Flags(parse_side(side), parse_align(align), False, VSingle, True),
+    Flags(parse_side(side), parse_align(align), False, VGroupedMultiple),
     selector,
   )
 }

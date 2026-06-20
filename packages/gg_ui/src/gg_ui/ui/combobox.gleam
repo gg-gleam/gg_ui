@@ -72,10 +72,16 @@ pub type Group(value) {
 }
 
 /// Behaviour switches (Base UI's defaults via `config`). `loop` wraps arrow
-/// navigation; `auto_highlight` highlights the first match as you type; `mode`
-/// is the selection axis.
+/// navigation; `auto_highlight` highlights the first match as you type; `mode` is
+/// the selection axis; `filter` is who filters the list (the component, or the
+/// host/server — a remote/server search).
 pub type Config {
-  Config(loop: Bool, auto_highlight: Bool, mode: SelectionMode)
+  Config(
+    loop: Bool,
+    auto_highlight: Bool,
+    mode: SelectionMode,
+    filter: FilterMode,
+  )
 }
 
 /// Selection mode. `Single` replaces the selection and closes on pick; `Multiple`
@@ -85,9 +91,18 @@ pub type SelectionMode {
   Multiple
 }
 
-/// Base UI's defaults: looping navigation, no auto-highlight, single-select.
+/// Who filters the list. `Client` (default) substring-filters `items` by the
+/// typed query; `Manual` leaves the list as-is (the host fetched already-filtered
+/// results — a remote/server search). Base UI's `filter={null}`.
+pub type FilterMode {
+  Client
+  Manual
+}
+
+/// Base UI's defaults: looping navigation, no auto-highlight, single-select,
+/// client-side filtering.
 pub fn config() -> Config {
-  Config(loop: True, auto_highlight: False, mode: Single)
+  Config(loop: True, auto_highlight: False, mode: Single, filter: Client)
 }
 
 // --- Lifecycle wrappers ----------------------------------------------------
@@ -138,6 +153,39 @@ pub fn set_loading(model: Model(value), loading: Bool) -> Model(value) {
   base_combobox.set_loading(model, loading)
 }
 
+/// Replace the whole `items` list (a remote search returned a fresh page one).
+/// Drops the highlight and any group sections. For a `Manual`-filter combobox.
+pub fn set_items(
+  model: Model(value),
+  items: List(Item(value)),
+) -> Model(value) {
+  base_combobox.set_items(model, list.map(items, item_to_base))
+}
+
+/// Append more `items` (the next page of a paginated/remote list); the highlight
+/// is kept so keyboard position survives a page load.
+pub fn append_items(
+  model: Model(value),
+  items: List(Item(value)),
+) -> Model(value) {
+  base_combobox.append_items(model, list.map(items, item_to_base))
+}
+
+/// A scroll handler for the `list` that fires when it's within `threshold` px of
+/// its bottom — wire it onto the `list` to auto-load the next page. It's a no-op
+/// for the combobox; the host checks `is_reached_end` on the threaded `Msg` to
+/// fetch. (The popup owns the native toggle observer, so this is a `Msg`, not a
+/// host-generic event.)
+pub fn on_scroll_end(threshold threshold: Int) -> Attribute(Msg) {
+  base_combobox.on_scroll_end(threshold:)
+}
+
+/// Whether `msg` is the `list`'s near-bottom signal (from `on_scroll_end`). In
+/// your `update`, check it on the wrapped combobox `Msg` to fetch the next page.
+pub fn is_reached_end(msg: Msg) -> Bool {
+  base_combobox.is_reached_end(msg)
+}
+
 /// The sole selected value, if any (single-select convenience — the first of the
 /// selection in multiple mode).
 pub fn selected(model: Model(value)) -> Option(value) {
@@ -157,6 +205,12 @@ pub fn input_value(model: Model(value)) -> String {
 /// Whether the list is open.
 pub fn is_open(model: Model(value)) -> Bool {
   model.open
+}
+
+/// How many items are currently visible (post-filter, or all of them in `Manual`
+/// mode) — e.g. to decide whether more pages remain to load.
+pub fn visible_count(model: Model(value)) -> Int {
+  base_combobox.visible_count(model)
 }
 
 // --- Styled parts ----------------------------------------------------------
@@ -633,6 +687,7 @@ fn config_to_base(config: Config) -> base_combobox.Config {
     loop: config.loop,
     auto_highlight: config.auto_highlight,
     mode: mode_to_base(config.mode),
+    filter: filter_to_base(config.filter),
   )
 }
 
@@ -640,5 +695,12 @@ fn mode_to_base(mode: SelectionMode) -> base_combobox.SelectionMode {
   case mode {
     Single -> base_combobox.Single
     Multiple -> base_combobox.Multiple
+  }
+}
+
+fn filter_to_base(filter: FilterMode) -> base_combobox.FilterMode {
+  case filter {
+    Client -> base_combobox.Client
+    Manual -> base_combobox.Manual
   }
 }
