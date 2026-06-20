@@ -36,13 +36,16 @@
     @apply text-muted-foreground hover:text-foreground;
   }
 
-  /* Multiple-select: the field wraps to hold the leading chips. */
+  /* Multiple-select: chips + input share the field and wrap together (shadcn).
+   * `contents` dissolves the chips wrapper so each chip is a flex item of the
+   * field, flowing inline with the input instead of forcing it onto its own row.
+   * The field gap is the spacing between chips and the input. */
   .cn-input-group:has(.cn-combobox-chips) {
-    @apply h-auto flex-wrap items-center gap-1 py-1;
+    @apply h-auto flex-wrap items-center gap-1.5 py-1.5;
   }
 
   .cn-combobox-chips {
-    @apply flex flex-wrap items-center gap-1;
+    @apply contents;
   }
 
   .cn-combobox-chips ~ .cn-combobox-input {

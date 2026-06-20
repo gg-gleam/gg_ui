@@ -672,6 +672,14 @@ pub fn input(
         attribute.attribute("aria-autocomplete", "list"),
         attribute.attribute("aria-expanded", bool_attr(model.open)),
         attribute.attribute("aria-controls", anatomy.listbox_id),
+        // Suppress the browser's native autofill/autocomplete bubble — the
+        // listbox *is* the suggestion UI (Base UI sets these too). Chrome ignores
+        // a bare `autocomplete="off"` on text inputs, so pair it with the
+        // editing-hint attrs that together opt the field out.
+        attribute.attribute("autocomplete", "off"),
+        attribute.attribute("autocapitalize", "none"),
+        attribute.attribute("autocorrect", "off"),
+        attribute.attribute("spellcheck", "false"),
         attribute.value(model.input_value),
         event.on_input(InputChanged),
         event.advanced(

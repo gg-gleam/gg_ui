@@ -29,7 +29,7 @@ test_name: input_chips_test
       </button>
     </span>
   </div>
-  <input aria-activedescendant="cb-listbox-option-2" aria-autocomplete="list" aria-controls="cb-listbox" aria-expanded="true" class="cn-input-group-input cn-combobox-input" data-slot="input-group-control" id="cb-input" placeholder="Search…" role="combobox" value>
+  <input aria-activedescendant="cb-listbox-option-2" aria-autocomplete="list" aria-controls="cb-listbox" aria-expanded="true" autocapitalize="none" autocomplete="off" autocorrect="off" class="cn-input-group-input cn-combobox-input" data-slot="input-group-control" id="cb-input" placeholder="Search…" role="combobox" spellcheck="false" value>
   <div class="cn-input-group-addon cn-input-group-addon-align-inline-end" data-align="inline-end" data-slot="input-group-addon" role="group">
     <button aria-label="Toggle suggestions" class="cn-button cn-button-variant-ghost cn-button-size-icon-xs cn-input-group-button cn-combobox-trigger" data-slot="input-group-button" data-slot="button" tabindex="-1" type="button" type="button">
       <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="cn-icon cn-icon-size-md" data-slot="icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
