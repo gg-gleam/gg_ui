@@ -749,7 +749,7 @@ fn hide(anatomy: Anatomy) -> Effect(Msg) {
   effect.from(fn(_dispatch) {
     let _ = hide_listbox(anatomy.popup_id)
     // Detach the Safari fit listeners (resize/scroll) bound while open — no leak.
-    stop_fit_popup(anatomy.popup_id)
+    let _ = stop_fit_popup(anatomy.popup_id)
     // Cancel any pending debounced search when the list closes — both correct
     // (you closed, don't fire a late search into a dead/closed list) and clean
     // teardown so no timer dispatches after unmount.

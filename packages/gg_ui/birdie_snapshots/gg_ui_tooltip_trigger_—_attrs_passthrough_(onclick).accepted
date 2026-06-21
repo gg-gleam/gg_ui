@@ -4,6 +4,6 @@ title: gg_ui tooltip trigger — attrs passthrough (onclick)
 file: ./test/tooltip_test.gleam
 test_name: trigger_attrs_passthrough_test
 ---
-<button aria-describedby="demo-content" class="cn-button cn-button-variant-outline cn-button-size-default" data-action="save" data-slot="button" id="demo-anchor" interestfor="demo-content" onclick="window.alert(&#39;hi&#39;)" style="anchor-name:--gg-demo-anchor;interest-delay-start:0ms;interest-delay-end:0ms;" type="button">
+<button aria-describedby="demo-content" class="cn-button cn-button-variant-outline cn-button-size-default" data-action="save" data-interest-delay-end="0" data-interest-delay-start="0" data-slot="button" id="demo-anchor" interestfor="demo-content" onclick="window.alert(&#39;hi&#39;)" style="anchor-name:--gg-demo-anchor;interest-delay-start:0ms;interest-delay-end:0ms;" type="button">
   Hover
 </button>

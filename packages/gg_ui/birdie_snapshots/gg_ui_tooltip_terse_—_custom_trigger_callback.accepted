@@ -4,7 +4,7 @@ title: gg_ui tooltip terse — custom trigger callback
 file: ./test/tooltip_test.gleam
 test_name: terse_custom_trigger_test
 ---
-<button aria-describedby="demo-content" id="demo-anchor" interestfor="demo-content" style="anchor-name:--gg-demo-anchor;interest-delay-start:600ms;interest-delay-end:0ms;">
+<button aria-describedby="demo-content" data-interest-delay-end="0" data-interest-delay-start="600" id="demo-anchor" interestfor="demo-content" style="anchor-name:--gg-demo-anchor;interest-delay-start:600ms;interest-delay-end:0ms;">
   Custom
 </button>
 <div class="cn-tooltip-positioner" data-align="center" data-side="top" id="demo-content" popover="hint" role="tooltip" style="position-anchor:--gg-demo-anchor;position-area:block-start;inset:auto;position-try-fallbacks:flip-block, flip-inline, flip-block flip-inline;margin-inline:0;margin-block:4px;">
