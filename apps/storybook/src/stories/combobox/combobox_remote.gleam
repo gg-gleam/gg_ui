@@ -94,26 +94,24 @@ fn init(flags: #(Side, Align, Bool)) -> #(Model, Effect(Msg)) {
 fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
   case msg {
     ComboboxMsg(cb_msg) -> {
+      // Thread the combobox through its own update first, then react to *what
+      // changed* — three independent triggers for a fetch, each its own case:
+      let was_open = combobox.is_open(model.cb)
       let old_query = combobox.input_value(model.cb)
       let #(cb, eff) = combobox.update(model.anatomy, model.cb, cb_msg)
-      let new_query = combobox.input_value(cb)
-      let model = Model(..model, cb:, query: new_query)
+      let model = Model(..model, cb:, query: combobox.input_value(cb))
       let passthrough = #(model, effect.map(eff, ComboboxMsg))
-      case combobox.is_reached_end(cb_msg), combobox.is_open(cb) {
+
+      let opened = !was_open && combobox.is_open(cb)
+      let query_changed = combobox.is_open(cb) && model.query != old_query
+      case combobox.is_reached_end(cb_msg), opened, query_changed {
         // Scrolled near the bottom → auto-load the next page.
-        True, _ -> load_more(model)
-        False, True ->
-          case model.fetched {
-            // The lazy first open → fetch the default page immediately.
-            False -> search(model)
-            // A changed query → debounce, then search.
-            True ->
-              case new_query != old_query {
-                True -> schedule_search(model)
-                False -> passthrough
-              }
-          }
-        False, False -> passthrough
+        True, _, _ -> load_more(model)
+        // Closed → open: the lazy first fetch (default query).
+        _, True, _ -> search(model)
+        // Query changed while open → debounce, then fetch.
+        _, _, True -> schedule_search(model)
+        _, _, _ -> passthrough
       }
     }
 
