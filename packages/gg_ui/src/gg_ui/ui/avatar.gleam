@@ -29,6 +29,7 @@ import gg_ui/helpers/cn
 import gva
 import lustre/attribute.{type Attribute}
 import lustre/element.{type Element}
+import lustre/element/html
 
 /// Avatar size. `Xs` is `size-5` (chip-sized), `Sm` `size-6`, `Default`
 /// `size-8`, `Lg` `size-10`.
@@ -116,6 +117,61 @@ pub fn fallback(
       ..attrs
     ],
     children:,
+  )
+}
+
+/// A status indicator pinned to the avatar's corner (shadcn's `AvatarBadge`) —
+/// an online dot, or a tiny status icon as `children`. Place it as a sibling of
+/// the `image`/`fallback` inside `avatar`; it sizes itself off the avatar's
+/// `data-size`. Defaults to the primary colour — pass a colour override in
+/// `attrs` for e.g. an online green.
+pub fn badge(
+  attrs attrs: List(Attribute(msg)),
+  children children: List(Element(msg)),
+) -> Element(msg) {
+  html.span(
+    [
+      attribute.attribute("data-slot", "avatar-badge"),
+      attribute.class(cn.cn(["cn-avatar-badge"])),
+      ..attrs
+    ],
+    children,
+  )
+}
+
+/// A row of overlapping avatars (shadcn's `AvatarGroup`) — each gets a ring so
+/// the overlap reads cleanly. Carries the `group/avatar-group` marker so a
+/// trailing `group_count` sizes off the avatars within. `children` is the
+/// `avatar`s followed by an optional `group_count`.
+pub fn group(
+  attrs attrs: List(Attribute(msg)),
+  children children: List(Element(msg)),
+) -> Element(msg) {
+  html.div(
+    [
+      attribute.attribute("data-slot", "avatar-group"),
+      attribute.class(cn.cn(["cn-avatar-group"])),
+      attribute.class("group/avatar-group"),
+      ..attrs
+    ],
+    children,
+  )
+}
+
+/// The trailing overflow count at the end of a `group` (shadcn's
+/// `AvatarGroupCount`) — `children` is the `+N` text or an icon. Sizes off the
+/// group's avatars.
+pub fn group_count(
+  attrs attrs: List(Attribute(msg)),
+  children children: List(Element(msg)),
+) -> Element(msg) {
+  html.div(
+    [
+      attribute.attribute("data-slot", "avatar-group-count"),
+      attribute.class(cn.cn(["cn-avatar-group-count"])),
+      ..attrs
+    ],
+    children,
   )
 }
 

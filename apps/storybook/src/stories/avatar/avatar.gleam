@@ -6,9 +6,15 @@
 //// initials inherit the fallback recipe's colour instead of overriding it.
 
 import gg_icon/icon
+import gg_icons_lucide/lucide/c as lu_c
 import gg_icons_lucide/lucide/u as lu_u
+import gg_ui/positioning
 import gg_ui/ui/avatar
+import gg_ui/ui/button
+import gg_ui/ui/popover
 import gg_ui/ui/text
+import gleam/list
+import gleam/option
 import lustre
 import lustre/attribute
 import lustre/element.{type Element}
@@ -109,7 +115,131 @@ pub fn mount_avatar_fallbacks(selector: String) -> Nil {
   Nil
 }
 
+pub fn mount_avatar_badge(selector: String) -> Nil {
+  let view =
+    row([
+      // An online dot (no children) — a colour override for green.
+      labelled(
+        "online",
+        avatar.avatar(
+          avatar.Lg,
+          avatar.Circle,
+          [],
+          badged(avatar.badge([attribute.class("bg-green-500")], [])),
+        ),
+      ),
+      // A status icon — the recipe sizes the svg off the avatar size.
+      labelled(
+        "status",
+        avatar.avatar(
+          avatar.Lg,
+          avatar.Circle,
+          [],
+          badged(avatar.badge([], [lu_c.check([])])),
+        ),
+      ),
+    ])
+  let assert Ok(_) = lustre.start(lustre.element(view), selector, Nil)
+  Nil
+}
+
+pub fn mount_avatar_group(selector: String) -> Nil {
+  let view =
+    row([
+      labelled("group", avatar.group([], group_avatars())),
+      labelled(
+        "with count",
+        avatar.group(
+          [],
+          list.append(group_avatars(), [
+            avatar.group_count([], [
+              text.s6([text.color(text.Inherit)], [html.text("+3")]),
+            ]),
+          ]),
+        ),
+      ),
+      labelled(
+        "with icon",
+        avatar.group(
+          [],
+          list.append(group_avatars(), [
+            avatar.group_count([], [lu_u.users([])]),
+          ]),
+        ),
+      ),
+    ])
+  let assert Ok(_) = lustre.start(lustre.element(view), selector, Nil)
+  Nil
+}
+
+// Avatar + popover: the avatar as the trigger for an account menu (shadcn's
+// "Dropdown" example — we use the native popover, our menu primitive).
+pub fn mount_avatar_menu(selector: String) -> Nil {
+  let view =
+    popover.popover_with_trigger(
+      trigger: avatar_trigger,
+      options: popover.Options(
+        ..popover.options(),
+        id: option.Some("avatar-menu"),
+        side: positioning.Bottom,
+        align: positioning.Start,
+      ),
+      children: menu_items,
+    )
+  let assert Ok(_) = lustre.start(lustre.element(view), selector, Nil)
+  Nil
+}
+
 // --- helpers ----------------------------------------------------------------
+
+fn badged(badge: Element(msg)) -> List(Element(msg)) {
+  [
+    avatar.image(src: ok_src, alt: "User avatar", attrs: []),
+    avatar.fallback([], [fallback_text("CN")]),
+    badge,
+  ]
+}
+
+fn group_avatars() -> List(Element(msg)) {
+  list.map(["CN", "LR", "ER"], fn(initials) {
+    avatar.avatar(avatar.Default, avatar.Circle, [], image(initials))
+  })
+}
+
+fn avatar_trigger(anatomy: popover.Anatomy) -> Element(msg) {
+  html.button(
+    list.append(popover.trigger_attributes(anatomy), [
+      attribute.class(
+        "rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+      ),
+    ]),
+    [avatar.avatar(avatar.Default, avatar.Circle, [], image("CN"))],
+  )
+}
+
+fn menu_items(anatomy: popover.Anatomy) -> List(Element(msg)) {
+  [
+    popover.header([
+      popover.title(anatomy, [text.s6_m([], [html.text("My Account")])]),
+      popover.description(anatomy, [html.text("shadcn@example.com")]),
+    ]),
+    menu_item("Profile"),
+    menu_item("Billing"),
+    menu_item("Settings"),
+    menu_item("Log out"),
+  ]
+}
+
+fn menu_item(label: String) -> Element(msg) {
+  button.button(
+    button.Ghost,
+    button.Sm,
+    [attribute.class("w-full justify-start")],
+    [
+      html.text(label),
+    ],
+  )
+}
 
 fn image(initials: String) -> List(Element(msg)) {
   [

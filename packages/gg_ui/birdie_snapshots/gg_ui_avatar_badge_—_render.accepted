@@ -1,0 +1,7 @@
+---
+version: 1.5.5
+title: gg_ui avatar badge — render
+file: ./test/avatar_test.gleam
+test_name: render_badge_test
+---
+<span class="cn-avatar-badge" data-slot="avatar-badge"></span>

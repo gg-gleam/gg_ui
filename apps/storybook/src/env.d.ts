@@ -118,6 +118,9 @@ declare module "*.gleam" {
   export const mount_avatar_sizes: MountStatic
   export const mount_avatar_shapes: MountStatic
   export const mount_avatar_fallbacks: MountStatic
+  export const mount_avatar_badge: MountStatic
+  export const mount_avatar_group: MountStatic
+  export const mount_avatar_menu: MountStatic
 
   // button stories
   export const mount_variants: MountStatic

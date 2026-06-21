@@ -26,3 +26,20 @@ pub fn render_default_test() {
   |> element.to_readable_string
   |> birdie.snap(title: "gg_ui avatar render — default")
 }
+
+pub fn render_badge_test() {
+  avatar.badge([], [])
+  |> element.to_readable_string
+  |> birdie.snap(title: "gg_ui avatar badge — render")
+}
+
+pub fn render_group_test() {
+  avatar.group([], [
+    avatar.avatar(avatar.Default, avatar.Circle, [], [
+      avatar.fallback([], [html.text("CN")]),
+    ]),
+    avatar.group_count([], [html.text("+3")]),
+  ])
+  |> element.to_readable_string
+  |> birdie.snap(title: "gg_ui avatar group — with count")
+}

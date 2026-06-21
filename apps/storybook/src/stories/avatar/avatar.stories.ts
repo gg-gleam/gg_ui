@@ -1,7 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/html-vite"
 import { mountLustre } from "../../../.storybook/lustre-mount"
 import {
+  mount_avatar_badge,
   mount_avatar_fallbacks,
+  mount_avatar_group,
+  mount_avatar_menu,
   mount_avatar_playground,
   mount_avatar_shapes,
   mount_avatar_sizes,
@@ -56,4 +59,20 @@ export const Shapes: Story = {
 export const Fallbacks: Story = {
   parameters: { controls: { disable: true } },
   render: () => mountLustre(mount_avatar_fallbacks),
+}
+
+export const Badge: Story = {
+  parameters: { controls: { disable: true } },
+  render: () => mountLustre(mount_avatar_badge),
+}
+
+export const Group: Story = {
+  parameters: { controls: { disable: true } },
+  render: () => mountLustre(mount_avatar_group),
+}
+
+export const Menu: Story = {
+  name: "Avatar + popover",
+  parameters: { controls: { disable: true } },
+  render: () => mountLustre(mount_avatar_menu),
 }

@@ -1,7 +1,7 @@
 /* mira · avatar — shape recipe, translated from shadcn's avatar.tsx (+ an Xs size
- * and a Shape axis we add). Fallback initials use `text-foreground` (not
- * shadcn's `text-muted-foreground`) for WCAG AA contrast on the muted ground.
- * A fragment; no tailwind import — `@apply`-only, one rule per cn-* class. */
+ * and a Shape axis we add). Fallback/group-count text use `text-foreground`
+ * (not shadcn's `text-muted-foreground`) for WCAG AA contrast on the muted
+ * ground. A fragment; no tailwind import — `@apply`-only, one rule per cn-* class. */
 .style-mira {
   .cn-avatar {
     @apply relative flex shrink-0 overflow-hidden select-none;
@@ -46,5 +46,21 @@
 
   .cn-avatar-fallback {
     @apply flex size-full items-center justify-center rounded-[inherit] bg-muted text-sm text-foreground group-data-[size=xs]/avatar:text-xs group-data-[size=sm]/avatar:text-xs;
+  }
+
+  /* Corner status indicator; sizes off the avatar's data-size (svg hidden at the
+   * smaller sizes where it wouldn't read). */
+  .cn-avatar-badge {
+    @apply absolute right-0 bottom-0 z-10 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground ring-2 ring-background select-none group-data-[size=xs]/avatar:size-2 group-data-[size=xs]/avatar:[&>svg]:hidden group-data-[size=sm]/avatar:size-2 group-data-[size=sm]/avatar:[&>svg]:hidden group-data-[size=default]/avatar:size-2.5 group-data-[size=default]/avatar:[&>svg]:size-2 group-data-[size=lg]/avatar:size-3 group-data-[size=lg]/avatar:[&>svg]:size-2;
+  }
+
+  /* Overlapping row; each avatar gets a ring so the overlap reads cleanly. */
+  .cn-avatar-group {
+    @apply flex -space-x-2 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:ring-background;
+  }
+
+  /* Trailing overflow count; sizes off the group's avatars via group-has. */
+  .cn-avatar-group-count {
+    @apply relative flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-sm text-foreground ring-2 ring-background group-has-data-[size=xs]/avatar-group:size-4 group-has-data-[size=sm]/avatar-group:size-6 group-has-data-[size=lg]/avatar-group:size-10 [&>svg]:size-4 group-has-data-[size=sm]/avatar-group:[&>svg]:size-3 group-has-data-[size=lg]/avatar-group:[&>svg]:size-5;
   }
 }
