@@ -159,6 +159,7 @@ pub fn set_query_auto_highlight_first_test() {
         auto_highlight: True,
         mode: combobox.Single,
         filter: combobox.Client,
+        search_debounce: 0,
       ),
     )
   assert { combobox.set_query(m, "ap") }.active_index == Some(0)
@@ -360,6 +361,7 @@ fn multi() -> combobox.Model(Int) {
       auto_highlight: False,
       mode: combobox.Multiple,
       filter: combobox.Client,
+      search_debounce: 0,
     ),
   )
 }
@@ -575,6 +577,7 @@ fn remote() -> combobox.Model(Int) {
       auto_highlight: False,
       mode: combobox.Single,
       filter: combobox.Manual,
+      search_debounce: 0,
     ),
   )
 }
@@ -619,4 +622,33 @@ pub fn update_reached_end_is_noop_test() {
   let m = combobox.set_items(remote(), fruits())
   let #(next, _) = combobox.update(anatomy(), m, combobox.ReachedEnd)
   assert next == m
+}
+
+pub fn search_request_reads_query_test() {
+  assert combobox.search_request(combobox.SearchRequested("re")) == Some("re")
+  assert combobox.search_request(combobox.MoveNext) == None
+}
+
+pub fn update_search_requested_is_noop_test() {
+  let m = combobox.set_items(remote(), fruits())
+  let #(next, _) = combobox.update(anatomy(), m, combobox.SearchRequested("re"))
+  assert next == m
+}
+
+pub fn manual_input_sets_value_immediately_and_loads_test() {
+  // Manual mode: typing updates the value NOW (controlled, no lag) and flips the
+  // loading flag (the spinner shows during the debounce). `search_debounce: 0`
+  // here, so the SearchRequested would fire immediately via the effect.
+  let #(m, _) =
+    combobox.update(anatomy(), remote(), combobox.InputChanged("re"))
+  assert m.input_value == "re"
+  assert m.query == "re"
+  assert m.loading
+}
+
+pub fn client_input_does_not_set_loading_test() {
+  // Client mode: typing filters locally, no remote search, no loading flag.
+  let #(m, _) = combobox.update(anatomy(), model(), combobox.InputChanged("ap"))
+  assert m.input_value == "ap"
+  assert !m.loading
 }

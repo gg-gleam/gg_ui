@@ -15,16 +15,6 @@ declare global {
   var __comboboxFetchMock: FetchMock | undefined
 }
 
-// Host-side debounce keyed by an id: each call cancels the prior pending timer
-// for that key. Used to debounce the *search* (not the input dispatch — debouncing
-// a controlled input drops characters).
-const timers: Record<string, ReturnType<typeof setTimeout>> = {}
-export function debounce(key: string, delayMs: number, cb: () => void): void {
-  const prev = timers[key]
-  if (prev) clearTimeout(prev)
-  timers[key] = setTimeout(cb, delayMs)
-}
-
 export function searchRepos(
   query: string,
   page: number,

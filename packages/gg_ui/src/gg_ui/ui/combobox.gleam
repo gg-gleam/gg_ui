@@ -74,13 +74,16 @@ pub type Group(value) {
 /// Behaviour switches (Base UI's defaults via `config`). `loop` wraps arrow
 /// navigation; `auto_highlight` highlights the first match as you type; `mode` is
 /// the selection axis; `filter` is who filters the list (the component, or the
-/// host/server — a remote/server search).
+/// host/server). `search_debounce` (ms; Manual mode) emits a debounced
+/// `SearchRequested` on typing — the host fetches on it via `search_request`; the
+/// value updates immediately, only the search is debounced. `0` = no debounce.
 pub type Config {
   Config(
     loop: Bool,
     auto_highlight: Bool,
     mode: SelectionMode,
     filter: FilterMode,
+    search_debounce: Int,
   )
 }
 
@@ -100,9 +103,15 @@ pub type FilterMode {
 }
 
 /// Base UI's defaults: looping navigation, no auto-highlight, single-select,
-/// client-side filtering.
+/// client-side filtering, no search debounce.
 pub fn config() -> Config {
-  Config(loop: True, auto_highlight: False, mode: Single, filter: Client)
+  Config(
+    loop: True,
+    auto_highlight: False,
+    mode: Single,
+    filter: Client,
+    search_debounce: 0,
+  )
 }
 
 // --- Lifecycle wrappers ----------------------------------------------------
@@ -184,6 +193,14 @@ pub fn on_scroll_end(threshold threshold: Int) -> Attribute(Msg) {
 /// your `update`, check it on the wrapped combobox `Msg` to fetch the next page.
 pub fn is_reached_end(msg: Msg) -> Bool {
   base_combobox.is_reached_end(msg)
+}
+
+/// The debounced search query when `msg` is a `SearchRequested` (Manual mode +
+/// `search_debounce`), else `None`. In your `update`, check it on the wrapped
+/// combobox `Msg` and run your fetch — the component owns the debounce, you own
+/// the request. The value already updated immediately; only the search is delayed.
+pub fn search_request(msg: Msg) -> Option(String) {
+  base_combobox.search_request(msg)
 }
 
 /// The sole selected value, if any (single-select convenience — the first of the
@@ -703,6 +720,7 @@ fn config_to_base(config: Config) -> base_combobox.Config {
     auto_highlight: config.auto_highlight,
     mode: mode_to_base(config.mode),
     filter: filter_to_base(config.filter),
+    search_debounce: config.search_debounce,
   )
 }
 

@@ -16,6 +16,7 @@ import gg_ui/ui/text
 import gleam/dynamic.{type Dynamic}
 import gleam/dynamic/decode
 import gleam/int
+import gleam/option.{Some}
 import lustre
 import lustre/attribute
 import lustre/effect.{type Effect}
@@ -43,10 +44,6 @@ type Model {
 
 type Msg {
   ComboboxMsg(combobox.Msg)
-  // The debounce timer elapsed → run the search for this query if it's still
-  // current. (Debounce lives in the host, not the input — debouncing a controlled
-  // input's dispatch drops characters.)
-  RunSearch(query: String)
   // A fetched page: the query it was for (staleness guard), the page number, the
   // repos, and the total available.
   GotPage(
@@ -71,8 +68,10 @@ fn init(flags: #(Side, Align, Bool)) -> #(Model, Effect(Msg)) {
         loop: True,
         auto_highlight: False,
         mode:,
-        // The server filters; debounce the input so typing fires one fetch.
+        // The server filters (Manual), and the component debounces typing into a
+        // single `SearchRequested` after 250ms — the host just fetches on it.
         filter: combobox.Manual,
+        search_debounce: 250,
       ),
     )
   #(
@@ -94,33 +93,30 @@ fn init(flags: #(Side, Align, Bool)) -> #(Model, Effect(Msg)) {
 fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
   case msg {
     ComboboxMsg(cb_msg) -> {
-      // Thread the combobox through its own update first, then react to *what
-      // changed* — three independent triggers for a fetch, each its own case:
+      // The component owns the debounce: on typing it updates the value
+      // immediately and emits a debounced `SearchRequested` (read via
+      // `search_request`). The host just fetches — on that, on the open
+      // transition (first load), or on scroll-end (next page).
       let was_open = combobox.is_open(model.cb)
-      let old_query = combobox.input_value(model.cb)
       let #(cb, eff) = combobox.update(model.anatomy, model.cb, cb_msg)
       let model = Model(..model, cb:, query: combobox.input_value(cb))
-      let passthrough = #(model, effect.map(eff, ComboboxMsg))
-
       let opened = !was_open && combobox.is_open(cb)
-      let query_changed = combobox.is_open(cb) && model.query != old_query
-      case combobox.is_reached_end(cb_msg), opened, query_changed {
-        // Scrolled near the bottom → auto-load the next page.
-        True, _, _ -> load_more(model)
+      let #(model, fetch_eff) = case
+        combobox.search_request(cb_msg),
+        combobox.is_reached_end(cb_msg),
+        opened
+      {
+        // Debounced search fired → fetch page 1 for that query.
+        Some(query), _, _ -> fetch(model, query)
+        // Scrolled near the bottom → next page.
+        _, True, _ -> load_more(model)
         // Closed → open: the lazy first fetch (default query).
-        _, True, _ -> search(model)
-        // Query changed while open → debounce, then fetch.
-        _, _, True -> schedule_search(model)
-        _, _, _ -> passthrough
+        _, _, True -> fetch(model, model.query)
+        _, _, _ -> #(model, effect.none())
       }
+      // Always run the combobox's own effect (show/focus/scroll) alongside.
+      #(model, effect.batch([effect.map(eff, ComboboxMsg), fetch_eff]))
     }
-
-    // Fire only if the query is still current (the debounce coalesced keystrokes).
-    RunSearch(query:) ->
-      case query == model.query {
-        True -> #(model, fetch_page(query, 1))
-        False -> #(model, effect.none())
-      }
 
     GotPage(query:, page:, items:, total:) ->
       // Drop a stale page (the query moved on while it was in flight).
@@ -152,8 +148,10 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
   }
 }
 
-// The lazy first open → fetch the default page now (no debounce needed).
-fn search(model: Model) -> #(Model, Effect(Msg)) {
+// Run a fresh search for `query` → page 1, spinner on. (No debounce here — the
+// component already debounced typing before emitting the request; an open-load
+// fetches immediately.)
+fn fetch(model: Model, query: String) -> #(Model, Effect(Msg)) {
   #(
     Model(
       ..model,
@@ -161,24 +159,7 @@ fn search(model: Model) -> #(Model, Effect(Msg)) {
       page: 1,
       fetched: True,
     ),
-    fetch_page(model.query, 1),
-  )
-}
-
-// A changed query → show the spinner now, but debounce the fetch (host-side, via
-// `debounce`) so fast typing fires one request after it settles.
-fn schedule_search(model: Model) -> #(Model, Effect(Msg)) {
-  let query = model.query
-  #(
-    Model(
-      ..model,
-      cb: combobox.set_loading(model.cb, True),
-      page: 1,
-      fetched: True,
-    ),
-    effect.from(fn(dispatch) {
-      debounce("combobox-remote", 250, fn() { dispatch(RunSearch(query:)) })
-    }),
+    fetch_page(query, 1),
   )
 }
 
@@ -320,10 +301,5 @@ fn search_repos(
   _on_ok: fn(Dynamic) -> Nil,
   _on_err: fn(String) -> Nil,
 ) -> Nil {
-  Nil
-}
-
-@external(javascript, "./github_ffi.ts", "debounce")
-fn debounce(_key: String, _delay_ms: Int, _callback: fn() -> Nil) -> Nil {
   Nil
 }

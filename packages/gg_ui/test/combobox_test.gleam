@@ -148,6 +148,7 @@ fn multi_config() -> combobox.Config {
     auto_highlight: False,
     mode: combobox.Multiple,
     filter: combobox.Client,
+    search_debounce: 0,
   )
 }
 

@@ -84,6 +84,7 @@ fn init(flags: Flags) -> #(Model, Effect(Msg)) {
         auto_highlight: False,
         mode: combobox.Multiple,
         filter: combobox.Client,
+        search_debounce: 0,
       )
     _ -> combobox.config()
   }

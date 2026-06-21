@@ -74,12 +74,21 @@ pub type GroupRange {
 /// highlighted as you type (`autoHighlight`, default off). `mode` is Base UI's
 /// `selectionMode` (single vs multiple/chips). `filter` decides who filters the
 /// list (the component, or the host/server — Base UI's `filter={null}`).
+///
+/// `search_debounce` is the **remote-search** knob (only meaningful in `Manual`
+/// filter mode): on each query change the component updates the input value
+/// *immediately* (controlled, no lag) and emits a `SearchRequested(query)` after
+/// this many ms of quiet — the host fetches on it (read it with `search_request`).
+/// It's React's `onChange = { setValue(v); useDebounce(search)(v) }` folded into
+/// the component: the value is never debounced (that drops chars), only the
+/// derived search callback is. `0` = emit immediately, no timer.
 pub type Config {
   Config(
     loop: Bool,
     auto_highlight: Bool,
     mode: SelectionMode,
     filter: FilterMode,
+    search_debounce: Int,
   )
 }
 
@@ -93,9 +102,15 @@ pub type FilterMode {
 }
 
 /// Base UI's defaults: looping navigation, no auto-highlight, single-select,
-/// client-side filtering, no input debounce.
+/// client-side filtering, no search debounce.
 pub fn config() -> Config {
-  Config(loop: True, auto_highlight: False, mode: Single, filter: Client)
+  Config(
+    loop: True,
+    auto_highlight: False,
+    mode: Single,
+    filter: Client,
+    search_debounce: 0,
+  )
 }
 
 /// Base UI's `selectionMode`. `Single` replaces the selection and closes on pick;
@@ -561,72 +576,62 @@ pub fn chip_id(anatomy: Anatomy, index: Int) -> String {
 
 // --- Msg -----------------------------------------------------------------
 
-/// What the component handles. The host threads these through `update`; it never
-/// constructs them by hand (the view parts wire the events), so a styled facade
-/// can keep `Msg` opaque.
 pub type Msg {
-  /// The input's text changed (`on_input`): re-filter + open.
   InputChanged(String)
-  /// ArrowDown — highlight the next visible option (opening if closed).
   MoveNext
-  /// ArrowUp — highlight the previous visible option.
   MovePrevious
-  /// Home — highlight the first visible option.
   MoveFirst
-  /// End — highlight the last visible option.
   MoveLast
-  /// Enter — select the highlighted option.
   ChooseActive
-  /// Escape — close without selecting.
   Dismissed
-  /// A pointer click on the visible option at this position.
   OptionChosen(Int)
-  /// Hover moved onto the visible option at this position (highlight follows).
   OptionHighlighted(Int)
-  /// The native popover's `toggle` fired (`True` open / `False` closed) — keeps
-  /// the model in sync.
   ListToggled(Bool)
-  /// The input gained focus or was clicked — open the list.
   OpenRequested
-  /// The trigger (chevron) was clicked — toggle the list open/closed.
   ToggleRequested
-  /// The clear affordance was pressed — drop the selection + typed text.
   Cleared
-  /// A chip's remove button was pressed — drop the selection at this index.
   ChipRemoved(Int)
-  /// Backspace in an empty input — drop the last selection (multiple mode).
   LastChipRemoved
-  /// Roving chip focus (←/→ on a focused chip) resolved to a target: `Some(i)`
-  /// focuses chip `i`, `None` returns focus to the input.
   ChipFocusMoved(Option(Int))
-  /// Backspace/Delete on a focused chip — remove it and move focus to the chip
-  /// that takes its place (or the input when none remain).
   ChipDeleted(Int)
-  /// Enter/Space (`False`) or ArrowDown/ArrowUp (`True`) on a focused chip —
-  /// return focus to the input, opening the list when `True`.
   ChipReturnedToInput(Bool)
-  /// ArrowLeft at the input's caret-0 with chips present — focus the last chip.
   ChipFocusLast
-  /// The list scrolled near its bottom (paginated/remote lists) — a no-op for the
-  /// combobox; the host reads `is_reached_end` to fetch the next page.
   ReachedEnd
-  /// No-op — carries a `preventDefault` on the popup's mousedown so a click
-  /// inside the list doesn't blur the input (and so close it) before it lands.
+  /// The debounced search timer elapsed — emitted by the component in `Manual`
+  /// filter mode after `search_debounce` ms of typing quiet. A no-op for the
+  /// combobox; the host reads it with `search_request` and fetches.
+  SearchRequested(String)
   Noop
 }
 
 // --- update --------------------------------------------------------------
 
-/// Map a `Msg` to a pure core transition plus any DOM effect (native popover
-/// show/hide, scroll the active option into view, focus the input). Returns the
-/// new model and its effect; the host inspects `model.selected` for the choice.
 pub fn update(
   anatomy: Anatomy,
   model: Model(value),
   msg: Msg,
 ) -> #(Model(value), Effect(Msg)) {
   case msg {
-    InputChanged(text) -> #(set_query(model, text), show(anatomy))
+    InputChanged(text) -> {
+      // Value updates immediately (controlled, no lag). In Manual mode also kick
+      // a debounced search request + show the spinner now (React's setValue +
+      // useDebounce(search) — only the *callback* is debounced, never the value).
+      let next = set_query(model, text)
+      case next.config.filter {
+        Client -> #(next, show(anatomy))
+        Manual -> #(
+          set_loading(next, True),
+          effect.batch([
+            show(anatomy),
+            search_request_effect(
+              anatomy,
+              next.query,
+              next.config.search_debounce,
+            ),
+          ]),
+        )
+      }
+    }
     MoveNext -> navigated(anatomy, model, Next)
     MovePrevious -> navigated(anatomy, model, Previous)
     MoveFirst -> navigated(anatomy, model, First)
@@ -685,6 +690,9 @@ pub fn update(
     // The host owns the response to ReachedEnd (fetch the next page); for the
     // combobox itself it changes nothing.
     ReachedEnd -> #(model, effect.none())
+    // The host fetches on SearchRequested (read via `search_request`); a no-op
+    // for the combobox.
+    SearchRequested(_) -> #(model, effect.none())
     Noop -> #(model, effect.none())
   }
 }
@@ -724,7 +732,13 @@ fn show(anatomy: Anatomy) -> Effect(Msg) {
 }
 
 fn hide(anatomy: Anatomy) -> Effect(Msg) {
-  effect.from(fn(_dispatch) { hide_listbox(anatomy.popup_id) })
+  effect.from(fn(_dispatch) {
+    hide_listbox(anatomy.popup_id)
+    // Cancel any pending debounced search when the list closes — both correct
+    // (you closed, don't fire a late search into a dead/closed list) and clean
+    // teardown so no timer dispatches after unmount.
+    cancel_debounce(anatomy.input_id <> "-search")
+  })
 }
 
 fn focus(anatomy: Anatomy) -> Effect(Msg) {
@@ -740,6 +754,29 @@ fn focus_target(anatomy: Anatomy, target: Option(Int)) -> Effect(Msg) {
   case target {
     Some(i) -> focus_chip(anatomy, i)
     None -> focus(anatomy)
+  }
+}
+
+fn search_request_effect(
+  anatomy: Anatomy,
+  query: String,
+  ms: Int,
+) -> Effect(Msg) {
+  effect.from(fn(dispatch) {
+    case ms {
+      0 -> dispatch(SearchRequested(query))
+      _ ->
+        debounce(anatomy.input_id <> "-search", ms, fn() {
+          dispatch(SearchRequested(query))
+        })
+    }
+  })
+}
+
+pub fn search_request(msg: Msg) -> Option(String) {
+  case msg {
+    SearchRequested(query) -> Some(query)
+    _ -> None
   }
 }
 
@@ -1265,5 +1302,17 @@ fn focus_input(_input_id: String) -> Nil {
 
 @external(javascript, "./combobox_ffi.ts", "focusElement")
 fn focus_element(_id: String) -> Nil {
+  Nil
+}
+
+// Keyed debounce (the `useDebounce` analog): each call cancels the prior pending
+// timer for `key`. SSR fallback never runs (effects are client-side).
+@external(javascript, "./combobox_ffi.ts", "debounce")
+fn debounce(_key: String, _delay_ms: Int, _callback: fn() -> Nil) -> Nil {
+  Nil
+}
+
+@external(javascript, "./combobox_ffi.ts", "cancelDebounce")
+fn cancel_debounce(_key: String) -> Nil {
   Nil
 }

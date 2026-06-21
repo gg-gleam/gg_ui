@@ -44,3 +44,32 @@ export function focusElement(id: string): void {
     el.focus()
   }
 }
+
+// Keyed debounce (the `useDebounce` analog): each call for a given `key` cancels
+// the prior pending timer, so a burst coalesces to one trailing call. Drives the
+// component's debounced search-request emission — only the search callback is
+// debounced; the input value updates synchronously (never debounced).
+const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>()
+export function debounce(key: string, delayMs: number, cb: () => void): void {
+  const prev = debounceTimers.get(key)
+  if (prev) clearTimeout(prev)
+  debounceTimers.set(
+    key,
+    setTimeout(() => {
+      // Self-clean: drop the entry before firing so the Map never accumulates a
+      // stale timer id (bounded — one per key, removed on fire or on cancel).
+      debounceTimers.delete(key)
+      cb()
+    }, delayMs),
+  )
+}
+
+// Cancel a pending debounce (e.g. when the list closes) — clears the timer and
+// drops the Map entry so nothing fires after teardown and no id lingers.
+export function cancelDebounce(key: string): void {
+  const prev = debounceTimers.get(key)
+  if (prev) {
+    clearTimeout(prev)
+    debounceTimers.delete(key)
+  }
+}
