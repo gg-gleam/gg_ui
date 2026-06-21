@@ -172,9 +172,16 @@ pub fn mount_avatar_group(selector: String) -> Nil {
   Nil
 }
 
-// Avatar + popover: the avatar as the trigger for a profile-card popover. (We
-// don't have a dropdown-menu primitive yet, so this is a clean account *card*
-// — avatar + identity + a CTA — rather than a faked menu.)
+// Avatar + popover: the avatar as the trigger for a profile-card popover.
+//
+// TODO(dropdown-menu): this is a temporary stand-in. The real target is shadcn's
+// avatar "Dropdown" example — an account *menu* (Profile / Billing / Settings, a
+// separator, then a destructive Log out), avatar as the trigger:
+//   https://ui.shadcn.com/docs/components/base/avatar#dropdown
+// We don't have a DropdownMenu primitive yet (roving focus, role=menu/menuitem,
+// separator, destructive item, tight p-1 layout), and the popover card (p-4,
+// centered button content) can't fake it cleanly. Once DropdownMenu lands,
+// replace this profile card with that menu.
 pub fn mount_avatar_menu(selector: String) -> Nil {
   let view =
     popover.popover_with_trigger(
