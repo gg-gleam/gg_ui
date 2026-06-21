@@ -652,3 +652,17 @@ pub fn client_input_does_not_set_loading_test() {
   assert m.input_value == "ap"
   assert !m.loading
 }
+
+pub fn manual_input_dedups_on_trimmed_query_test() {
+  // First search for "re" sets loading; adding a trailing space (same trimmed
+  // query) updates the value but does NOT re-search (loading stays cleared).
+  let #(searched, _) =
+    combobox.update(anatomy(), remote(), combobox.InputChanged("re"))
+  assert searched.loading
+  let settled = combobox.set_loading(searched, False)
+  let #(again, _) =
+    combobox.update(anatomy(), settled, combobox.InputChanged("re "))
+  assert again.input_value == "re "
+  // No new search → loading not re-raised.
+  assert !again.loading
+}

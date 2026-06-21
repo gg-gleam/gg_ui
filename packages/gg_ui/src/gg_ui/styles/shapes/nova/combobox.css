@@ -25,6 +25,11 @@
     @apply text-muted-foreground hidden w-full justify-center py-2 text-center text-sm group-data-empty/combobox-content:flex;
   }
 
+  /* First-open placeholder — min-height so the popup isn't a collapsed empty box. */
+  .cn-combobox-loading-state {
+    @apply text-muted-foreground grid min-h-20 place-items-center py-2 text-center text-sm;
+  }
+
   .cn-combobox-list {
     @apply no-scrollbar min-h-0 flex-1 scroll-py-1 overflow-y-auto p-1 data-empty:p-0;
   }
@@ -67,6 +72,11 @@
   }
 
   .cn-combobox-loading {
-    @apply text-muted-foreground w-full justify-center py-2 text-center text-sm;
+    @apply text-muted-foreground flex w-full items-center justify-center gap-2 py-2 text-center text-sm;
+  }
+
+  /* The in-input loading spinner — the lucide loader-circle, spun. */
+  .cn-combobox-spinner-icon {
+    @apply animate-spin text-muted-foreground;
   }
 }

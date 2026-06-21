@@ -616,18 +616,19 @@ pub fn update(
       // Value updates immediately (controlled, no lag). In Manual mode also kick
       // a debounced search request + show the spinner now (React's setValue +
       // useDebounce(search) — only the *callback* is debounced, never the value).
+      // Dedup on the **trimmed** query: typing/removing only whitespace (or a
+      // no-op edit) doesn't re-fetch; the value still updates.
       let next = set_query(model, text)
-      case next.config.filter {
-        Client -> #(next, show(anatomy))
-        Manual -> #(
+      let query = string.trim(next.query)
+      case next.config.filter, query == string.trim(model.query) {
+        Client, _ -> #(next, show(anatomy))
+        // Same trimmed query → value updates, but no new search.
+        Manual, True -> #(next, show(anatomy))
+        Manual, False -> #(
           set_loading(next, True),
           effect.batch([
             show(anatomy),
-            search_request_effect(
-              anatomy,
-              next.query,
-              next.config.search_debounce,
-            ),
+            search_request_effect(anatomy, query, next.config.search_debounce),
           ]),
         )
       }
@@ -733,7 +734,7 @@ fn show(anatomy: Anatomy) -> Effect(Msg) {
 
 fn hide(anatomy: Anatomy) -> Effect(Msg) {
   effect.from(fn(_dispatch) {
-    hide_listbox(anatomy.popup_id)
+    let _ = hide_listbox(anatomy.popup_id)
     // Cancel any pending debounced search when the list closes — both correct
     // (you closed, don't fire a late search into a dead/closed list) and clean
     // teardown so no timer dispatches after unmount.

@@ -8,8 +8,8 @@
 ////
 //// Nothing fetches until the combobox is opened: the first open kicks off the
 //// default-query page; typing emits a debounced search; scrolling to the bottom
-//// auto-loads the next page. A fresh search shows a spinner at the top of the
-//// popup; pagination shows "Loading more…" at the bottom.
+//// auto-loads the next page. Loading feedback is built into the field — the
+//// combobox swaps its trailing chevron for a spinner while `is_loading`.
 
 import gg_ui/positioning.{type Align, type Side, Bottom, Start}
 import gg_ui/ui/combobox
@@ -25,8 +25,8 @@ import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html
 
-// GitHub search needs a non-empty `q`; before the user types we browse popular
-// repos. `per_page=20` and the 1000-result cap come from the API.
+// The mock "server" needs a non-empty query; before the user types we browse all
+// repos via a `stars:` qualifier (which the mock treats as "everything").
 const default_query = "stars:>50000"
 
 type Model {
@@ -36,8 +36,11 @@ type Model {
     side: Side,
     align: Align,
     multiple: Bool,
-    // The active search text (default = "" → browse) and pagination cursor.
-    query: String,
+    // What the server is currently serving — the query the in-flight/last fetch
+    // was for ("" = browse). Kept separate from the combobox's input value (which
+    // may hold a selected label) so the staleness guard + pagination key off the
+    // *fetched* query, not the displayed text. Plus the pagination cursor.
+    active_query: String,
     page: Int,
     total: Int,
     fetched: Bool,
@@ -83,7 +86,7 @@ fn init(flags: #(Side, Align, Bool)) -> #(Model, Effect(Msg)) {
       side:,
       align:,
       multiple:,
-      query: "",
+      active_query: "",
       page: 1,
       total: 0,
       fetched: False,
@@ -95,13 +98,18 @@ fn init(flags: #(Side, Align, Bool)) -> #(Model, Effect(Msg)) {
 fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
   case msg {
     ComboboxMsg(cb_msg) -> {
-      // The component owns the debounce: on typing it updates the value
-      // immediately and emits a debounced `SearchRequested` (read via
-      // `search_request`). The host just fetches — on that, on the open
-      // transition (first load), or on scroll-end (next page).
       let was_open = combobox.is_open(model.cb)
+      let old_value = combobox.input_value(model.cb)
       let #(cb, eff) = combobox.update(model.anatomy, model.cb, cb_msg)
-      let model = Model(..model, cb:, query: combobox.input_value(cb))
+      let new_value = combobox.input_value(cb)
+      let model = Model(..model, cb:)
+      // Typing → a fresh search is coming; reset to page 1 *eagerly* (before the
+      // debounce fires) so the spinner shows for a fresh search, not the bottom
+      // "Loading more…" from a prior pagination.
+      let model = case new_value != old_value {
+        True -> Model(..model, page: 1)
+        False -> model
+      }
       let opened = !was_open && combobox.is_open(cb)
       let #(model, fetch_eff) = case
         combobox.search_request(cb_msg),
@@ -112,8 +120,10 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
         Some(query), _, _ -> fetch(model, query)
         // Scrolled near the bottom → next page.
         _, True, _ -> load_more(model)
-        // Closed → open: the lazy first fetch (default query).
-        _, _, True -> fetch(model, model.query)
+        // Closed → open: fetch. If the input still holds a *selected* label (a
+        // single-select reopened), browse the full list instead of filtering down
+        // to just that one selection — opening a select should show the options.
+        _, _, True -> fetch(model, browse_query(model))
         _, _, _ -> #(model, effect.none())
       }
       // Always run the combobox's own effect (show/focus/scroll) alongside.
@@ -121,8 +131,9 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
     }
 
     GotPage(query:, page:, items:, total:) ->
-      // Drop a stale page (the query moved on while it was in flight).
-      case query == model.query {
+      // Drop a stale page (a newer fetch superseded this one while it was in
+      // flight) — keyed on the *fetched* query, not the input text.
+      case query == model.active_query {
         False -> #(model, effect.none())
         True -> {
           let cb = case page {
@@ -130,14 +141,7 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
             _ -> combobox.append_items(model.cb, items)
           }
           #(
-            Model(
-              ..model,
-              cb: combobox.set_loading(cb, False),
-              page:,
-              // GitHub search only serves the first 1000 results, even though
-              // `total_count` reports the full match count.
-              total: int.min(total, 1000),
-            ),
+            Model(..model, cb: combobox.set_loading(cb, False), page:, total:),
             effect.none(),
           )
         }
@@ -150,14 +154,26 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
   }
 }
 
-// Run a fresh search for `query` → page 1, spinner on. (No debounce here — the
-// component already debounced typing before emitting the request; an open-load
-// fetches immediately.)
+// On open, the query to browse with: empty (→ default browse) when the input only
+// holds the current selection's label (a reopened single-select), otherwise the
+// query as-is (a search the user had typed but not yet picked from).
+fn browse_query(model: Model) -> String {
+  let input = combobox.input_value(model.cb)
+  case combobox.selected(model.cb) {
+    Some(value) if value == input -> ""
+    _ -> input
+  }
+}
+
+// Run a fresh fetch for `query` → page 1, loading on, recording it as the active
+// (server) query. (No debounce here — the component already debounced typing; an
+// open/browse load fetches immediately.)
 fn fetch(model: Model, query: String) -> #(Model, Effect(Msg)) {
   #(
     Model(
       ..model,
       cb: combobox.set_loading(model.cb, True),
+      active_query: query,
       page: 1,
       fetched: True,
     ),
@@ -165,7 +181,8 @@ fn fetch(model: Model, query: String) -> #(Model, Effect(Msg)) {
   )
 }
 
-// Auto-pagination: fetch the next page while more remain and nothing's in flight.
+// Auto-pagination: fetch the next page of the *active* query while more remain
+// and nothing's in flight.
 fn load_more(model: Model) -> #(Model, Effect(Msg)) {
   let loaded = combobox.visible_count(model.cb)
   case loaded < model.total && !combobox.is_loading(model.cb) {
@@ -173,7 +190,7 @@ fn load_more(model: Model) -> #(Model, Effect(Msg)) {
       let next = model.page + 1
       #(
         Model(..model, cb: combobox.set_loading(model.cb, True), page: next),
-        fetch_page(model.query, next),
+        fetch_page(model.active_query, next),
       )
     }
     False -> #(model, effect.none())
@@ -230,26 +247,18 @@ fn view(model: Model) -> Element(Msg) {
   )
 }
 
-// Assemble the parts (composition): field + popup holding the empty announcer, a
-// loading announcer while fetching, and the list. The list carries `on_scroll_end`
-// so reaching the bottom auto-loads the next page.
+// Assemble the parts (composition): field + popup holding the empty announcer, an
+// optional first-load placeholder, and the list. Loading feedback is built into
+// the field (the combobox swaps the trailing chevron for a spinner while
+// `is_loading`), so the popup shows no loading row; on the *first* open, though,
+// the list is still empty, so a min-height placeholder keeps the popup from being
+// a collapsed empty box (and reserves the height so results don't jump in).
 fn widget(model: Model) -> Element(combobox.Msg) {
   let a = model.anatomy
   let cb = model.cb
-  let loading = combobox.is_loading(cb)
-  // Two loading contexts (Base UI's async pattern puts the search indicator at the
-  // TOP so it's visible while you type; pagination's belongs at the bottom):
-  //  - a fresh search (page 1) → spinner + "Searching…" as the FIRST popup child,
-  //  - the next page (page > 1) → "Loading more…" as a footer after the list.
-  let searching = loading && model.page == 1
-  let paginating = loading && model.page > 1
-  let head = case searching {
-    True -> [combobox.loading([], [spinner(), html.text("Searching…")])]
-    // Empty only when settled (no flash of "no results" mid-search).
-    False -> [combobox.empty([], [html.text("No repositories found.")])]
-  }
-  let foot = case paginating {
-    True -> [combobox.loading([], [spinner(), html.text("Loading more…")])]
+  let first_load = combobox.is_loading(cb) && combobox.visible_count(cb) == 0
+  let placeholder = case first_load {
+    True -> [combobox.loading_state_text(text: "Loading…")]
     False -> []
   }
   html.div([], [
@@ -267,7 +276,8 @@ fn widget(model: Model) -> Element(combobox.Msg) {
       align: model.align,
       attrs: [],
       children: list.flatten([
-        head,
+        [combobox.empty([], [html.text("No repositories found.")])],
+        placeholder,
         [
           combobox.list(
             a,
@@ -276,24 +286,9 @@ fn widget(model: Model) -> Element(combobox.Msg) {
             combobox.options(a, cb),
           ),
         ],
-        foot,
       ]),
     ),
   ])
-}
-
-// A small CSS border-spinner, matching Base UI's async demo (no icon dep). Raw
-// Tailwind is fine for this story-local affordance.
-fn spinner() -> Element(combobox.Msg) {
-  html.span(
-    [
-      attribute.attribute("aria-hidden", "true"),
-      attribute.class(
-        "mr-2 inline-block size-3 animate-spin rounded-full border border-current border-r-transparent align-[-1px]",
-      ),
-    ],
-    [],
-  )
 }
 
 fn status_line(model: Model) -> Element(Msg) {
@@ -322,7 +317,7 @@ pub fn mount_combobox_remote_multiple(selector: String) -> Nil {
   start(#(Bottom, Start, True), selector)
 }
 
-@external(javascript, "./github_ffi.ts", "searchRepos")
+@external(javascript, "./repos_ffi.ts", "searchRepos")
 fn search_repos(
   _query: String,
   _page: Int,

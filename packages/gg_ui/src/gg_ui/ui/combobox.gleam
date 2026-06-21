@@ -26,6 +26,7 @@
 import gg_base_ui/combobox/combobox as base_combobox
 import gg_icon/icon
 import gg_icons_lucide/lucide/c as lu_c
+import gg_icons_lucide/lucide/l as lu_l
 import gg_icons_lucide/lucide/x as lu_x
 import gg_ui/helpers/cn
 import gg_ui/positioning.{type Align, type Side}
@@ -377,8 +378,22 @@ fn chip(
 // each carries a single `data-slot` — shadcn gets one via Base UI render-prop
 // merge, which we don't have, and triple `data-slot` is invalid HTML.
 fn end_affordance(model: Model(value), clearable: Bool) -> List(Element(Msg)) {
-  case clearable && base_combobox.has_selection(model) {
-    True -> [
+  case model.loading, clearable && base_combobox.has_selection(model) {
+    // While loading (a remote search/fetch), the trailing icon is a spinner —
+    // built in, replacing the chevron/clear. Non-interactive; the `role=status`
+    // + `aria-label` announce the busy state to screen readers.
+    True, _ -> [
+      html.span(
+        [
+          attribute.attribute("data-slot", "combobox-loading"),
+          attribute.attribute("role", "status"),
+          attribute.attribute("aria-label", "Loading"),
+          attribute.class(cn.cn(["cn-combobox-trigger"])),
+        ],
+        [loader_glyph()],
+      ),
+    ]
+    False, True -> [
       affordance_button(
         "combobox-clear",
         "cn-combobox-clear",
@@ -388,7 +403,7 @@ fn end_affordance(model: Model(value), clearable: Bool) -> List(Element(Msg)) {
         clear_glyph(),
       ),
     ]
-    False -> [
+    False, False -> [
       // The chevron is a real trigger button (shadcn's ComboboxTrigger) — clicking
       // it toggles the list; behaviour from the headless `trigger_attributes`.
       affordance_button(
@@ -448,6 +463,16 @@ fn chip_remove_glyph() -> Element(msg) {
   lu_x.x([icon.size(icon.Sm)])
 }
 
+// The in-input loading spinner — lucide `loader-circle` spun via the shared
+// `cn-combobox-spinner-icon` recipe (CSS `animate-spin`). Replaces the
+// chevron/clear while a remote search/fetch is in flight.
+fn loader_glyph() -> Element(msg) {
+  lu_l.loader_circle([
+    icon.size(icon.Md),
+    attribute.class("cn-combobox-spinner-icon"),
+  ])
+}
+
 /// The popup container (shadcn's `ComboboxContent`) — the native-popover box
 /// (`cn-combobox-content`, the `group/combobox-content` marker + `data-empty`
 /// when nothing matches). You **compose** what goes inside: an `empty`, an
@@ -472,7 +497,7 @@ pub fn content(
         attribute.class("group/combobox-content"),
         attribute.attribute("data-slot", "combobox-content"),
       ],
-      empty_marker(is_empty(model)),
+      empty_marker(is_empty(model) && !model.loading),
       attrs,
     ]),
     children,
@@ -511,7 +536,7 @@ pub fn list(
         attribute.class(cn.cn(["cn-combobox-list"])),
         attribute.attribute("data-slot", "combobox-list"),
       ],
-      empty_marker(is_empty(model)),
+      empty_marker(is_empty(model) && !model.loading),
       attrs,
     ]),
     children,
@@ -556,6 +581,34 @@ pub fn loading(
   )
 }
 
+/// A **min-height centred placeholder** for the popup body — the first-open case,
+/// where the list is still empty while the initial fetch runs, so the popup isn't
+/// a collapsed empty box (and the height is reserved so results don't jump in).
+/// It's a polite `role=status` region (announces the busy state); `children` is
+/// **any UI**. For the common case use `loading_state_text`. Render it conditionally
+/// (e.g. `is_loading && visible_count == 0`) as a sibling of `list` inside `content`.
+pub fn loading_state(
+  attrs attrs: List(Attribute(Msg)),
+  children children: List(Element(Msg)),
+) -> Element(Msg) {
+  base_combobox.status(
+    list.flatten([
+      [
+        attribute.class(cn.cn(["cn-combobox-loading-state"])),
+        attribute.attribute("data-slot", "combobox-loading-state"),
+      ],
+      attrs,
+    ]),
+    children,
+  )
+}
+
+/// A ready-made `loading_state` with just text — the ergonomic default so the
+/// caller doesn't build the placeholder div.
+pub fn loading_state_text(text text: String) -> Element(Msg) {
+  loading_state([], [html.text(text)])
+}
+
 /// Whether the visible list is empty (gate the `empty`/`list` composition).
 pub fn is_empty(model: Model(value)) -> Bool {
   base_combobox.is_empty(model)
@@ -567,7 +620,8 @@ pub fn is_loading(model: Model(value)) -> Bool {
 }
 
 // `data-empty` on the content + list (shadcn's `data-empty:p-0` / the empty's
-// `group-data-empty/combobox-content:flex` reveal). Empty value, present-or-absent.
+// `group-data-empty/combobox-content:flex` reveal). Gated on `!loading` at the
+// call sites so the empty message never flashes mid-fetch. Present-or-absent.
 fn empty_marker(empty: Bool) -> List(Attribute(msg)) {
   case empty {
     True -> [attribute.attribute("data-empty", "")]
