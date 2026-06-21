@@ -1,0 +1,7 @@
+---
+version: 1.5.5
+title: gg_ui avatar classes — xs / rounded
+file: ./test/avatar_test.gleam
+test_name: classes_xs_rounded_test
+---
+cn-avatar cn-avatar-size-xs cn-avatar-shape-rounded

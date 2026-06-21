@@ -59,8 +59,9 @@
   }
 
   .cn-combobox-chip {
-    @apply bg-muted-foreground/10 text-foreground flex h-[calc(--spacing(4.75))] w-fit items-center justify-center gap-1 rounded-[calc(var(--radius-sm)-2px)] px-1.5 text-xs/relaxed font-medium whitespace-nowrap has-data-[slot=combobox-chip-remove]:pr-0 focus:outline-hidden focus:ring-2 focus:ring-ring/50;
+    @apply bg-muted-foreground/10 text-foreground flex h-[calc(--spacing(4.75))] w-fit items-center justify-center gap-1 rounded-[calc(var(--radius-sm)-2px)] px-1.5 text-xs/relaxed font-medium whitespace-nowrap has-data-[slot=combobox-chip-remove]:pr-0 has-[>:first-child:not([data-slot=combobox-chip-remove])]:ps-0.5 focus:outline-hidden focus:ring-2 focus:ring-ring/50;
   }
+
 
   .cn-combobox-chip-remove {
     @apply -ml-1 opacity-50 hover:opacity-100;
@@ -68,7 +69,7 @@
 
   /* gg_ui additions: input width marker, chips-input, async loading line. */
   .cn-combobox-input {
-    @apply w-auto;
+    @apply h-8 w-auto;
   }
 
   .cn-combobox-chip-input {

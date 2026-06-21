@@ -1,0 +1,50 @@
+/* mira · avatar — shape recipe, translated from shadcn's avatar.tsx (+ an Xs size
+ * and a Shape axis we add). Fallback initials use `text-foreground` (not
+ * shadcn's `text-muted-foreground`) for WCAG AA contrast on the muted ground.
+ * A fragment; no tailwind import — `@apply`-only, one rule per cn-* class. */
+.style-mira {
+  .cn-avatar {
+    @apply relative flex shrink-0 overflow-hidden select-none;
+  }
+
+  .cn-avatar-size-xs {
+    @apply size-4;
+  }
+
+  .cn-avatar-size-sm {
+    @apply size-6;
+  }
+
+  .cn-avatar-size-default {
+    @apply size-8;
+  }
+
+  .cn-avatar-size-lg {
+    @apply size-10;
+  }
+
+  /* Shape rides on the root; `overflow-hidden` clips the image + fallback to it.
+   * `corner-shape: squircle` is a progressive enhancement — it degrades to the
+   * `border-radius` rounded square where unsupported. */
+  .cn-avatar-shape-circle {
+    @apply rounded-full;
+  }
+
+  .cn-avatar-shape-rounded {
+    @apply rounded-[25%];
+  }
+
+  .cn-avatar-shape-squircle {
+    @apply rounded-[42%] [corner-shape:squircle];
+  }
+
+  /* On load failure the observer sets data-status=error on the root; the image
+   * hides itself via the group variant so the fallback behind it shows. */
+  .cn-avatar-image {
+    @apply absolute inset-0 size-full object-cover group-data-[status=error]/avatar:hidden;
+  }
+
+  .cn-avatar-fallback {
+    @apply flex size-full items-center justify-center rounded-[inherit] bg-muted text-sm text-foreground group-data-[size=xs]/avatar:text-xs group-data-[size=sm]/avatar:text-xs;
+  }
+}

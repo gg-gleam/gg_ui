@@ -1,0 +1,7 @@
+---
+version: 1.5.5
+title: gg_ui avatar classes — lg / squircle
+file: ./test/avatar_test.gleam
+test_name: classes_lg_squircle_test
+---
+cn-avatar cn-avatar-size-lg cn-avatar-shape-squircle

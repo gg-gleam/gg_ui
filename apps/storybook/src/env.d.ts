@@ -103,6 +103,21 @@ declare module "*.gleam" {
   // remote (GitHub-search) combobox — no side/align controls, just a selector.
   export const mount_combobox_remote_single: (selector: string) => void
   export const mount_combobox_remote_multiple: (selector: string) => void
+  // remote combobox with custom items (owner avatar + name) and custom chips.
+  export const mount_combobox_avatars: (selector: string) => void
+
+  // avatar stories — static (lustre.element). Playground takes size + shape + a
+  // broken toggle + the fallback initials; the showcases just take a selector.
+  export const mount_avatar_playground: (
+    selector: string,
+    size: string,
+    shape: string,
+    broken: boolean,
+    initials: string,
+  ) => void
+  export const mount_avatar_sizes: MountStatic
+  export const mount_avatar_shapes: MountStatic
+  export const mount_avatar_fallbacks: MountStatic
 
   // button stories
   export const mount_variants: MountStatic

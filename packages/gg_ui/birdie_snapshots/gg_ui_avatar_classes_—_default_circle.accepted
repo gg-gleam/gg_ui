@@ -1,0 +1,7 @@
+---
+version: 1.5.5
+title: gg_ui avatar classes — default / circle
+file: ./test/avatar_test.gleam
+test_name: classes_default_circle_test
+---
+cn-avatar cn-avatar-size-default cn-avatar-shape-circle

@@ -1,0 +1,11 @@
+---
+version: 1.5.5
+title: gg_base_ui avatar — fallback only
+file: ./test/avatar_test.gleam
+test_name: fallback_only_test
+---
+<span data-avatar-root>
+  <span>
+    JD
+  </span>
+</span>
