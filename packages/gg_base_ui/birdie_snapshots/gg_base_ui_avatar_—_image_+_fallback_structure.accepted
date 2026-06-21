@@ -1,0 +1,12 @@
+---
+version: 1.5.5
+title: gg_base_ui avatar — image + fallback structure
+file: ./test/avatar_test.gleam
+test_name: image_and_fallback_test
+---
+<span data-avatar-root>
+  <img alt="Jane Doe" data-avatar-image src="/jane.png">
+  <span>
+    JD
+  </span>
+</span>

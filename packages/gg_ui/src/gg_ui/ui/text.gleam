@@ -85,12 +85,16 @@ pub type Style {
 // --- tokenized modifier axes -------------------------------------------------
 
 /// Color — semantic tokens only, so text rides the Base Color / Theme axes.
-/// `Foreground` is the default (omit `text.color`).
+/// `Foreground` is the default (omit `text.color`). `Inherit` takes the colour
+/// from the surrounding context (`text-inherit`) — for text dropped inside a
+/// component that already sets a colour (e.g. an avatar fallback's
+/// `text-muted-foreground`, a coloured badge), so the token isn't overridden.
 pub type Color {
   Foreground
   Muted
   Primary
   Destructive
+  Inherit
 }
 
 /// Font weight — the orthogonal emphasis axis. `Normal` is the default (omit
@@ -453,6 +457,7 @@ fn color_class(color: Color) -> String {
     Muted -> "cn-text-color-muted"
     Primary -> "cn-text-color-primary"
     Destructive -> "cn-text-color-destructive"
+    Inherit -> "cn-text-color-inherit"
   }
 }
 

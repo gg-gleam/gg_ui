@@ -1,0 +1,70 @@
+/* nova · avatar — shape recipe, translated from shadcn's avatar.tsx (+ an Xs size
+ * and a Shape axis we add). Fallback/group-count text use `text-foreground`
+ * (not shadcn's `text-muted-foreground`) for WCAG AA contrast on the muted
+ * ground. A fragment; no tailwind import — `@apply`-only, one rule per cn-* class. */
+.style-nova {
+  /* The root clips the image/fallback to the shape. When a badge is present we
+   * switch to overflow-visible so the corner badge isn't cropped — the image
+   * self-clips via rounded-[inherit] instead. */
+  .cn-avatar {
+    @apply relative flex shrink-0 overflow-hidden select-none has-[[data-slot=avatar-badge]]:overflow-visible;
+  }
+
+  .cn-avatar-size-xs {
+    @apply size-4;
+  }
+
+  .cn-avatar-size-sm {
+    @apply size-6;
+  }
+
+  .cn-avatar-size-default {
+    @apply size-8;
+  }
+
+  .cn-avatar-size-lg {
+    @apply size-10;
+  }
+
+  /* Shape rides on the root; `overflow-hidden` (or the image/fallback's own
+   * rounded-[inherit]) clips to it. `corner-shape: squircle` is a progressive
+   * enhancement — it degrades to the `border-radius` rounded square. */
+  .cn-avatar-shape-circle {
+    @apply rounded-full;
+  }
+
+  .cn-avatar-shape-rounded {
+    @apply rounded-[25%];
+  }
+
+  .cn-avatar-shape-squircle {
+    @apply rounded-[42%] [corner-shape:squircle];
+  }
+
+  /* Self-clips to the root shape (so the badge can escape an overflow-visible
+   * root). On load failure the observer sets data-status=error on the root; the
+   * image hides itself so the fallback behind it shows. */
+  .cn-avatar-image {
+    @apply absolute inset-0 size-full rounded-[inherit] object-cover group-data-[status=error]/avatar:hidden;
+  }
+
+  .cn-avatar-fallback {
+    @apply flex size-full items-center justify-center rounded-[inherit] bg-muted text-sm text-foreground group-data-[size=xs]/avatar:text-xs group-data-[size=sm]/avatar:text-xs;
+  }
+
+  /* Corner status indicator; sizes off the avatar's data-size (svg hidden at the
+   * smaller sizes where it wouldn't read). */
+  .cn-avatar-badge {
+    @apply absolute right-0 bottom-0 z-10 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground ring-2 ring-background select-none group-data-[size=xs]/avatar:size-2 group-data-[size=xs]/avatar:[&>svg]:hidden group-data-[size=sm]/avatar:size-2 group-data-[size=sm]/avatar:[&>svg]:hidden group-data-[size=default]/avatar:size-2.5 group-data-[size=default]/avatar:[&>svg]:size-2 group-data-[size=lg]/avatar:size-3 group-data-[size=lg]/avatar:[&>svg]:size-2;
+  }
+
+  /* Overlapping row; each avatar gets a ring so the overlap reads cleanly. */
+  .cn-avatar-group {
+    @apply flex -space-x-2 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:ring-background;
+  }
+
+  /* Trailing overflow count; sizes off the group's avatars via group-has. */
+  .cn-avatar-group-count {
+    @apply relative flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-sm text-foreground ring-2 ring-background group-has-data-[size=xs]/avatar-group:size-4 group-has-data-[size=sm]/avatar-group:size-6 group-has-data-[size=lg]/avatar-group:size-10 [&>svg]:size-4 group-has-data-[size=sm]/avatar-group:[&>svg]:size-3 group-has-data-[size=lg]/avatar-group:[&>svg]:size-5;
+  }
+}

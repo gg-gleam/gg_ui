@@ -91,6 +91,10 @@
   @apply text-destructive;
 }
 
+.cn-text-color-inherit {
+  @apply text-inherit;
+}
+
 /* --- modifiers (alignment / transform / truncation / …) ------------------- */
 
 .cn-text-align-start {

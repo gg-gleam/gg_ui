@@ -248,11 +248,51 @@ pub fn input(
   clearable clearable: Bool,
   attrs attrs: List(Attribute(Msg)),
 ) -> Element(Msg) {
+  input_with(
+    anatomy,
+    model,
+    placeholder,
+    clearable,
+    attrs,
+    default_chip_content,
+  )
+}
+
+/// Like `input`, but renders each chip's **content** with your own renderer
+/// (custom chips — e.g. an avatar before the label). `chip` gets the selected
+/// `Item`; the chip *shell* (roving focus, the `data-slot=combobox-chip` box)
+/// and the built-in remove ✕ are still provided. `Multiple`-mode only — in
+/// `Single` mode there are no chips, so it behaves exactly like `input`.
+pub fn input_custom_chips(
+  anatomy: Anatomy,
+  model: Model(value),
+  placeholder placeholder: String,
+  clearable clearable: Bool,
+  chip chip: fn(Item(value)) -> List(Element(Msg)),
+  attrs attrs: List(Attribute(Msg)),
+) -> Element(Msg) {
+  input_with(anatomy, model, placeholder, clearable, attrs, chip)
+}
+
+fn input_with(
+  anatomy: Anatomy,
+  model: Model(value),
+  placeholder: String,
+  clearable: Bool,
+  attrs: List(Attribute(Msg)),
+  chip_content: fn(Item(value)) -> List(Element(Msg)),
+) -> Element(Msg) {
   case base_combobox.selection_mode(model) {
-    base_combobox.Multiple -> chips_field(anatomy, model, placeholder, attrs)
+    base_combobox.Multiple ->
+      chips_field(anatomy, model, placeholder, attrs, chip_content)
     base_combobox.Single ->
       single_field(anatomy, model, placeholder, clearable, attrs)
   }
+}
+
+// The default chip body: just the label, mirroring shadcn's bare `ComboboxChip`.
+fn default_chip_content(item: Item(value)) -> List(Element(Msg)) {
+  [html.text(item.label)]
 }
 
 // Single-select field — shadcn's `ComboboxInput` (InputGroup + trailing
@@ -300,12 +340,17 @@ fn chips_field(
   model: Model(value),
   placeholder: String,
   attrs: List(Attribute(Msg)),
+  chip_content: fn(Item(value)) -> List(Element(Msg)),
 ) -> Element(Msg) {
   let items = base_combobox.selected_items(model)
   let chip_count = list.length(items)
   let chips =
     list.index_map(items, fn(item, index) {
-      #("chip-" <> int.to_string(index), chip(anatomy, item, index, chip_count))
+      let content = chip_content(item_from_base(item))
+      #(
+        "chip-" <> int.to_string(index),
+        chip(anatomy, item, index, chip_count, content),
+      )
     })
   let field_input =
     base_combobox.input(anatomy, model, [
@@ -341,6 +386,7 @@ fn chip(
   item: base_combobox.Item(value),
   index: Int,
   chip_count: Int,
+  content: List(Element(Msg)),
 ) -> Element(Msg) {
   html.div(
     list.flatten([
@@ -351,8 +397,7 @@ fn chip(
       // Roving-focus keydown behaviour (←/→, Delete, Enter → input).
       base_combobox.chip_attributes(anatomy, index, chip_count),
     ]),
-    [
-      html.text(item.label),
+    list.append(content, [
       html.button(
         list.append(base_combobox.chip_remove_attributes(index, item.label), [
           attribute.attribute("data-slot", "combobox-chip-remove"),
@@ -367,7 +412,7 @@ fn chip(
         ]),
         [chip_remove_glyph()],
       ),
-    ],
+    ]),
   )
 }
 

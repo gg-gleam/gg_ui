@@ -81,6 +81,20 @@ shadcn. When they disagree on behavior, Base UI wins.*
    scaffolding). If you catch yourself hand-writing a recipe a component already
    owns (text sizing/color, buttons, inputs, …), that's the signal to swap it for
    the component. Dogfooding is how we find the kit's rough edges first.
+7. **Shape fragments are `@apply`-only, one rule per `cn-*` class.** Every rule in
+   `styles/shapes/<style>/<component>.css` (and the other shippable recipe
+   fragments) must be a **single-class selector** — `.cn-foo { @apply <tailwind
+   utilities/variants>; }` — whose body is **nothing but Tailwind** (`@apply`
+   utilities, variants, and arbitrary `[property:value]` utilities). This is a
+   hard requirement: the CLI **ejects each `cn-*` recipe into the user's markup**
+   as the className string, so a class must be self-contained. **Forbidden:** raw
+   CSS declarations, and any selector that isn't a lone class —
+   `.cn-x:has(…)`, `.cn-x[data-…] .cn-y`, descendant/compound/combinator rules,
+   bare element/attribute selectors. Express all state and cross-element logic as
+   **Tailwind variants on the class itself**: `data-*`, `aria-*`, `has-[…]`,
+   `group-*`/`peer-*`/`in-*`/`*:`, etc. (e.g. *not*
+   `.cn-avatar[data-status=error] .cn-avatar-image { … }` but
+   `.cn-avatar-image { @apply … group-data-[status=error]/avatar:hidden; }`).
 
 ## Project map
 
