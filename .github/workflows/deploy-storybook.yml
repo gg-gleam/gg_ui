@@ -1,0 +1,86 @@
+name: deploy-storybook
+
+# Build the Storybook app and publish it to GitHub Pages on every merge to main.
+# Pages serves a project site at https://gg-gleam.github.io/gg_ui/, so the build
+# is given that sub-path as its base (STORYBOOK_BASE_PATH, read in vite.config.ts).
+on:
+  push:
+    branches:
+      - main
+  # Allow manual re-deploys from the Actions tab.
+  workflow_dispatch:
+
+# Allow the workflow to mint a Pages deployment token.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One live deployment at a time; let an in-flight run finish rather than cancel
+# it (a half-published Pages deploy is worse than a slightly stale one).
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "28"
+          gleam-version: "1.16.0"
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      # Mirrors the cache in test.yml: hex deps + per-package incremental build
+      # output so the storybook build's `gleam build` recompiles only what changed.
+      - name: Cache Gleam (hex deps + incremental build)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/gleam
+            packages/gg_base_ui/build
+            packages/gg_ui/build
+            apps/storybook/build
+          key: gleam-${{ runner.os }}-otp28-gleam1.16.0-${{ hashFiles('**/manifest.toml') }}
+          restore-keys: |
+            gleam-${{ runner.os }}-otp28-gleam1.16.0-
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      # Pre-compile Gleam so the in-build vite-plugin-gleam invocation is
+      # incremental — it runs `gleam build` under a 5s timeout that a cold
+      # compile (deps download + full build) blows past.
+      - name: Warm Gleam build
+        run: pnpm --filter @gg_ui/storybook build:gleam
+
+      - name: Build Storybook
+        env:
+          # Project-site sub-path; consumed by apps/storybook/vite.config.ts.
+          STORYBOOK_BASE_PATH: /gg_ui/
+        run: pnpm build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/storybook/storybook-static
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
