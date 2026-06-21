@@ -98,9 +98,24 @@ export const Remote: Story = {
       expect(canvas.getByText("popular/repo-1")).toBeVisible(),
     )
 
-    // Type → debounced server search (250ms) replaces the list with new results.
+    // Type → the value updates immediately; while the debounced search is pending,
+    // the spinner + "Searching…" shows at the TOP of the popup (above the list), so
+    // there's visible feedback during a fresh search (not just at the bottom).
     await userEvent.type(input, "react")
     await waitFor(() => expect(input.value).toBe("react"))
+    {
+      const status = canvasElement.querySelector<HTMLElement>(
+        "[data-slot='combobox-status']",
+      )
+      expect(status?.textContent).toContain("Searching")
+      // It precedes the listbox in the DOM (DOCUMENT_POSITION_FOLLOWING = 4).
+      const list = listbox(canvasElement)
+      expect(
+        status &&
+          status.compareDocumentPosition(list) &
+            Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy()
+    }
     await waitFor(
       () =>
         expect(canvas.getAllByRole("option")[0]?.textContent?.trim()).toBe(

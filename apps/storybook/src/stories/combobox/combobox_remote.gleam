@@ -1,14 +1,15 @@
 //// Remote (server-driven) combobox story host — a realistic async, debounced,
 //// paginated, **lazy-on-open** selector backed by GitHub repository search. Shows
 //// how a host drives the combobox in `Manual` filter mode: it owns the data
-//// (`set_items` on a new search, `append_items` on the next page), the loading
-//// announcer (`set_loading`), the debounce (host-side; see `schedule_search`),
-//// and pagination (`on_scroll_end` → `is_reached_end` → fetch
-//// the next page). Single- and multiple-select share this host.
+//// (`set_items` on a new search, `append_items` on the next page) and the fetch;
+//// the **component** owns the typing debounce (`Config.search_debounce`), emitting
+//// a `SearchRequested` the host reads via `search_request`. Pagination comes from
+//// `on_scroll_end` → `is_reached_end`. Single- and multiple-select share this host.
 ////
 //// Nothing fetches until the combobox is opened: the first open kicks off the
-//// default-query page; typing debounces a fresh search; scrolling to the bottom
-//// auto-loads the next page.
+//// default-query page; typing emits a debounced search; scrolling to the bottom
+//// auto-loads the next page. A fresh search shows a spinner at the top of the
+//// popup; pagination shows "Loading more…" at the bottom.
 
 import gg_ui/positioning.{type Align, type Side, Bottom, Start}
 import gg_ui/ui/combobox
@@ -16,6 +17,7 @@ import gg_ui/ui/text
 import gleam/dynamic.{type Dynamic}
 import gleam/dynamic/decode
 import gleam/int
+import gleam/list
 import gleam/option.{Some}
 import lustre
 import lustre/attribute
@@ -234,12 +236,21 @@ fn view(model: Model) -> Element(Msg) {
 fn widget(model: Model) -> Element(combobox.Msg) {
   let a = model.anatomy
   let cb = model.cb
-  // The loading announcer sits **after** the list (a footer), so toggling it
-  // doesn't shove the list down/up — and the empty message is suppressed while
-  // loading (no "No repositories" flash mid-fetch). The list top stays put.
-  let footer = case combobox.is_loading(cb) {
-    True -> [combobox.loading([], [html.text("Searching repositories…")])]
+  let loading = combobox.is_loading(cb)
+  // Two loading contexts (Base UI's async pattern puts the search indicator at the
+  // TOP so it's visible while you type; pagination's belongs at the bottom):
+  //  - a fresh search (page 1) → spinner + "Searching…" as the FIRST popup child,
+  //  - the next page (page > 1) → "Loading more…" as a footer after the list.
+  let searching = loading && model.page == 1
+  let paginating = loading && model.page > 1
+  let head = case searching {
+    True -> [combobox.loading([], [spinner(), html.text("Searching…")])]
+    // Empty only when settled (no flash of "no results" mid-search).
     False -> [combobox.empty([], [html.text("No repositories found.")])]
+  }
+  let foot = case paginating {
+    True -> [combobox.loading([], [spinner(), html.text("Loading more…")])]
+    False -> []
   }
   html.div([], [
     combobox.input(
@@ -255,17 +266,34 @@ fn widget(model: Model) -> Element(combobox.Msg) {
       side: model.side,
       align: model.align,
       attrs: [],
-      children: [
-        combobox.list(
-          a,
-          cb,
-          [combobox.on_scroll_end(threshold: 48)],
-          combobox.options(a, cb),
-        ),
-        ..footer
-      ],
+      children: list.flatten([
+        head,
+        [
+          combobox.list(
+            a,
+            cb,
+            [combobox.on_scroll_end(threshold: 48)],
+            combobox.options(a, cb),
+          ),
+        ],
+        foot,
+      ]),
     ),
   ])
+}
+
+// A small CSS border-spinner, matching Base UI's async demo (no icon dep). Raw
+// Tailwind is fine for this story-local affordance.
+fn spinner() -> Element(combobox.Msg) {
+  html.span(
+    [
+      attribute.attribute("aria-hidden", "true"),
+      attribute.class(
+        "mr-2 inline-block size-3 animate-spin rounded-full border border-current border-r-transparent align-[-1px]",
+      ),
+    ],
+    [],
+  )
 }
 
 fn status_line(model: Model) -> Element(Msg) {
