@@ -20,6 +20,16 @@ fn model() -> combobox.Model(Int) {
   combobox.init(items: fruits(), config: combobox.config())
 }
 
+// `selected` stores Items now; these map fruit values → Items for the assertions.
+fn it(value: Int) -> combobox.Item(Int) {
+  let assert Ok(item) = list.find(fruits(), fn(f) { f.value == value })
+  item
+}
+
+fn sel(values: List(Int)) -> List(combobox.Item(Int)) {
+  list.map(values, it)
+}
+
 // --- filtering -----------------------------------------------------------
 
 pub fn matches_empty_query_test() {
@@ -179,7 +189,7 @@ pub fn select_active_returns_value_and_closes_test() {
     |> combobox.move(combobox.Next)
   let #(next, chosen) = combobox.select_active(m)
   assert chosen == Some(2)
-  assert next.selected == [2]
+  assert combobox.selected_values(next) == [2]
   assert next.input_value == "Apricot"
   assert !next.open
   assert next.query == ""
@@ -189,13 +199,13 @@ pub fn select_active_none_when_no_highlight_test() {
   let #(next, chosen) =
     combobox.select_active(combobox.set_query(model(), "ap"))
   assert chosen == None
-  assert next.selected == []
+  assert combobox.selected_values(next) == []
 }
 
 pub fn select_specific_item_test() {
   let m =
     combobox.select(combobox.open(model()), combobox.Item(3, "Banana", False))
-  assert m.selected == [3]
+  assert combobox.selected_values(m) == [3]
   assert m.input_value == "Banana"
   assert !m.open
   assert combobox.is_selected(m, 3)
@@ -210,7 +220,7 @@ pub fn close_drops_highlight_keeps_selection_test() {
     |> combobox.close
   assert !m.open
   assert m.active_index == None
-  assert m.selected == [1]
+  assert combobox.selected_values(m) == [1]
 }
 
 // =========================================================================
@@ -245,7 +255,7 @@ pub fn update_move_next_twice_advances_test() {
 pub fn update_choose_active_selects_and_closes_test() {
   let m = combobox.move(combobox.open(model()), combobox.Next)
   let #(next, _) = combobox.update(anatomy(), m, combobox.ChooseActive)
-  assert next.selected == [1]
+  assert combobox.selected_values(next) == [1]
   assert next.input_value == "Apple"
   assert !next.open
 }
@@ -254,7 +264,7 @@ pub fn update_option_chosen_selects_visible_position_test() {
   // "ap" → [Apple(0), Apricot(1)]; choose visible position 1 (Apricot).
   let m = combobox.set_query(model(), "ap")
   let #(next, _) = combobox.update(anatomy(), m, combobox.OptionChosen(1))
-  assert next.selected == [2]
+  assert combobox.selected_values(next) == [2]
   assert next.input_value == "Apricot"
   assert !next.open
 }
@@ -387,7 +397,7 @@ fn grouped() -> combobox.Model(Int) {
 pub fn multiple_toggle_adds_and_keeps_open_test() {
   let t =
     combobox.toggle(combobox.open(multi()), combobox.Item(1, "Apple", False))
-  assert t.selected == [1]
+  assert combobox.selected_values(t) == [1]
   assert t.open
 }
 
@@ -396,7 +406,7 @@ pub fn multiple_toggle_twice_removes_test() {
     combobox.open(multi())
     |> combobox.toggle(combobox.Item(1, "Apple", False))
     |> combobox.toggle(combobox.Item(1, "Apple", False))
-  assert t.selected == []
+  assert combobox.selected_values(t) == []
 }
 
 pub fn multiple_toggle_appends_in_selection_order_test() {
@@ -404,7 +414,7 @@ pub fn multiple_toggle_appends_in_selection_order_test() {
     combobox.open(multi())
     |> combobox.toggle(combobox.Item(3, "Banana", False))
     |> combobox.toggle(combobox.Item(1, "Apple", False))
-  assert t.selected == [3, 1]
+  assert combobox.selected_values(t) == [3, 1]
 }
 
 pub fn multiple_toggle_resets_active_filter_test() {
@@ -412,7 +422,7 @@ pub fn multiple_toggle_resets_active_filter_test() {
   let t =
     combobox.set_query(multi(), "ap")
     |> combobox.toggle(combobox.Item(1, "Apple", False))
-  assert t.selected == [1]
+  assert combobox.selected_values(t) == [1]
   assert t.query == ""
   assert t.input_value == ""
   assert t.active_index == None
@@ -431,40 +441,43 @@ pub fn multiple_toggle_keeps_highlight_without_filter_test() {
 // --- chip removal --------------------------------------------------------
 
 pub fn remove_selected_at_test() {
-  let m = combobox.Model(..multi(), selected: [1, 2, 3])
-  assert combobox.remove_selected_at(m, 1).selected == [1, 3]
+  let m = combobox.Model(..multi(), selected: sel([1, 2, 3]))
+  assert combobox.selected_values(combobox.remove_selected_at(m, 1)) == [1, 3]
 }
 
 pub fn remove_selected_at_out_of_range_is_noop_test() {
-  let m = combobox.Model(..multi(), selected: [1, 2, 3])
-  assert combobox.remove_selected_at(m, 9).selected == [1, 2, 3]
+  let m = combobox.Model(..multi(), selected: sel([1, 2, 3]))
+  assert combobox.selected_values(combobox.remove_selected_at(m, 9))
+    == [1, 2, 3]
 }
 
 pub fn remove_last_selected_test() {
-  let m = combobox.Model(..multi(), selected: [1, 2, 3])
-  assert combobox.remove_last_selected(m).selected == [1, 2]
+  let m = combobox.Model(..multi(), selected: sel([1, 2, 3]))
+  assert combobox.selected_values(combobox.remove_last_selected(m)) == [1, 2]
 }
 
 pub fn remove_last_selected_empty_is_noop_test() {
-  assert combobox.remove_last_selected(multi()).selected == []
+  assert combobox.selected_values(combobox.remove_last_selected(multi())) == []
 }
 
 // --- selectors -----------------------------------------------------------
 
 pub fn selected_items_in_order_test() {
-  let m = combobox.Model(..multi(), selected: [3, 1])
+  let m = combobox.Model(..multi(), selected: sel([3, 1]))
   assert combobox.selected_items(m)
     == [combobox.Item(3, "Banana", False), combobox.Item(1, "Apple", False)]
 }
 
 pub fn selected_value_first_test() {
-  assert combobox.selected_value(combobox.Model(..multi(), selected: [2, 3]))
+  assert combobox.selected_value(
+      combobox.Model(..multi(), selected: sel([2, 3])),
+    )
     == Some(2)
   assert combobox.selected_value(multi()) == None
 }
 
 pub fn is_selected_multiple_test() {
-  let m = combobox.Model(..multi(), selected: [1, 3])
+  let m = combobox.Model(..multi(), selected: sel([1, 3]))
   assert combobox.is_selected(m, 1)
   assert combobox.is_selected(m, 3)
   assert !combobox.is_selected(m, 2)
@@ -472,7 +485,7 @@ pub fn is_selected_multiple_test() {
 
 pub fn has_selection_test() {
   assert !combobox.has_selection(multi())
-  assert combobox.has_selection(combobox.Model(..multi(), selected: [1]))
+  assert combobox.has_selection(combobox.Model(..multi(), selected: sel([1])))
 }
 
 pub fn selection_mode_test() {
@@ -485,23 +498,23 @@ pub fn selection_mode_test() {
 pub fn update_option_chosen_multiple_toggles_and_stays_open_test() {
   let #(on, _) =
     combobox.update(anatomy(), combobox.open(multi()), combobox.OptionChosen(0))
-  assert on.selected == [1]
+  assert combobox.selected_values(on) == [1]
   assert on.open
   let #(off, _) = combobox.update(anatomy(), on, combobox.OptionChosen(0))
-  assert off.selected == []
+  assert combobox.selected_values(off) == []
   assert off.open
 }
 
 pub fn update_chip_removed_test() {
-  let m = combobox.Model(..multi(), selected: [1, 2, 3])
+  let m = combobox.Model(..multi(), selected: sel([1, 2, 3]))
   let #(next, _) = combobox.update(anatomy(), m, combobox.ChipRemoved(0))
-  assert next.selected == [2, 3]
+  assert combobox.selected_values(next) == [2, 3]
 }
 
 pub fn update_last_chip_removed_test() {
-  let m = combobox.Model(..multi(), selected: [1, 2])
+  let m = combobox.Model(..multi(), selected: sel([1, 2]))
   let #(next, _) = combobox.update(anatomy(), m, combobox.LastChipRemoved)
-  assert next.selected == [1]
+  assert combobox.selected_values(next) == [1]
 }
 
 // --- groups --------------------------------------------------------------

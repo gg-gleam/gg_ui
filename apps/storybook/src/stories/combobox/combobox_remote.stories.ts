@@ -176,5 +176,26 @@ export const RemoteMultiple: Story = {
         2,
       ),
     )
+
+    // Search a DIFFERENT term → the result list is replaced by repos that don't
+    // include the two picks, yet both chips PERSIST (regression: chips used to
+    // vanish because their labels were looked up in the now-replaced item list).
+    await userEvent.type(input, "react")
+    await waitFor(() => expect(canvas.getByText("react/react")).toBeVisible(), {
+      timeout: 2000,
+    })
+    expect(
+      canvas.getByRole("button", { name: `Remove ${FIRST_REPO}` }),
+    ).toBeVisible()
+    expect(
+      canvas.getByRole("button", { name: "Remove sindresorhus/awesome" }),
+    ).toBeVisible()
+    // Pick a third from the search results → all three chips coexist.
+    await userEvent.click(canvas.getByText("react/react"))
+    await waitFor(() =>
+      expect(canvas.getAllByRole("button", { name: /^Remove/ })).toHaveLength(
+        3,
+      ),
+    )
   }),
 }

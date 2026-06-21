@@ -149,7 +149,10 @@ pub type Model(value) {
     items: List(Item(value)),
     groups: List(GroupRange),
     active_index: Option(Int),
-    selected: List(value),
+    // The chosen **items** (value + label), in selection order — store the items,
+    // not bare values, so chips keep their labels even after `items` is replaced
+    // by a remote search (the selections may no longer be in the loaded list).
+    selected: List(Item(value)),
     loading: Bool,
     config: Config,
   )
@@ -420,7 +423,7 @@ pub fn choose(
 pub fn select(model: Model(value), item: Item(value)) -> Model(value) {
   Model(
     ..model,
-    selected: [item.value],
+    selected: [item],
     input_value: item.label,
     query: "",
     open: False,
@@ -434,9 +437,11 @@ pub fn select(model: Model(value), item: Item(value)) -> Model(value) {
 /// highlight, since the visible list changes); an unfiltered toggle leaves the
 /// highlight put, so repeated Enter toggles the same row.
 pub fn toggle(model: Model(value), item: Item(value)) -> Model(value) {
-  let selected = case list.contains(model.selected, item.value) {
-    True -> list.filter(model.selected, fn(v) { v != item.value })
-    False -> list.append(model.selected, [item.value])
+  let selected = case
+    list.any(model.selected, fn(it) { it.value == item.value })
+  {
+    True -> list.filter(model.selected, fn(it) { it.value != item.value })
+    False -> list.append(model.selected, [item])
   }
   case model.query {
     "" -> Model(..model, selected:, open: True)
@@ -478,26 +483,28 @@ pub fn remove_last_selected(model: Model(value)) -> Model(value) {
 /// `aria-selected` / check indicator). Uses Gleam structural equality — a
 /// faithful stand-in for Base UI's `isItemEqualToValue` for plain value types.
 pub fn is_selected(model: Model(value), value: value) -> Bool {
-  list.contains(model.selected, value)
+  list.any(model.selected, fn(item) { item.value == value })
 }
 
 /// The sole selection (single-select convenience) — the first of the selection
 /// list, `None` if nothing is selected.
 pub fn selected_value(model: Model(value)) -> Option(value) {
-  option.from_result(list.first(model.selected))
+  model.selected
+  |> list.first
+  |> option.from_result
+  |> option.map(fn(it) { it.value })
 }
 
 /// All selected values, in selection order (drives the chips in multiple mode).
 pub fn selected_values(model: Model(value)) -> List(value) {
-  model.selected
+  list.map(model.selected, fn(item) { item.value })
 }
 
-/// The selected **items** (value + label), in selection order — looked up in
-/// `items` so the chips can show labels. Values with no matching item drop out.
+/// The selected **items** (value + label), in selection order — taken straight
+/// from the stored selection, so chip labels survive an `items` replacement
+/// (remote search) where the selected items are no longer in the loaded list.
 pub fn selected_items(model: Model(value)) -> List(Item(value)) {
-  list.filter_map(model.selected, fn(value) {
-    list.find(model.items, fn(item) { item.value == value })
-  })
+  model.selected
 }
 
 /// Whether anything is selected (drives the clear affordance / chip rendering).
