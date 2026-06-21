@@ -1,0 +1,35 @@
+/*
+ * base — the global base styles a consumer's entry needs, 1:1 with shadcn's
+ * `globals.css` (its `@layer base { * { … } }` plus the `no-scrollbar` utility).
+ * A *shippable fragment*: NO `@import "tailwindcss"`. The consumer entry (the
+ * Storybook app today, a CLI-generated app later) `@import`s this AFTER
+ * `tokens.css`, so the theme (`--ring`, `--border`) is available — and as the
+ * LAST import, so the inlined `@utility`/`@layer` sit after every `@import`.
+ *
+ * This lives in the package (not the app entry) precisely so the CLI ships it:
+ * an ejected app gets the neutral focus ring and scrollbar utility automatically,
+ * not just Storybook.
+ */
+
+/* Shared menu/listbox infra — combobox (and later select/command) `@apply
+ * no-scrollbar` on their scroll areas. */
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  /* stylelint-disable-next-line nesting-selector-no-missing-scoping-root --
+   * `&` resolves to the utility's target inside `@utility` (Tailwind v4);
+   * stylelint can't see that scoping root. shadcn's globals.css is identical. */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* A default border colour and — the bit that matters for focus —
+ * `outline-ring/50`: tints every element's focus outline to the neutral `--ring`
+ * token instead of the browser-default blue (e.g. a roving-focused combobox chip). */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+}

@@ -74,7 +74,11 @@ pub fn positioned_style(
   ]
 }
 
-const position_try_fallbacks = "flip-block, flip-inline, flip-block flip-inline, flip-start, flip-block flip-start, flip-inline flip-start, flip-block flip-inline flip-start"
+// Flip only on the block axis (the natural opposite side) and inline alignment —
+// never `flip-start`, which swaps the *whole axis* (a bottom dropdown thrown out
+// to the right when it doesn't fit below). A tall popup that can't fit below
+// opens upward instead, the expected overlay behaviour.
+const position_try_fallbacks = "flip-block, flip-inline, flip-block flip-inline"
 
 pub fn side_to_string(side: Side) -> String {
   case side {

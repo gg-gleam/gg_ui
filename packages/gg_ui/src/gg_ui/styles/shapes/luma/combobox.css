@@ -1,38 +1,86 @@
-/* luma · combobox — shape recipe, translated from shadcn combobox.tsx.
- * A fragment; no tailwind import. The field reuses input-group; these are the
- * popup (listbox) + item recipes. The listbox is a native popover, so its
- * enter/exit motion lives in styles/motion/combobox.css. */
+/* luma · combobox — ported 1:1 from shadcn style-luma.css (solid menu surface).
+ * Native enter/exit motion lives in styles/motion/combobox.css (rule 4), so shadcn's
+ * tw-animate-css `data-open:*`/`slide-in-from-*` utils are stripped from
+ * .cn-combobox-content. The popup's anchor-relative width/height (anchor-size +
+ * the available-space clamp) are emitted inline by the styled layer, not here, so
+ * these recipes stay pure `@apply`. No tailwind import. */
 .style-luma {
+  /* `open:flex` (not bare `flex`) so `display:flex` applies only while
+   * `:popover-open` — a bare `flex` overrides the UA
+   * `[popover]:not(:popover-open){display:none}` and leaves the closed popup
+   * laid out (invisible but interactive). Ejects as `open:flex open:flex-col`. */
   .cn-combobox-content {
-    @apply z-50 max-h-96 overflow-x-hidden overflow-y-auto rounded-2xl border border-border bg-popover p-1 text-popover-foreground shadow-md;
-    width: anchor-size(width);
+    @apply bg-popover text-popover-foreground ring-foreground/5 dark:ring-foreground/10 *:data-[slot=input-group]:bg-input/50 *:data-[slot=input-group]:border-input/30 min-w-36 overflow-hidden rounded-3xl shadow-lg ring-1 *:data-[slot=input-group]:m-1.5 *:data-[slot=input-group]:mb-0 *:data-[slot=input-group]:h-8 *:data-[slot=input-group]:shadow-none open:flex open:flex-col;
+  }
+
+  .cn-combobox-label {
+    @apply text-muted-foreground px-3 py-2.5 text-xs;
   }
 
   .cn-combobox-item {
-    @apply relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50;
-  }
-
-  .cn-combobox-item-label {
-    @apply flex-1 truncate;
+    @apply relative flex w-full cursor-default items-center outline-hidden select-none data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 data-highlighted:bg-accent data-highlighted:text-accent-foreground not-data-[variant=destructive]:data-highlighted:**:text-accent-foreground gap-2.5 rounded-2xl py-2 pr-8 pl-3 text-sm font-medium [&_svg:not([class*='size-'])]:size-4;
   }
 
   .cn-combobox-item-indicator {
-    @apply pointer-events-none absolute right-2 flex size-4 items-center justify-center opacity-0 [&>svg]:size-4;
-  }
-
-  .cn-combobox-item[aria-selected="true"] .cn-combobox-item-indicator {
-    @apply opacity-100;
+    @apply pointer-events-none absolute right-2 flex size-4 items-center justify-center;
   }
 
   .cn-combobox-empty {
-    @apply py-6 text-center text-sm text-muted-foreground;
+    @apply text-muted-foreground hidden w-full justify-center py-2 text-center text-sm group-data-empty/combobox-content:flex;
+  }
+
+  /* First-open placeholder — min-height so the popup isn't a collapsed empty box. */
+  .cn-combobox-loading-state {
+    @apply text-muted-foreground grid min-h-20 place-items-center py-2 text-center text-sm;
+  }
+
+  .cn-combobox-list {
+    @apply no-scrollbar min-h-0 flex-1 scroll-py-1.5 overflow-y-auto p-1.5 data-empty:p-0;
+  }
+
+  .cn-combobox-item-text {
+    @apply flex flex-1 gap-2;
+  }
+
+  .cn-combobox-separator {
+    @apply bg-border -mx-1.5 my-1.5 h-px;
   }
 
   .cn-combobox-trigger {
-    @apply text-muted-foreground hover:text-foreground;
+    @apply [&_svg:not([class*='size-'])]:size-4;
   }
 
-  .cn-combobox-clear {
-    @apply text-muted-foreground hover:text-foreground;
+  .cn-combobox-trigger-icon {
+    @apply text-muted-foreground size-4;
+  }
+
+  .cn-combobox-chips {
+    @apply bg-input/50 border-transparent focus-within:border-ring focus-within:ring-ring/30 has-aria-invalid:ring-destructive/20 dark:has-aria-invalid:ring-destructive/40 has-aria-invalid:border-destructive dark:has-aria-invalid:border-destructive/50 flex min-h-9 flex-wrap items-center gap-1.5 rounded-3xl border bg-clip-padding px-3 py-1.5 text-sm transition-[color,box-shadow,background-color] focus-within:ring-3 has-aria-invalid:ring-3 has-data-[slot=combobox-chip]:px-1.5;
+  }
+
+  .cn-combobox-chip {
+    @apply bg-input text-foreground flex h-[calc(--spacing(5.5))] w-fit items-center justify-center gap-1 rounded-3xl px-2 text-xs font-medium whitespace-nowrap has-data-[slot=combobox-chip-remove]:pr-0 dark:bg-input/60 focus:outline-hidden focus:ring-2 focus:ring-ring/50;
+  }
+
+  .cn-combobox-chip-remove {
+    @apply -ml-1 opacity-50 hover:opacity-100;
+  }
+
+  /* gg_ui additions: input width marker, chips-input, async loading line. */
+  .cn-combobox-input {
+    @apply w-auto;
+  }
+
+  .cn-combobox-chip-input {
+    @apply min-w-16 flex-1 bg-transparent outline-none;
+  }
+
+  .cn-combobox-loading {
+    @apply text-muted-foreground flex w-full items-center justify-center gap-2 py-2 text-center text-sm;
+  }
+
+  /* The in-input loading spinner — the lucide loader-circle, spun. */
+  .cn-combobox-spinner-icon {
+    @apply animate-spin text-muted-foreground;
   }
 }

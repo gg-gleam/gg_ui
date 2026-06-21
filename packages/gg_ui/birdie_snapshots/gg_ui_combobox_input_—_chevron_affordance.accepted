@@ -4,11 +4,11 @@ title: gg_ui combobox input — chevron affordance
 file: ./test/combobox_test.gleam
 test_name: input_chevron_affordance_test
 ---
-<div class="cn-input-group group/input-group" data-slot="combobox" data-slot="input-group" role="group" style="anchor-name:--gg-cb-input;">
-  <input aria-autocomplete="list" aria-controls="cb-listbox" aria-expanded="false" class="cn-input-group-input cn-combobox-input" data-slot="input-group-control" id="cb-input" placeholder="Search…" role="combobox" value>
+<div class="cn-input-group group/input-group cn-combobox-input" data-slot="input-group" role="group" style="anchor-name:--gg-cb-input;">
+  <input aria-autocomplete="list" aria-controls="cb-listbox" aria-expanded="false" autocapitalize="none" autocomplete="off" autocorrect="off" class="cn-input-group-input" data-slot="input-group-control" id="cb-input" placeholder="Search…" role="combobox" spellcheck="false" value>
   <div class="cn-input-group-addon cn-input-group-addon-align-inline-end" data-align="inline-end" data-slot="input-group-addon" role="group">
-    <button aria-label="Toggle suggestions" class="cn-button cn-button-variant-ghost cn-button-size-icon-xs cn-input-group-button cn-combobox-trigger" data-slot="input-group-button" data-slot="button" tabindex="-1" type="button" type="button">
-      <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="cn-icon cn-icon-size-md" data-slot="icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+    <button aria-label="Toggle suggestions" class="cn-button cn-button-variant-ghost cn-button-size-icon-xs cn-input-group-button cn-combobox-trigger" data-slot="combobox-trigger" tabindex="-1" type="button">
+      <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="cn-icon cn-icon-size-md cn-combobox-trigger-icon" data-slot="icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
         <path d="m6 9 6 6 6-6"></path>
       </svg>
     </button>

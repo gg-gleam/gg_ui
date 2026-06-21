@@ -1,0 +1,7 @@
+---
+version: 1.5.5
+title: gg_base_ui combobox list — multiselectable
+file: ./test/combobox_test.gleam
+test_name: render_list_multiselectable_test
+---
+<div aria-multiselectable="true" id="cb-listbox" role="listbox"></div>

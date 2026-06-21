@@ -4,6 +4,6 @@ title: gg_ui tooltip trigger — ghost / icon-sm, 0/150 delay
 file: ./test/tooltip_test.gleam
 test_name: trigger_custom_delay_test
 ---
-<button aria-describedby="demo-content" class="cn-button cn-button-variant-ghost cn-button-size-icon-sm" data-slot="button" id="demo-anchor" interestfor="demo-content" style="anchor-name:--gg-demo-anchor;interest-delay-start:0ms;interest-delay-end:150ms;" type="button">
+<button aria-describedby="demo-content" class="cn-button cn-button-variant-ghost cn-button-size-icon-sm" data-interest-delay-end="150" data-interest-delay-start="0" data-slot="button" id="demo-anchor" interestfor="demo-content" style="anchor-name:--gg-demo-anchor;interest-delay-start:0ms;interest-delay-end:150ms;" type="button">
   ?
 </button>

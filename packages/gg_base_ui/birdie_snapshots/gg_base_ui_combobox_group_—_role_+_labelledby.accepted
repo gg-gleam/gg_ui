@@ -1,0 +1,11 @@
+---
+version: 1.5.5
+title: gg_base_ui combobox group — role + labelledby
+file: ./test/combobox_test.gleam
+test_name: render_group_test
+---
+<div aria-labelledby="cb-listbox-group-0" role="group">
+  <div id="cb-listbox-group-0">
+    Citrus
+  </div>
+</div>

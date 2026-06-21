@@ -2,23 +2,38 @@
 //// it runs a real `lustre.application` (Model/update/view), not `lustre.element`.
 //// The host owns the combobox `Model` + `Anatomy` and threads the opaque `Msg`
 //// through `combobox.update`. Icons aren't a consumer concern — the field's
-//// chevron, the selected check and the clear ✕ are built into the component from
-//// lucide — so the story passes no icons and ignores the icon toolbar globals.
+//// chevron, the selected check, the clear ✕ and the chip ✕ are built into the
+//// component from lucide — so the story passes no icons and ignores the icon
+//// toolbar globals.
+////
+//// One app drives every story variant via `Flags`: single-select (the
+//// playground), multiple-select with chips, and grouped lists. The realistic
+//// async/paginated selector lives in `combobox_remote.gleam`.
 
 import gg_ui/positioning.{
   type Align, type Side, Bottom, Center, End, Left, Right, Start, Top,
 }
 import gg_ui/ui/combobox
 import gg_ui/ui/text
-import gleam/option.{None, Some}
+import gleam/int
+import gleam/list
+import gleam/option
+import gleam/string
 import lustre
 import lustre/attribute
 import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html
 
+type Variant {
+  VSingle
+  VMultiple
+  VGrouped
+  VGroupedMultiple
+}
+
 type Flags {
-  Flags(side: Side, align: Align, clearable: Bool)
+  Flags(side: Side, align: Align, clearable: Bool, variant: Variant)
 }
 
 type Model {
@@ -29,28 +44,56 @@ type Msg {
   ComboboxMsg(combobox.Msg)
 }
 
-fn frameworks() -> List(combobox.Item(String)) {
-  build_items([
-    "Next.js", "SvelteKit", "Nuxt", "Remix", "Astro", "Gleam Lustre", "Phoenix",
-  ])
+fn item(label: String) -> combobox.Item(String) {
+  combobox.Item(value: label, label:, disabled: False)
 }
 
-fn build_items(labels: List(String)) -> List(combobox.Item(String)) {
-  case labels {
-    [] -> []
-    [label, ..rest] -> [
-      combobox.Item(value: label, label:, disabled: False),
-      ..build_items(rest)
-    ]
-  }
+fn frameworks() -> List(combobox.Item(String)) {
+  list.map(
+    [
+      "Next.js",
+      "SvelteKit",
+      "Nuxt",
+      "Remix",
+      "Astro",
+      "Gleam Lustre",
+      "Phoenix",
+    ],
+    item,
+  )
+}
+
+fn framework_groups() -> List(combobox.Group(String)) {
+  [
+    combobox.Group(label: "React", items: list.map(["Next.js", "Remix"], item)),
+    combobox.Group(label: "Vue", items: list.map(["Nuxt"], item)),
+    combobox.Group(label: "Svelte", items: list.map(["SvelteKit"], item)),
+    combobox.Group(
+      label: "Other",
+      items: list.map(["Astro", "Gleam Lustre", "Phoenix"], item),
+    ),
+  ]
 }
 
 fn init(flags: Flags) -> #(Model, Effect(Msg)) {
-  let anatomy = combobox.anatomy_with_id("combobox-playground")
-  #(
-    Model(cb: combobox.init(frameworks(), combobox.config()), anatomy:, flags:),
-    effect.none(),
-  )
+  let anatomy = combobox.anatomy_with_id("combobox-story")
+  let config = case flags.variant {
+    VMultiple | VGroupedMultiple ->
+      combobox.Config(
+        loop: True,
+        auto_highlight: False,
+        mode: combobox.Multiple,
+        filter: combobox.Client,
+        search_debounce: 0,
+      )
+    _ -> combobox.config()
+  }
+  let cb = case flags.variant {
+    VGrouped | VGroupedMultiple ->
+      combobox.init_grouped(framework_groups(), config)
+    _ -> combobox.init(frameworks(), config)
+  }
+  #(Model(cb:, anatomy:, flags:), effect.none())
 }
 
 fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
@@ -63,39 +106,100 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
 }
 
 fn view(model: Model) -> Element(Msg) {
-  let widget =
-    combobox.combobox(
-      anatomy: model.anatomy,
-      model: model.cb,
-      placeholder: "Search framework…",
-      side: model.flags.side,
-      align: model.flags.align,
-      clearable: model.flags.clearable,
-      empty_label: "No framework found.",
-    )
+  let widget = element.map(combobox_widget(model), ComboboxMsg)
   html.div(
     [
-      attribute.class(
-        "flex min-h-72 w-full max-w-xs flex-col gap-3 text-foreground",
-      ),
+      // A *definite* width (`w-80`, = max-w-xs), not `w-full max-w-xs`: the story
+      // uses Storybook's `layout: "centered"`, so the canvas is shrink-to-fit and
+      // a percentage/max-width collapses to content width — which makes the
+      // multiple-select field grow when the first chip appears (1 chip + input >
+      // bare input). A fixed width gives the field's `w-full` something to fill,
+      // so it stays put and chips wrap. shadcn's example sizes ComboboxChips the
+      // same way at the call site (`w-full max-w-xs` inside a framed preview).
+      attribute.class("flex min-h-72 w-80 flex-col gap-3 text-foreground"),
     ],
-    [element.map(widget, ComboboxMsg), selected_line(model.cb)],
+    [widget, selected_line(model)],
   )
 }
 
-fn selected_line(cb: combobox.Model(String)) -> Element(Msg) {
-  let label = case combobox.selected(cb) {
-    Some(value) -> "Selected: " <> value
-    None -> "Nothing selected"
+// Assemble the combobox from parts (the composition API, shadcn-style): the field
+// + a popup holding the empty announcer, an optional loading announcer, and the
+// list (sectioned for the grouped variants, flat otherwise).
+fn combobox_widget(model: Model) -> Element(combobox.Msg) {
+  let a = model.anatomy
+  let cb = model.cb
+  let loading = case combobox.is_loading(cb) {
+    True -> [
+      combobox.loading([], [html.text("Loading frameworks…")]),
+    ]
+    False -> []
   }
-  // Dogfood the kit (rule 6): the label is our `text` component, not raw
-  // `text-sm text-muted-foreground`. s6 is the body size (normal weight) — s1–s5
-  // bake in semibold (heading tier). NB: the scale has no small-normal token
-  // (s7 is text-sm but font-medium), a gap dogfooding surfaced.
+  let body = case model.flags.variant {
+    VGrouped | VGroupedMultiple ->
+      combobox.groups(cb, fn(label, entries, gi) {
+        combobox.group(
+          a,
+          gi,
+          [],
+          list.flatten([
+            [combobox.label(a, gi, [], [html.text(label)])],
+            list.map(entries, fn(e) { combobox.option(a, cb, e.0, e.1) }),
+          ]),
+        )
+      })
+    _ -> combobox.options(a, cb)
+  }
+  html.div([], [
+    combobox.input(
+      a,
+      cb,
+      placeholder: "Search framework…",
+      clearable: model.flags.clearable,
+      attrs: [],
+    ),
+    combobox.content(
+      a,
+      cb,
+      side: model.flags.side,
+      align: model.flags.align,
+      attrs: [],
+      children: list.flatten([
+        loading,
+        [combobox.empty([], [html.text("No framework found.")])],
+        [combobox.list(a, cb, [], body)],
+      ]),
+    ),
+  ])
+}
+
+// Dogfood the kit (rule 6): the status line is our `text` component, not raw
+// `text-sm text-muted-foreground`.
+fn selected_line(model: Model) -> Element(Msg) {
+  let label = case model.flags.variant {
+    VMultiple | VGroupedMultiple ->
+      case combobox.selected_values(model.cb) {
+        [] -> "Nothing selected"
+        values ->
+          int.to_string(list.length(values))
+          <> " selected: "
+          <> string.join(values, ", ")
+      }
+    _ ->
+      case combobox.selected(model.cb) {
+        option.Some(value) -> "Selected: " <> value
+        option.None -> "Nothing selected"
+      }
+  }
   text.s6([text.color(text.Muted)], [html.text(label)])
 }
 
 // --- mount ---------------------------------------------------------------
+
+fn start(flags: Flags, selector: String) -> Nil {
+  let assert Ok(_) =
+    lustre.start(lustre.application(init, update, view), selector, flags)
+  Nil
+}
 
 pub fn mount_combobox_playground(
   selector: String,
@@ -103,11 +207,37 @@ pub fn mount_combobox_playground(
   align: String,
   clearable: Bool,
 ) -> Nil {
-  let flags =
-    Flags(side: parse_side(side), align: parse_align(align), clearable:)
-  let assert Ok(_) =
-    lustre.start(lustre.application(init, update, view), selector, flags)
-  Nil
+  start(
+    Flags(parse_side(side), parse_align(align), clearable, VSingle),
+    selector,
+  )
+}
+
+pub fn mount_combobox_multiple(
+  selector: String,
+  side: String,
+  align: String,
+) -> Nil {
+  start(Flags(parse_side(side), parse_align(align), True, VMultiple), selector)
+}
+
+pub fn mount_combobox_grouped(
+  selector: String,
+  side: String,
+  align: String,
+) -> Nil {
+  start(Flags(parse_side(side), parse_align(align), False, VGrouped), selector)
+}
+
+pub fn mount_combobox_grouped_multiple(
+  selector: String,
+  side: String,
+  align: String,
+) -> Nil {
+  start(
+    Flags(parse_side(side), parse_align(align), False, VGroupedMultiple),
+    selector,
+  )
 }
 
 fn parse_side(side: String) -> Side {

@@ -15,6 +15,48 @@
 //
 // Keep export names in sync with the bindings in `arrow.gleam`.
 
+// CSS `d` fallback (Safari). The caret's shape is set per side by the CSS `d`
+// property in `styles/shapes/arrow.css` — but Safari doesn't support CSS `d`, so
+// its `<path>`s (which ship no `d` attribute) render nothing and the arrow is
+// invisible. Where CSS `d` is unsupported, the observer writes the `d` ATTRIBUTE
+// per resolved side instead (the attribute is universal; where CSS `d` IS
+// supported it wins by cascade, so this stays a no-op there). The path data
+// mirrors arrow.css — keep the two in sync. Attribute form omits the `path(...)`
+// wrapper the CSS property requires.
+const cssDSupported =
+  typeof CSS !== "undefined" && CSS.supports("d", 'path("M0 0")')
+
+const ARROW_D: Record<string, { fill: string; stroke: string }> = {
+  bottom: {
+    fill: "M0,7 L5,2 Q7,0 9,2 L14,7 Z",
+    stroke: "M0,7 L5,2 Q7,0 9,2 L14,7",
+  },
+  top: {
+    fill: "M0,0 L5,5 Q7,7 9,5 L14,0 Z",
+    stroke: "M0,0 L5,5 Q7,7 9,5 L14,0",
+  },
+  right: {
+    fill: "M7,0 L2,5 Q0,7 2,9 L7,14 Z",
+    stroke: "M7,0 L2,5 Q0,7 2,9 L7,14",
+  },
+  left: {
+    fill: "M0,0 L5,5 Q7,7 5,9 L0,14 Z",
+    stroke: "M0,0 L5,5 Q7,7 5,9 L0,14",
+  },
+}
+
+function applyArrowDFallback(popup: HTMLElement, side: string): void {
+  if (cssDSupported) return
+  const d = ARROW_D[side]
+  if (!d) return
+  for (const arrow of popup.querySelectorAll("[data-arrow]")) {
+    const fill = arrow.querySelector('[data-arrow-part="fill"]')
+    const stroke = arrow.querySelector('[data-arrow-part="stroke"]')
+    fill?.setAttribute("d", d.fill)
+    stroke?.setAttribute("d", d.stroke)
+  }
+}
+
 let resolvedSideObserverInstalled = false
 
 export function ensureResolvedSideObserver(): void {
@@ -89,6 +131,8 @@ function updateResolvedSide(popup: HTMLElement): void {
   if (popup.getAttribute("data-side") !== side) {
     popup.setAttribute("data-side", side)
   }
+  // Safari has no CSS `d` — paint the caret shape via the `d` attribute instead.
+  applyArrowDFallback(popup, side)
 }
 
 function findTriggerFor(popup: HTMLElement): HTMLElement | null {

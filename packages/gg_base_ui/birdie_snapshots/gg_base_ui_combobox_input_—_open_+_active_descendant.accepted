@@ -4,4 +4,4 @@ title: gg_base_ui combobox input — open + active descendant
 file: ./test/combobox_test.gleam
 test_name: render_input_open_active_test
 ---
-<input aria-activedescendant="cb-listbox-option-0" aria-autocomplete="list" aria-controls="cb-listbox" aria-expanded="true" id="cb-input" role="combobox" value="a">
+<input aria-activedescendant="cb-listbox-option-0" aria-autocomplete="list" aria-controls="cb-listbox" aria-expanded="true" autocapitalize="none" autocomplete="off" autocorrect="off" id="cb-input" role="combobox" spellcheck="false" value="a">

@@ -1,0 +1,9 @@
+---
+version: 1.5.5
+title: gg_base_ui combobox status — polite live region
+file: ./test/combobox_test.gleam
+test_name: render_status_test
+---
+<div aria-atomic="true" aria-live="polite" role="status">
+  Loading…
+</div>

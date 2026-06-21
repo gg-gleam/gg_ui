@@ -1,0 +1,9 @@
+---
+version: 1.5.5
+title: gg_base_ui combobox chip-remove — labelled button
+file: ./test/combobox_test.gleam
+test_name: render_chip_remove_test
+---
+<button aria-label="Remove Apple" tabindex="-1" type="button">
+  ×
+</button>

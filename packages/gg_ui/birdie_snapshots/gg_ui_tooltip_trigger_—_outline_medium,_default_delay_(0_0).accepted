@@ -4,6 +4,6 @@ title: gg_ui tooltip trigger — outline / medium, default delay (0/0)
 file: ./test/tooltip_test.gleam
 test_name: trigger_outline_medium_test
 ---
-<button aria-describedby="demo-content" class="cn-button cn-button-variant-outline cn-button-size-default" data-slot="button" id="demo-anchor" interestfor="demo-content" style="anchor-name:--gg-demo-anchor;interest-delay-start:0ms;interest-delay-end:0ms;" type="button">
+<button aria-describedby="demo-content" class="cn-button cn-button-variant-outline cn-button-size-default" data-interest-delay-end="0" data-interest-delay-start="0" data-slot="button" id="demo-anchor" interestfor="demo-content" style="anchor-name:--gg-demo-anchor;interest-delay-start:0ms;interest-delay-end:0ms;" type="button">
   Hover
 </button>

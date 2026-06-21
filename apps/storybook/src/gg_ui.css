@@ -76,6 +76,11 @@
 /* Story scaffolding — shared scroll-canvas surface (see the file's header). */
 @import "./css/story-canvas.css";
 
+/* Global base + shared utilities (no-scrollbar, neutral focus ring). A shippable
+ * package fragment so the CLI emits it for ejected apps — not app-only. Imported
+ * LAST: it carries `@utility`/`@layer` (which must follow every `@import`). */
+@import "../../../packages/gg_ui/src/gg_ui/styles/base.css";
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Scan story sources, shared story helpers, and the styled package. */

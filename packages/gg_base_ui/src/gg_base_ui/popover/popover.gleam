@@ -136,6 +136,7 @@ fn dismiss_to_string(dismiss: Dismiss) -> String {
 /// static SSR seed; the platform takes over live once hydrated. `aria-haspopup`
 /// is *not* set by the native API, so we emit it ourselves.
 pub fn trigger_attributes(anatomy: Anatomy) -> List(Attribute(msg)) {
+  let Nil = ensure_invoker_commands_polyfill()
   list.flatten([
     [
       attribute.id(anatomy.anchor_id),
@@ -296,6 +297,14 @@ fn hide_popover(_content_id: String) -> Nil {
 
 @external(javascript, "./popover_ffi.ts", "togglePopover")
 fn toggle_popover(_content_id: String) -> Nil {
+  Nil
+}
+
+// Idempotent install of the Invoker Commands polyfill — a no-op where the native
+// API exists (Chrome/Firefox) and on the BEAM. `trigger_attributes` calls it so
+// the declarative `command`/`commandfor` trigger still works on Safari.
+@external(javascript, "./popover_ffi.ts", "ensureInvokerCommandsPolyfill")
+fn ensure_invoker_commands_polyfill() -> Nil {
   Nil
 }
 

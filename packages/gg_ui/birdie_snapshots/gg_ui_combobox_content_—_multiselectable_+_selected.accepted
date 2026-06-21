@@ -1,14 +1,14 @@
 ---
 version: 1.5.5
-title: gg_ui combobox content — selected option
+title: gg_ui combobox content — multiselectable + selected
 file: ./test/combobox_test.gleam
-test_name: content_selected_option_test
+test_name: content_multiselectable_test
 ---
 <div class="cn-combobox-content group/combobox-content" data-align="start" data-side="bottom" data-slot="combobox-content" id="cb-popup" popover="manual" style="width:anchor-size(width);max-block-size:min(18rem, calc(100% - 16px));;position-anchor:--gg-cb-input;position-area:block-end span-inline-end;inset:auto;position-try-fallbacks:flip-block, flip-inline, flip-block flip-inline;margin-inline:0;margin-block:8px;">
   <div aria-atomic="true" aria-live="polite" class="cn-combobox-empty" data-slot="combobox-empty" role="status">
     No fruit found.
   </div>
-  <div class="cn-combobox-list" data-slot="combobox-list" id="cb-listbox" role="listbox">
+  <div aria-multiselectable="true" class="cn-combobox-list" data-slot="combobox-list" id="cb-listbox" role="listbox">
     <div aria-selected="true" class="cn-combobox-item" data-slot="combobox-item" id="cb-listbox-option-0" role="option">
       Apple
       <span class="cn-combobox-item-indicator">
@@ -20,8 +20,13 @@ test_name: content_selected_option_test
     <div aria-selected="false" class="cn-combobox-item" data-slot="combobox-item" id="cb-listbox-option-1" role="option">
       Apricot
     </div>
-    <div aria-selected="false" class="cn-combobox-item" data-slot="combobox-item" id="cb-listbox-option-2" role="option">
+    <div aria-selected="true" class="cn-combobox-item" data-highlighted data-slot="combobox-item" id="cb-listbox-option-2" role="option">
       Banana
+      <span class="cn-combobox-item-indicator">
+        <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="cn-icon cn-icon-size-md" data-slot="icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M20 6 9 17l-5-5"></path>
+        </svg>
+      </span>
     </div>
   </div>
 </div>

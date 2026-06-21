@@ -4,7 +4,7 @@ title: gg_ui popover content — auto dismiss
 file: ./test/popover_test.gleam
 test_name: content_auto_dismiss_test
 ---
-<div aria-describedby="demo-description" aria-labelledby="demo-title" class="cn-popover-positioner" data-align="center" data-side="bottom" id="demo-content" popover="auto" role="dialog" style="position-anchor:--gg-demo-anchor;position-area:block-end;inset:auto;position-try-fallbacks:flip-block, flip-inline, flip-block flip-inline, flip-start, flip-block flip-start, flip-inline flip-start, flip-block flip-inline flip-start;margin-inline:0;margin-block:8px;">
+<div aria-describedby="demo-description" aria-labelledby="demo-title" class="cn-popover-positioner" data-align="center" data-side="bottom" id="demo-content" popover="auto" role="dialog" style="position-anchor:--gg-demo-anchor;position-area:block-end;inset:auto;position-try-fallbacks:flip-block, flip-inline, flip-block flip-inline;margin-inline:0;margin-block:8px;">
   <div class="cn-popover">
     <h2 class="cn-popover-title" id="demo-title">
       Title

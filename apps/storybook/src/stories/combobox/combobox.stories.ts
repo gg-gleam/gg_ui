@@ -1,7 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/html-vite"
 import { expect, userEvent, waitFor, within } from "storybook/test"
 import { mountLustre } from "../../../.storybook/lustre-mount"
-import { mount_combobox_playground } from "./combobox.gleam"
+import {
+  mount_combobox_grouped,
+  mount_combobox_grouped_multiple,
+  mount_combobox_multiple,
+  mount_combobox_playground,
+} from "./combobox.gleam"
 
 type SideArg = "top" | "right" | "bottom" | "left"
 type AlignArg = "start" | "center" | "end"
@@ -52,9 +57,15 @@ const testOnly =
     }
   }
 
-// The popup is the headless `role=listbox` rendered with `popover="manual"`. It
-// lives in the DOM under the mounted host (and is promoted to the top layer when
-// open), so it's reachable from `canvasElement`.
+// The popup is the headless container rendered with `popover="manual"` — the
+// top-layer box that flips to `:popover-open`. The `role=listbox` lives *inside*
+// it (sibling to the status region). Both are reachable from `canvasElement`.
+function popup(canvasElement: HTMLElement): HTMLElement {
+  const el = canvasElement.querySelector<HTMLElement>("[popover]")
+  if (!el) throw new Error("combobox popup not mounted")
+  return el
+}
+
 function listbox(canvasElement: HTMLElement): HTMLElement {
   const el = canvasElement.querySelector<HTMLElement>("[role='listbox']")
   if (!el) throw new Error("combobox listbox not mounted")
@@ -62,7 +73,23 @@ function listbox(canvasElement: HTMLElement): HTMLElement {
 }
 
 const isOpen = (canvasElement: HTMLElement): boolean =>
-  listbox(canvasElement).matches(":popover-open")
+  popup(canvasElement).matches(":popover-open")
+
+// The single highlighted (active-descendant) option's label, or null. Base UI's
+// "active index" — independent of selection — surfaces as `data-highlighted`.
+const highlighted = (canvasElement: HTMLElement): string | null =>
+  canvasElement
+    .querySelector<HTMLElement>("[role='option'][data-highlighted]")
+    ?.textContent?.trim() ?? null
+
+// The label of the chip that currently holds DOM focus (roving chip nav), or null
+// if focus isn't on a chip.
+const focusedChip = (): string | null => {
+  const el = document.activeElement as HTMLElement | null
+  return el?.getAttribute("data-slot") === "combobox-chip"
+    ? (el.textContent?.trim() ?? null)
+    : null
+}
 
 /** Type to filter, arrow/Enter to pick, click an option, Escape to dismiss.
  *  Chevron / check / clear icons are built in (lucide), not story-supplied. */
@@ -75,11 +102,20 @@ export const Playground: Story = {
     const input = canvas.getByRole<HTMLInputElement>("combobox")
     await expect(input).toHaveAttribute("aria-expanded", "false")
 
+    // Closed popup must be fully hidden — `display:none` via the UA
+    // `[popover]:not(:popover-open)` rule, not merely opacity-0. Regression guard:
+    // a `display:flex` on the base content recipe would override that and leave the
+    // closed popup laid out (invisible but clickable). `checkVisibility()` is false
+    // for a display:none subtree.
+    expect(popup(canvasElement).checkVisibility()).toBe(false)
+
     // Click the input → opens. The regression guard: with `popover="manual"` the
     // same click that opens it must NOT immediately light-dismiss it.
     await userEvent.click(input)
     await waitFor(() => expect(isOpen(canvasElement)).toBe(true))
-    await expect(input).toHaveAttribute("aria-expanded", "true")
+    // `aria-expanded` tracks the model; the VDOM patch can trail the native
+    // popover open by a frame, so wait for it rather than asserting eagerly.
+    await waitFor(() => expect(input).toHaveAttribute("aria-expanded", "true"))
     // Still open a tick later — not auto-dismissed by the opening click.
     await new Promise((r) => setTimeout(r, 50))
     await expect(isOpen(canvasElement)).toBe(true)
@@ -102,7 +138,7 @@ export const Playground: Story = {
     await userEvent.keyboard("{Enter}")
     await waitFor(() => expect(input.value).toBe("Remix"))
     await waitFor(() => expect(isOpen(canvasElement)).toBe(false))
-    await expect(input).toHaveAttribute("aria-expanded", "false")
+    await waitFor(() => expect(input).toHaveAttribute("aria-expanded", "false"))
 
     // Re-open, then Escape dismisses (the headless keydown handler, not native
     // light-dismiss — a `manual` popover doesn't close on Escape on its own).
@@ -150,3 +186,205 @@ export const Clearable: Story = {
     ).toBeNull()
   }),
 }
+
+/** Multiple-select (Base UI parity). Picks accumulate as chips and the list stays
+ *  open; the active highlight is independent of selection, so Enter toggles in
+ *  place and you keep arrowing. Chips are a roving-focus toolbar: ←/→ moves
+ *  between them, Delete removes, Enter returns to the input; ArrowLeft from the
+ *  empty input enters the chips; Backspace there pops the last one. */
+export const Multiple: Story = {
+  parameters: { controls: { disable: true } },
+  render: ({ side, align }) =>
+    mountLustre((selector) => mount_combobox_multiple(selector, side, align)),
+  play: testOnly(async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const input = () => canvas.getByRole<HTMLInputElement>("combobox")
+    const selected = (name: string): string | null =>
+      canvas.getByRole("option", { name }).getAttribute("aria-selected")
+    const field = (): HTMLElement => {
+      const el = canvasElement.querySelector<HTMLElement>(
+        "[data-slot='combobox-chips']",
+      )
+      if (!el) throw new Error("chips field not mounted")
+      return el
+    }
+    const emptyWidth = field().getBoundingClientRect().width
+
+    // --- keyboard option nav: highlight is independent of selection ----------
+    await userEvent.click(input())
+    await waitFor(() => expect(isOpen(canvasElement)).toBe(true))
+    expect(highlighted(canvasElement)).toBeNull()
+
+    await userEvent.keyboard("{ArrowDown}") // seeds first
+    await waitFor(() => expect(highlighted(canvasElement)).toBe("Next.js"))
+    await userEvent.keyboard("{ArrowDown}")
+    await waitFor(() => expect(highlighted(canvasElement)).toBe("SvelteKit"))
+
+    // Enter toggles SvelteKit — highlight STAYS on it, list stays open.
+    await userEvent.keyboard("{Enter}")
+    await waitFor(() => expect(selected("SvelteKit")).toBe("true"))
+    await expect(isOpen(canvasElement)).toBe(true)
+    await expect(highlighted(canvasElement)).toBe("SvelteKit")
+
+    // Width is unchanged by the chip (w-full fills the fixed-width container).
+    expect(field().getBoundingClientRect().width).toBeCloseTo(emptyWidth, 0)
+
+    // Keep arrowing from where we are — focus survived the chip insert (keyed
+    // input), so position is not lost.
+    expect(document.activeElement).toBe(input())
+    await userEvent.keyboard("{ArrowDown}")
+    await waitFor(() => expect(highlighted(canvasElement)).toBe("Nuxt"))
+    await userEvent.keyboard("{Enter}") // toggle Nuxt on
+    await waitFor(() => expect(selected("Nuxt")).toBe("true"))
+
+    // Arrow back up and untoggle — toggle/untoggle both work mid-navigation.
+    await userEvent.keyboard("{ArrowUp}")
+    await waitFor(() => expect(highlighted(canvasElement)).toBe("SvelteKit"))
+    await userEvent.keyboard("{Enter}")
+    await waitFor(() => expect(selected("SvelteKit")).toBe("false"))
+
+    // Mouse + keyboard interplay: click two options, keep arrowing from the click.
+    await userEvent.click(canvas.getByRole("option", { name: "Phoenix" }))
+    await waitFor(() => expect(highlighted(canvasElement)).toBe("Phoenix"))
+    await userEvent.keyboard("{ArrowUp}")
+    await waitFor(() => expect(highlighted(canvasElement)).toBe("Gleam Lustre"))
+    await userEvent.click(canvas.getByRole("option", { name: "Astro" }))
+    // Selection so far: Nuxt, Phoenix, Astro → three chips, each removable.
+    await waitFor(() =>
+      expect(canvas.getAllByRole("button", { name: /^Remove/ })).toHaveLength(
+        3,
+      ),
+    )
+
+    // --- chip roving focus ----------------------------------------------------
+    // ArrowLeft from the empty input enters the chips at the last one.
+    input().focus()
+    await userEvent.keyboard("{ArrowLeft}")
+    await waitFor(() => expect(focusedChip()).toBe("Astro"))
+    await userEvent.keyboard("{ArrowLeft}") // → Phoenix
+    await waitFor(() => expect(focusedChip()).toBe("Phoenix"))
+    await userEvent.keyboard("{ArrowRight}") // → Astro
+    await waitFor(() => expect(focusedChip()).toBe("Astro"))
+
+    // Delete the focused chip — it's removed and focus lands on the new last chip.
+    await userEvent.keyboard("{Delete}")
+    await waitFor(() =>
+      expect(canvas.queryByRole("button", { name: "Remove Astro" })).toBeNull(),
+    )
+    await waitFor(() => expect(focusedChip()).toBe("Phoenix"))
+
+    // Enter on a focused chip returns focus to the input.
+    await userEvent.keyboard("{Enter}")
+    await waitFor(() => expect(document.activeElement).toBe(input()))
+
+    // --- removal via the ✕ button + input Backspace --------------------------
+    await userEvent.click(
+      canvas.getByRole("button", { name: "Remove Phoenix" }),
+    )
+    await waitFor(() =>
+      expect(
+        canvas.queryByRole("button", { name: "Remove Phoenix" }),
+      ).toBeNull(),
+    )
+
+    // Backspace in the empty input pops the last remaining chip (Nuxt).
+    input().focus()
+    await userEvent.keyboard("{Backspace}")
+    await waitFor(() =>
+      expect(canvas.queryByRole("button", { name: "Remove Nuxt" })).toBeNull(),
+    )
+    // Back to no chips → the field returned to its empty width.
+    expect(field().getBoundingClientRect().width).toBeCloseTo(emptyWidth, 0)
+  }),
+}
+
+/** A grouped list: options sit under labelled `role=group` sections; empty
+ *  groups (everything filtered out) disappear. */
+export const Grouped: Story = {
+  parameters: { controls: { disable: true } },
+  render: ({ side, align }) =>
+    mountLustre((selector) => mount_combobox_grouped(selector, side, align)),
+  play: testOnly(async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const input = canvas.getByRole<HTMLInputElement>("combobox")
+
+    await userEvent.click(input)
+    await waitFor(() => expect(isOpen(canvasElement)).toBe(true))
+
+    // Sections live inside the listbox (role=group), labelled by their headers.
+    const list = within(listbox(canvasElement))
+    await waitFor(() => expect(list.getAllByRole("group")).toHaveLength(4))
+    await waitFor(() => expect(list.getByText("React")).toBeVisible())
+    await waitFor(() =>
+      expect(list.getByRole("option", { name: "Next.js" })).toBeVisible(),
+    )
+
+    // Filter to "nuxt" → only the Vue group survives; the rest drop out.
+    await userEvent.type(input, "nuxt")
+    await waitFor(() => expect(list.getAllByRole("group")).toHaveLength(1))
+    await waitFor(() => expect(list.getByText("Vue")).toBeVisible())
+  }),
+}
+
+/** Grouped + multiple compose (they're independent axes in Base UI): the popup
+ *  shows labelled `role=group` sections that are `aria-multiselectable`, and the
+ *  field is the chips field — picks from different groups accumulate as chips. */
+export const GroupedMultiple: Story = {
+  name: "Grouped + multiple",
+  parameters: { controls: { disable: true } },
+  render: ({ side, align }) =>
+    mountLustre((selector) =>
+      mount_combobox_grouped_multiple(selector, side, align),
+    ),
+  play: testOnly(async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const input = canvas.getByRole<HTMLInputElement>("combobox")
+
+    await userEvent.click(input)
+    await waitFor(() => expect(isOpen(canvasElement)).toBe(true))
+
+    // Re-query the listbox live each time — toggling re-renders the popup, so a
+    // captured node would go stale (the click would hit a detached element).
+    const option = (name: string): HTMLElement =>
+      within(listbox(canvasElement)).getByRole("option", { name })
+
+    // The list is grouped AND multi-selectable — both axes at once.
+    expect(listbox(canvasElement)).toHaveAttribute(
+      "aria-multiselectable",
+      "true",
+    )
+    await waitFor(() =>
+      expect(within(listbox(canvasElement)).getAllByRole("group")).toHaveLength(
+        4,
+      ),
+    )
+
+    // Pick from two different groups — list stays open, picks become chips.
+    await userEvent.click(option("Next.js")) // React group
+    await expect(isOpen(canvasElement)).toBe(true)
+    await userEvent.click(option("Nuxt")) // Vue group
+    await expect(isOpen(canvasElement)).toBe(true)
+
+    // Both picks are aria-selected in their groups…
+    await waitFor(() =>
+      expect(option("Next.js")).toHaveAttribute("aria-selected", "true"),
+    )
+    await waitFor(() =>
+      expect(option("Nuxt")).toHaveAttribute("aria-selected", "true"),
+    )
+
+    // …and both render as removable chips in the field.
+    await waitFor(() =>
+      expect(
+        canvas.getByRole("button", { name: "Remove Next.js" }),
+      ).toBeVisible(),
+    )
+    await expect(
+      canvas.getByRole("button", { name: "Remove Nuxt" }),
+    ).toBeVisible()
+  }),
+}
+
+// The async / loading announcer is exercised for real by the remote (GitHub)
+// combobox in `combobox_remote.stories.ts`, which fetches, searches, and
+// paginates — replacing the earlier artificial "toggle loading" demo.
