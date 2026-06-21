@@ -64,6 +64,26 @@ closed and correct, and the behaviour activates only once the runtime is live.
 Positioning itself stays native (`gg_base_ui/positioning` + the Popover API), as
 in popover — no JS positioning library.
 
+### Browser support — Safari gap (TODO before Safari is a supported target)
+
+The native-first bet (rule 4) costs us **Safari** today, kit-wide — popover,
+tooltip, and combobox all share `gg_base_ui/positioning`:
+
+- **Popover API** is Safari **17+**; below that the closed popup isn't hidden
+  (the UA `[popover]:not(:popover-open){display:none}` rule never applies), so our
+  motion `opacity:0` leaves a phantom, layout-occupying strip. Needs
+  `@oddbird/popover-polyfill`, conditionally loaded.
+- **CSS anchor positioning** has **no Safari support**. The popup's
+  `position-area` / `anchor-size()` are ignored → it falls back to UA-centred and
+  unsized. The `@oddbird/css-anchor-positioning` polyfill exists but **does not
+  support `position-area` on popovers** — so full Safari parity means reworking
+  `positioning` from `position-area` to `anchor()` insets.
+
+We ship **neither polyfill and no `@supports` fallback** — a deliberate deferral.
+Before Safari is a supported target: add the popover polyfill (fixes the phantom
+strip + open/dismiss), then either accept UA-centred positioning or do the
+`anchor()` rework + anchor polyfill. Revisit pre-CLI.
+
 ## Controlled vs uncontrolled
 
 Mirror Base UI's `value`/`defaultValue` split, the same way popover handles
