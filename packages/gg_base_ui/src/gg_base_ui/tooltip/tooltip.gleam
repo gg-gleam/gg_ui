@@ -111,10 +111,16 @@ pub fn trigger_attributes(
   delay delay: Int,
   close_delay close_delay: Int,
 ) -> List(Attribute(msg)) {
+  let Nil = ensure_interest_invokers_polyfill()
   [
     attribute.id(anatomy.anchor_id),
     attribute.attribute("interestfor", anatomy.content_id),
     attribute.attribute("aria-describedby", anatomy.content_id),
+    // Mirror the native interest delays as plain-ms data-* so the Safari
+    // polyfill can read them: browsers that lack Interest Invokers also drop the
+    // unknown `interest-delay-*` CSS, so it never survives in the inline style.
+    attribute.attribute("data-interest-delay-start", int.to_string(delay)),
+    attribute.attribute("data-interest-delay-end", int.to_string(close_delay)),
     trigger_style(anatomy, delay, close_delay),
   ]
 }
@@ -184,4 +190,15 @@ pub fn popup(
 /// identical regardless of where the hint opens.
 pub fn arrow(anatomy: Anatomy, attrs: List(Attribute(msg))) -> Element(msg) {
   arrow.arrow(anatomy.anchor_id, attrs)
+}
+
+// --- Interest Invokers polyfill install --------------------------------------
+
+// Idempotent install of the Interest Invokers polyfill — a no-op where the
+// native API exists (Chrome/Firefox) and on the BEAM. `trigger_attributes`
+// calls it so the declarative `interestfor` hover/focus trigger still works on
+// Safari (which has the Popover API but not Interest Invokers).
+@external(javascript, "./tooltip_ffi.ts", "ensureInterestInvokersPolyfill")
+fn ensure_interest_invokers_polyfill() -> Nil {
+  Nil
 }

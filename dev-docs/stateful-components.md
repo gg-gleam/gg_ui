@@ -64,25 +64,56 @@ closed and correct, and the behaviour activates only once the runtime is live.
 Positioning itself stays native (`gg_base_ui/positioning` + the Popover API), as
 in popover — no JS positioning library.
 
-### Browser support — Safari gap (TODO before Safari is a supported target)
+### Browser support — Safari (three shims)
 
-The native-first bet (rule 4) costs us **Safari** today, kit-wide — popover,
-tooltip, and combobox all share `gg_base_ui/positioning`:
+The native-first bet (rule 4) leans on APIs Safari shipped only partially.
+Tested against **Safari 26.1**, which **does** support the Popover API, CSS
+anchor *positioning* (`position-area` placement + `position-try-fallbacks` flip),
+`anchor-size()`, and the CSS motion recipe (`@starting-style` +
+`transition-behavior: allow-discrete`). What it lacks breaks one component each —
+so the fix is **three small, independent shims**, all in `gg_base_ui` behind an
+`@external` with the inert Gleam fallback, all feature-detected so Chrome/Firefox
+and SSR run **zero** added JS:
 
-- **Popover API** is Safari **17+**; below that the closed popup isn't hidden
-  (the UA `[popover]:not(:popover-open){display:none}` rule never applies), so our
-  motion `opacity:0` leaves a phantom, layout-occupying strip. Needs
-  `@oddbird/popover-polyfill`, conditionally loaded.
-- **CSS anchor positioning** has **no Safari support**. The popup's
-  `position-area` / `anchor-size()` are ignored → it falls back to UA-centred and
-  unsized. The `@oddbird/css-anchor-positioning` polyfill exists but **does not
-  support `position-area` on popovers** — so full Safari parity means reworking
-  `positioning` from `position-area` to `anchor()` insets.
+1. **Popover — Invoker Commands.** The trigger opens via `command`/`commandfor`,
+   unsupported in Safari, so it never opens. `ensureInvokerCommandsPolyfill`
+   (`popover_ffi.ts`) installs a delegated `click` that runs the command and a
+   `toggle` listener that keeps `aria-expanded` in sync. The one subtlety is the
+   `popover="auto"` light-dismiss double-toggle (clicking an open popover's
+   trigger light-dismisses it on pointerdown, so a naive toggle reopens it) —
+   defeated by capturing the open-state at `pointerdown`. No-op when `"command"
+   in HTMLButtonElement.prototype`.
+2. **Tooltip — Interest Invokers.** The trigger opens via `interestfor` +
+   `interest-delay-*`, unsupported in Safari, so it never shows.
+   `ensureInterestInvokersPolyfill` (`tooltip_ffi.ts`) installs delegated
+   pointer/focus listeners that show/hide the `popover="hint"` target with the
+   delays (read from `data-interest-delay-*`, since the unknown CSS props are
+   dropped). No-op when `"interestForElement" in HTMLButtonElement.prototype`.
+3. **Combobox — anchor *sizing*.** Placement works, but the popup's
+   `max-block-size: min(<cap>, calc(100% - <gap>))` relies on `100%` resolving
+   against the `position-area` cell; Safari resolves it wrong, collapsing the list
+   to a thin strip (`anchor-size(width)` for the width *does* resolve, so width is
+   left native). `fitPopup` (`combobox_ffi.ts`) **inspects the actual rendered
+   box** rather than feature-probing (`CSS.supports` and an `anchor-size` probe
+   both report support while sizing still fails): if the box collapsed (content
+   present, height < 24px) or overflows the viewport, it pins a definite
+   `block-size` from the content height (so the `flex-basis:0` list can't
+   collapse) and clamps `max-block-size` to the measured available space. It
+   re-fits via a `MutationObserver` (async results / first-open loading mount a
+   tick after open) + `resize`/`scroll`, rAF-coalesced, and no-ops where native
+   CSS sized it fine.
 
-We ship **neither polyfill and no `@supports` fallback** — a deliberate deferral.
-Before Safari is a supported target: add the popover polyfill (fixes the phantom
-strip + open/dismiss), then either accept UA-centred positioning or do the
-`anchor()` rework + anchor polyfill. Revisit pre-CLI.
+**Listener lifecycle.** The popover/tooltip shims install **once** per page
+(guarded flag, delegated on `document`) — mirroring `arrow_ffi`'s
+`ensureResolvedSideObserver`, not per-instance, so nothing accumulates. The
+combobox's per-open listeners (MutationObserver + resize + scroll + rAF) are torn
+down three ways: the `hide` effect, a once-installed `toggle` listener (fires on
+close **and** on DOM removal, covering unmount-while-open), and an `applyFit`
+self-heal when the popup is gone.
+
+**Still deferred:** the decorative popover/tooltip **arrow** rendering, a slight
+combobox dropdown/input **overlap**, and **Arrow Left/Right** chip entry on
+Safari — minor follow-ups, tracked separately.
 
 ## Controlled vs uncontrolled
 

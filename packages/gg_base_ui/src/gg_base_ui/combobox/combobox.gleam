@@ -736,12 +736,20 @@ fn scroll_active(anatomy: Anatomy, model: Model(value)) -> Effect(Msg) {
 }
 
 fn show(anatomy: Anatomy) -> Effect(Msg) {
-  effect.from(fn(_dispatch) { show_listbox(anatomy.popup_id) })
+  effect.from(fn(_dispatch) {
+    let _ = show_listbox(anatomy.popup_id)
+    // Stopgap width+height sizing for browsers without CSS anchor *sizing*
+    // (Safari): a no-op where `anchor-size()`/cell-percentage resolve natively.
+    // See `fitPopup` in the FFI + dev-docs/stateful-components.md.
+    fit_popup(anatomy.popup_id, anatomy.input_id)
+  })
 }
 
 fn hide(anatomy: Anatomy) -> Effect(Msg) {
   effect.from(fn(_dispatch) {
     let _ = hide_listbox(anatomy.popup_id)
+    // Detach the Safari fit listeners (resize/scroll) bound while open — no leak.
+    stop_fit_popup(anatomy.popup_id)
     // Cancel any pending debounced search when the list closes — both correct
     // (you closed, don't fire a late search into a dead/closed list) and clean
     // teardown so no timer dispatches after unmount.
@@ -1295,6 +1303,20 @@ fn show_listbox(_listbox_id: String) -> Nil {
 
 @external(javascript, "./combobox_ffi.ts", "hidePopover")
 fn hide_listbox(_listbox_id: String) -> Nil {
+  Nil
+}
+
+// Safari sizing fallback: match the popup width to the anchor and clamp its
+// height to the measured available space when CSS anchor *sizing* is missing
+// (empirically probed). No-op (and no JS) where it works. `stopFitPopup` detaches
+// the resize/scroll listeners bound while open.
+@external(javascript, "./combobox_ffi.ts", "fitPopup")
+fn fit_popup(_popup_id: String, _anchor_id: String) -> Nil {
+  Nil
+}
+
+@external(javascript, "./combobox_ffi.ts", "stopFitPopup")
+fn stop_fit_popup(_popup_id: String) -> Nil {
   Nil
 }
 
