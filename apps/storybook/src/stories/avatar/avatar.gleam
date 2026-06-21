@@ -172,19 +172,20 @@ pub fn mount_avatar_group(selector: String) -> Nil {
   Nil
 }
 
-// Avatar + popover: the avatar as the trigger for an account menu (shadcn's
-// "Dropdown" example — we use the native popover, our menu primitive).
+// Avatar + popover: the avatar as the trigger for a profile-card popover. (We
+// don't have a dropdown-menu primitive yet, so this is a clean account *card*
+// — avatar + identity + a CTA — rather than a faked menu.)
 pub fn mount_avatar_menu(selector: String) -> Nil {
   let view =
     popover.popover_with_trigger(
       trigger: avatar_trigger,
       options: popover.Options(
         ..popover.options(),
-        id: option.Some("avatar-menu"),
+        id: option.Some("avatar-card"),
         side: positioning.Bottom,
         align: positioning.Start,
       ),
-      children: menu_items,
+      children: profile_card,
     )
   let assert Ok(_) = lustre.start(lustre.element(view), selector, Nil)
   Nil
@@ -217,28 +218,21 @@ fn avatar_trigger(anatomy: popover.Anatomy) -> Element(msg) {
   )
 }
 
-fn menu_items(anatomy: popover.Anatomy) -> List(Element(msg)) {
+fn profile_card(anatomy: popover.Anatomy) -> List(Element(msg)) {
   [
-    popover.header([
-      popover.title(anatomy, [text.s6_m([], [html.text("My Account")])]),
-      popover.description(anatomy, [html.text("shadcn@example.com")]),
+    html.div([attribute.class("flex items-center gap-3")], [
+      avatar.avatar(avatar.Default, avatar.Circle, [], image("CN")),
+      popover.header([
+        popover.title(anatomy, [html.text("shadcn")]),
+        popover.description(anatomy, [html.text("shadcn@example.com")]),
+      ]),
     ]),
-    menu_item("Profile"),
-    menu_item("Billing"),
-    menu_item("Settings"),
-    menu_item("Log out"),
+    html.div([attribute.class("mt-3")], [
+      button.button(button.Outline, button.Sm, [attribute.class("w-full")], [
+        html.text("View profile"),
+      ]),
+    ]),
   ]
-}
-
-fn menu_item(label: String) -> Element(msg) {
-  button.button(
-    button.Ghost,
-    button.Sm,
-    [attribute.class("w-full justify-start")],
-    [
-      html.text(label),
-    ],
-  )
 }
 
 fn image(initials: String) -> List(Element(msg)) {

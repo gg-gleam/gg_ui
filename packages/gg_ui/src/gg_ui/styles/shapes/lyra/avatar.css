@@ -3,8 +3,11 @@
  * (not shadcn's `text-muted-foreground`) for WCAG AA contrast on the muted
  * ground. A fragment; no tailwind import — `@apply`-only, one rule per cn-* class. */
 .style-lyra {
+  /* The root clips the image/fallback to the shape. When a badge is present we
+   * switch to overflow-visible so the corner badge isn't cropped — the image
+   * self-clips via rounded-[inherit] instead. */
   .cn-avatar {
-    @apply relative flex shrink-0 overflow-hidden select-none;
+    @apply relative flex shrink-0 overflow-hidden select-none has-[[data-slot=avatar-badge]]:overflow-visible;
   }
 
   .cn-avatar-size-xs {
@@ -23,9 +26,9 @@
     @apply size-10;
   }
 
-  /* Shape rides on the root; `overflow-hidden` clips the image + fallback to it.
-   * `corner-shape: squircle` is a progressive enhancement — it degrades to the
-   * `border-radius` rounded square where unsupported. */
+  /* Shape rides on the root; `overflow-hidden` (or the image/fallback's own
+   * rounded-[inherit]) clips to it. `corner-shape: squircle` is a progressive
+   * enhancement — it degrades to the `border-radius` rounded square. */
   .cn-avatar-shape-circle {
     @apply rounded-full;
   }
@@ -38,10 +41,11 @@
     @apply rounded-[42%] [corner-shape:squircle];
   }
 
-  /* On load failure the observer sets data-status=error on the root; the image
-   * hides itself via the group variant so the fallback behind it shows. */
+  /* Self-clips to the root shape (so the badge can escape an overflow-visible
+   * root). On load failure the observer sets data-status=error on the root; the
+   * image hides itself so the fallback behind it shows. */
   .cn-avatar-image {
-    @apply absolute inset-0 size-full object-cover group-data-[status=error]/avatar:hidden;
+    @apply absolute inset-0 size-full rounded-[inherit] object-cover group-data-[status=error]/avatar:hidden;
   }
 
   .cn-avatar-fallback {
