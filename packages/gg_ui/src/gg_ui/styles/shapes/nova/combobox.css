@@ -6,7 +6,14 @@
  * these recipes stay pure `@apply`. No tailwind import. */
 .style-nova {
   .cn-combobox-content {
-    @apply bg-popover text-popover-foreground ring-foreground/10 *:data-[slot=input-group]:bg-input/30 *:data-[slot=input-group]:border-input/30 flex flex-col min-w-36 overflow-hidden rounded-lg shadow-md ring-1 *:data-[slot=input-group]:m-1 *:data-[slot=input-group]:mb-0 *:data-[slot=input-group]:h-8 *:data-[slot=input-group]:shadow-none;
+    @apply bg-popover text-popover-foreground ring-foreground/10 *:data-[slot=input-group]:bg-input/30 *:data-[slot=input-group]:border-input/30 min-w-36 overflow-hidden rounded-lg shadow-md ring-1 *:data-[slot=input-group]:m-1 *:data-[slot=input-group]:mb-0 *:data-[slot=input-group]:h-8 *:data-[slot=input-group]:shadow-none;
+  }
+
+  /* Flex column only while open — putting `display:flex` on the base recipe would
+   * override the UA `[popover]:not(:popover-open){display:none}` and leave the
+   * closed popup laid out (invisible but interactive). */
+  .cn-combobox-content:popover-open {
+    @apply flex flex-col;
   }
 
   .cn-combobox-label {

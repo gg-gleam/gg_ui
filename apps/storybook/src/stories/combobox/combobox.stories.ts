@@ -102,6 +102,13 @@ export const Playground: Story = {
     const input = canvas.getByRole<HTMLInputElement>("combobox")
     await expect(input).toHaveAttribute("aria-expanded", "false")
 
+    // Closed popup must be fully hidden — `display:none` via the UA
+    // `[popover]:not(:popover-open)` rule, not merely opacity-0. Regression guard:
+    // a `display:flex` on the base content recipe would override that and leave the
+    // closed popup laid out (invisible but clickable). `checkVisibility()` is false
+    // for a display:none subtree.
+    expect(popup(canvasElement).checkVisibility()).toBe(false)
+
     // Click the input → opens. The regression guard: with `popover="manual"` the
     // same click that opens it must NOT immediately light-dismiss it.
     await userEvent.click(input)
