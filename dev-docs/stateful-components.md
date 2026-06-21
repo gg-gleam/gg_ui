@@ -111,9 +111,20 @@ down three ways: the `hide` effect, a once-installed `toggle` listener (fires on
 close **and** on DOM removal, covering unmount-while-open), and an `applyFit`
 self-heal when the popup is gone.
 
-**Still deferred:** the decorative popover/tooltip **arrow** rendering, a slight
-combobox dropdown/input **overlap**, and **Arrow Left/Right** chip entry on
-Safari — minor follow-ups, tracked separately.
+Two smaller Safari fixes ride along the same way (feature-detected, no-op
+elsewhere):
+
+- **Arrow.** The caret shape is set via the CSS `d` property (`arrow.css`), which
+  Safari doesn't support, so its `<path>`s render nothing. Where CSS `d` is
+  unsupported, `arrow_ffi`'s resolved-side observer writes the `d` **attribute**
+  per side instead (universal; CSS `d` wins by cascade where it exists).
+- **Chip focus visibility.** Roving chip focus *worked* on Safari, but the ring
+  didn't show: shadcn's chip (and ours) carried no focus style, relying on the UA
+  outline, which Safari doesn't draw for a programmatically-focused
+  `tabindex="-1"` element. The chip recipe now adds an explicit **`:focus`** ring
+  (not `:focus-visible`, which Safari won't match for programmatic focus) — a
+  deliberate a11y divergence (WCAG 2.4.7), same class as the chip-remove
+  `aria-label`.
 
 ## Controlled vs uncontrolled
 
