@@ -105,7 +105,9 @@ pub fn image(
 
 /// The fallback (shadcn's `AvatarFallback`) — `data-slot=avatar-fallback` + the
 /// `cn-avatar-fallback` recipe (centred initials/icon on a muted ground, its
-/// corners inheriting the root shape).
+/// corners inheriting the root shape). Sits behind the `image` and hides once
+/// the image reports `data-status=loaded`, so a transparent image never reveals
+/// it.
 pub fn fallback(
   attrs attrs: List(Attribute(msg)),
   children children: List(Element(msg)),
