@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/html-vite"
+import { expect, waitFor, within } from "storybook/test"
 import { mountLustre } from "../../../.storybook/lustre-mount"
 import {
   mount_avatar_badge,
@@ -11,9 +12,24 @@ import {
 } from "./avatar.gleam"
 
 // Avatar — shadcn's Avatar / AvatarImage / AvatarFallback over the native-first
-// headless layer. The image is stacked over the fallback; on load failure the
-// observer hides it and the fallback shows through. We add an `xs` size and a
-// shape axis (circle / rounded / squircle) on top of shadcn's circle-only avatar.
+// headless layer. The fallback sits behind the image and is hidden once the
+// image reports data-status=loaded (so a *transparent* image doesn't reveal the
+// initials behind it); on load failure the observer hides the image instead and
+// the fallback shows. We add an `xs` size and a shape axis (circle / rounded /
+// squircle) on top of shadcn's circle-only avatar.
+
+declare global {
+  // `var` is required to augment `globalThis`; `let`/`const` don't work here.
+  var __vitest_browser__: boolean | undefined
+}
+const inVitestBrowser = (): boolean => globalThis.__vitest_browser__ === true
+const testOnly =
+  (fn: NonNullable<Story["play"]>): NonNullable<Story["play"]> =>
+  async (context) => {
+    if (inVitestBrowser() || context.globals.runPlay === "on") {
+      await fn(context)
+    }
+  }
 
 const sizes = ["xs", "sm", "default", "lg"] as const
 const shapes = ["circle", "rounded", "squircle"] as const
@@ -44,6 +60,21 @@ export const Playground: Story = {
     mountLustre((selector) =>
       mount_avatar_playground(selector, size, shape, broken, initials),
     ),
+  // Default args = a working (and transparent-capable) image. Once it loads the
+  // root flips to data-status=loaded and the fallback must be hidden — otherwise
+  // its initials bleed through a transparent image (the regression this guards).
+  play: testOnly(async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const root = canvasElement.querySelector<HTMLElement>(
+      "[data-slot='avatar']",
+    )
+    if (!root) throw new Error("avatar root not mounted")
+    await waitFor(() => expect(root.dataset.status).toBe("loaded"), {
+      timeout: 2000,
+    })
+    const fallback = canvas.getByText("CN")
+    expect(fallback).not.toBeVisible()
+  }),
 }
 
 export const Sizes: Story = {
