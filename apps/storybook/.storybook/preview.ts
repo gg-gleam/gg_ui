@@ -180,8 +180,26 @@ const preview: Preview = {
       if (mode === "dark") {
         root.classList.add("dark")
       }
-      root.style.setProperty("background", "var(--background)")
       root.style.setProperty("color", "var(--foreground)")
+
+      // Theme the whole canvas, not just the centered root box: mirror the axis
+      // classes onto the preview iframe's <html> so `--background`/`--foreground`
+      // resolve there and the *entire* story space paints them — so dark mode
+      // darkens everything, not only the card. Globals persist across renders,
+      // so clear the previous story's axis classes first. <html> is also an
+      // ancestor of every top-layer element (dialog/popover), so they keep
+      // inheriting the tokens.
+      const docEl = root.ownerDocument.documentElement
+      const stale = [...docEl.classList].filter(
+        (c) => /^(style-|base-color-|theme-)/.test(c) || c === "dark",
+      )
+      docEl.classList.remove(...stale)
+      docEl.classList.add(`style-${shape}`, `base-color-${baseColor}`)
+      if (theme && theme !== "none") docEl.classList.add(`theme-${theme}`)
+      if (mode === "dark") docEl.classList.add("dark")
+      docEl.style.setProperty("background", "var(--background)")
+      docEl.style.setProperty("color", "var(--foreground)")
+
       // FONT axis — override the gg_ui `--font-*` vars with the picked families
       // (null = leave the :root system-stack fallback). Body text inherits
       // --font-sans; headings opt into --font-heading via the `font-heading`
@@ -192,7 +210,6 @@ const preview: Preview = {
       if (heading) root.style.setProperty("--font-heading", heading)
       root.style.setProperty("font-family", "var(--font-sans)")
       root.style.setProperty("padding", "3rem")
-      root.style.setProperty("border-radius", "0.5rem")
       return root
     },
   ],

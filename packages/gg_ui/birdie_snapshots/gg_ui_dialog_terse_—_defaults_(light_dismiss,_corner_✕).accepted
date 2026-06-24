@@ -1,0 +1,26 @@
+---
+version: 1.5.5
+title: gg_ui dialog terse — defaults (light-dismiss, corner ✕)
+file: ./test/dialog_test.gleam
+test_name: terse_defaults_test
+---
+<button aria-controls="demo-content" aria-expanded="false" aria-haspopup="dialog" class="cn-button cn-button-variant-outline cn-button-size-default" command="show-modal" commandfor="demo-content" data-slot="button" type="button">
+  Open
+</button>
+<dialog aria-describedby="demo-description" aria-labelledby="demo-title" class="cn-dialog" closedby="any" id="demo-content">
+  <div class="cn-dialog-header">
+    <h2 class="cn-dialog-title" id="demo-title">
+      Title
+    </h2>
+    <p class="cn-dialog-description" id="demo-description">
+      Description text here.
+    </p>
+  </div>
+  <button aria-label="Close" class="cn-button cn-button-variant-ghost cn-button-size-icon-sm cn-dialog-close" command="close" commandfor="demo-content" data-slot="button" type="button">
+    <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="cn-icon cn-icon-size-sm" data-slot="icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+      <path d="M18 6 6 18"></path>
+      <path d="m6 6 12 12"></path>
+    </svg>
+  </button>
+</dialog>
+

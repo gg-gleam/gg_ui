@@ -1,0 +1,15 @@
+---
+version: 1.5.5
+title: gg_ui dialog terse — custom trigger, no corner ✕
+file: ./test/dialog_test.gleam
+test_name: terse_custom_trigger_no_close_test
+---
+<button aria-controls="demo-content" aria-expanded="false" aria-haspopup="dialog" command="show-modal" commandfor="demo-content">
+  Custom
+</button>
+<dialog aria-describedby="demo-description" aria-labelledby="demo-title" class="cn-dialog" closedby="any" id="demo-content">
+  <h2 class="cn-dialog-title" id="demo-title">
+    Title
+  </h2>
+</dialog>
+

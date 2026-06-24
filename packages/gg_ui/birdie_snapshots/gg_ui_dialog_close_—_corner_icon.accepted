@@ -1,0 +1,12 @@
+---
+version: 1.5.5
+title: gg_ui dialog close — corner icon
+file: ./test/dialog_test.gleam
+test_name: close_icon_test
+---
+<button aria-label="Close" class="cn-button cn-button-variant-ghost cn-button-size-icon-sm cn-dialog-close" command="close" commandfor="demo-content" data-slot="button" type="button">
+  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="cn-icon cn-icon-size-sm" data-slot="icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+    <path d="M18 6 6 18"></path>
+    <path d="m6 6 12 12"></path>
+  </svg>
+</button>

@@ -1,0 +1,143 @@
+/*
+ * dialog · motion — the dialog's slice of the MOTION layer (imported by
+ * ../motion.css). Reproduces shadcn's dialog animation natively, driven by the
+ * `<dialog>` top-layer lifecycle: the `[open]` attribute for the open state,
+ * `@starting-style` for the entry-from state, and `transition-behavior:
+ * allow-discrete` on `display`/`overlay` so it animates out before leaving the
+ * top layer. A fragment: no `@import "tailwindcss"`, no `@apply`.
+ *
+ * This file also owns two things the `<dialog>` shape recipe can't express as a
+ * lone `.cn-*` class (AGENTS.md rule 7): the `::backdrop` pseudo-element (its
+ * dim + blur + fade — shadcn's `cn-dialog-overlay`) and the pure-CSS scroll-lock
+ * (`:root:has(dialog:modal)`). Both are native, universal, and need no JS. The
+ * `::backdrop` rules here are *value-free* — the per-style tint/blur come in as
+ * the `--cn-dialog-overlay` / `-blur` vars set on `.cn-dialog` in the shape
+ * fragment (`::backdrop` inherits custom props from the `<dialog>`), so nothing
+ * per-style lives in this universal layer.
+ *
+ * Values mirror shadcn's recipe: duration-100, fade-in/out-0 (opacity 0↔1),
+ * zoom-in/out-95 (scale .95), and a per-style backdrop tint + backdrop-blur.
+ */
+
+:root {
+  --motion-duration-dialog: 100ms;
+}
+
+/* The `<dialog>` panel: CENTERING + the fade/zoom, all here as RAW CSS.
+ *
+ * Why not the UA default and not Tailwind: the UA's `inset:0; margin:auto` only
+ * shrinks to `fit-content` in Blink — WebKit/Safari stretches the panel to the
+ * full inset box (footer floats mid-panel, h-scroll). And Tailwind's
+ * `-translate-x-1/2` compiles to the `translate` CSS property via
+ * `@property`-registered `--tw-translate-*` vars, which real Safari does NOT
+ * reliably apply (the rule shows in the inspector but the translate is dropped,
+ * so the dialog falls back to the stretched UA box).
+ *
+ * So we center with plain `transform: translate(-50%,-50%)` — supported in
+ * Safari for a decade, no `@property`, no `translate` property — and fold the
+ * zoom into the SAME transform. `margin:0` clears the UA auto-margins;
+ * `inset:auto` clears the UA `inset:0` so `top`/`left` position the box.
+ *
+ * `height: fit-content` is the load-bearing cross-browser bit: Blink's UA
+ * `<dialog>` sets it, WebKit's does NOT. Without it the panel's height is
+ * `auto`, and any UA bottom constraint that survives (WebKit pins the modal
+ * with *logical* `inset-block`, which our *physical* `inset:auto` doesn't
+ * reset) stretches the box from `top:50%` to the viewport bottom — footer
+ * adrift, huge whitespace. A definite `fit-content` height makes the panel
+ * content-sized by definition, so a leaked bottom edge can't stretch it
+ * (`max-height` from the shape recipe still clamps tall content).
+ *
+ * BUG: Safari 16.1+ not respecting top property
+ * https://github.com/tailwindlabs/tailwindcss/issues/19363
+ */
+.cn-dialog {
+  position: fixed;
+  inset: auto;
+  top: 50%;
+  left: 50%;
+  height: fit-content;
+  margin: 0;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.95);
+  transition-property: opacity, transform, display, overlay;
+  transition-duration: var(--motion-duration-dialog);
+  transition-timing-function: var(--motion-ease, ease);
+  transition-behavior: allow-discrete;
+}
+
+.cn-dialog[open] {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+
+  @starting-style {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+}
+
+/* While CLOSING, the panel + its `::backdrop` linger in the top layer for the
+   exit transition (`display`/`overlay` are discrete-transitioned). A full-
+   viewport backdrop that still hit-tests would swallow the next click on the
+   trigger — the classic "have to click twice to reopen". Make them transparent
+   to pointer events while not `[open]`; defaults apply while open so `closedby`
+   light-dismiss keeps working. */
+.cn-dialog:not([open]),
+.cn-dialog:not([open])::backdrop {
+  pointer-events: none;
+}
+
+/* Native modal backdrop — shadcn's `cn-dialog-overlay`. The tint fades in with
+   the panel; the discrete `display`/`overlay` transitions keep it painted
+   through the exit.
+
+   The tint colour + blur are per-*style*, but `::backdrop` is a UA pseudo-
+   element — it can't be a `cn-*` recipe the CLI ejects into markup. So the
+   per-style *values* live on the `.cn-dialog` class in the shape fragment
+   (`shapes/\3c style>/dialog.css`, as the `--cn-dialog-overlay` / `-blur` vars),
+   and these universal rules just *consume* them. `::backdrop` inherits custom
+   props from its originating element (the `<dialog>`) in current Chrome +
+   Safari, so a var set on `.cn-dialog` reaches here — no `.style-*` selectors,
+   nothing per-style left to extract. The fallbacks (`rgb(0 0 0 / 0)` / `0`)
+   keep a styleless dialog inert. */
+.cn-dialog::backdrop {
+  background-color: rgb(0 0 0 / 0);
+  transition:
+    display var(--motion-duration-dialog) allow-discrete,
+    overlay var(--motion-duration-dialog) allow-discrete,
+    background-color var(--motion-duration-dialog) var(--motion-ease, ease);
+}
+
+.cn-dialog[open]::backdrop {
+  background-color: var(--cn-dialog-overlay, rgb(0 0 0 / 0));
+
+  @starting-style {
+    background-color: rgb(0 0 0 / 0);
+  }
+}
+
+/* Backdrop blur (shadcn's `supports-backdrop-filter:backdrop-blur-*`), gated on
+   support so unsupported browsers just get the tint. Radius is per-style via
+   the same var mechanism. */
+@supports (backdrop-filter: blur(1px)) {
+  .cn-dialog[open]::backdrop {
+    backdrop-filter: blur(var(--cn-dialog-overlay-blur, 0));
+  }
+}
+
+/* Scroll-lock: while any modal dialog is open, lock the page behind it. Pure
+   CSS via `:has(dialog:modal)` — no JS body-scroll-lock, no class to toggle.
+   `:modal` matches only modally-opened dialogs, so a non-modal `<dialog>`
+   (show(), not showModal()) never locks scroll. */
+:root:has(dialog:modal) {
+  overflow: hidden;
+}
+
+/* Respect reduced-motion: keep the fade, drop the zoom, near-instant. The
+   centering translate stays (it's layout, not motion) — only the scale goes. */
+@media (prefers-reduced-motion: reduce) {
+  .cn-dialog,
+  .cn-dialog[open] {
+    transform: translate(-50%, -50%);
+    transition-duration: 1ms;
+  }
+}

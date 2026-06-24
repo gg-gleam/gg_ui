@@ -17,5 +17,6 @@
  *    pre-emptively; this kit ships none of it today.
  */
 @import "./motion/popover.css";
+@import "./motion/dialog.css";
 @import "./motion/combobox.css";
 @import "./motion/tooltip.css";

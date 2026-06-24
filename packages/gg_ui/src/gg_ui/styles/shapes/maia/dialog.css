@@ -1,0 +1,33 @@
+/* maia · dialog — shape recipe, gg_ui native-first `<dialog>`-element anatomy.
+ * 1:1 with shadcn's maia `cn-dialog-*` recipe, adapted to the native `<dialog>`:
+ * centering is the platform's (restored with `m-auto`, since Tailwind Preflight
+ * resets the UA's `margin:auto`), and the `::backdrop` + enter/exit live in
+ * styles/motion/dialog.css — which reads the per-style overlay tint/blur from
+ * the `--cn-dialog-overlay*` vars set on `.cn-dialog` below (a pseudo-element
+ * can't be a `cn-*` recipe, so the *values* live here, the plumbing there).
+ * A fragment; no tailwind import. */
+.style-maia {
+  .cn-dialog {
+    @apply grid max-h-[calc(100%-2rem)] w-full max-w-[calc(100%-2rem)] gap-6 rounded-4xl bg-popover p-6 text-sm text-popover-foreground outline-none ring-1 ring-foreground/5 sm:max-w-md [--cn-dialog-overlay:rgb(0_0_0/0.8)] [--cn-dialog-overlay-blur:2px];
+  }
+
+  .cn-dialog-header {
+    @apply flex flex-col gap-2;
+  }
+
+  .cn-dialog-footer {
+    @apply flex flex-col-reverse gap-2 sm:flex-row sm:justify-end;
+  }
+
+  .cn-dialog-title {
+    @apply text-base font-medium leading-none;
+  }
+
+  .cn-dialog-description {
+    @apply text-sm text-muted-foreground;
+  }
+
+  .cn-dialog-close {
+    @apply absolute right-4 top-4;
+  }
+}
