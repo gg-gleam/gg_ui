@@ -9,6 +9,7 @@ import {
 import {
   mount_dialog_close_button,
   mount_dialog_demo,
+  mount_dialog_lazy_content,
   mount_dialog_no_close_button,
   mount_dialog_playground,
   mount_dialog_rtl,
@@ -314,5 +315,38 @@ export const Rtl: Story = {
   play: testOnly(async ({ canvasElement }) => {
     const dialog = dialogEl(canvasElement)
     await expect(dialog).toHaveAttribute("dir", "rtl")
+  }),
+}
+
+/**
+ * Host-controlled, lazily-mounted body: the dialog renders its content ONLY
+ * while open. Demonstrates the DOM-cost pattern — a heavy dialog body doesn't sit
+ * in the DOM while closed; the native `<dialog>` shell stays mounted, we gate the
+ * children. Closed → 0 body nodes; open → the form; close → the body unmounts
+ * again. (The spinner-while-fetching affordance lives in the Combobox Remote
+ * story, which has a real mock fetch.)
+ */
+export const LazyContent: Story = {
+  name: "Lazy Content (host-controlled)",
+  parameters: { controls: { disable: true } },
+  render: () => mountLustre(mount_dialog_lazy_content),
+  play: testOnly(async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const trigger = await canvas.findByRole("button", { name: /edit profile/i })
+    const dialog = dialogEl(canvasElement)
+
+    // Closed: the body is NOT in the DOM — the <dialog> shell is empty.
+    await expect(dialog.children.length).toBe(0)
+
+    // Open → the body is rendered and the dialog is shown modally.
+    await userEvent.click(trigger)
+    await waitFor(() => expect(dialog.open).toBe(true))
+    await waitFor(() =>
+      expect(canvas.getByLabelText("Name")).toHaveValue("Pedro Duarte"),
+    )
+
+    // Close → the body unmounts again (lazy DOM): the shell is empty once more.
+    await closeDialog(dialog)
+    await waitFor(() => expect(dialog.children.length).toBe(0))
   }),
 }

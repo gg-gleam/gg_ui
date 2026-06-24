@@ -73,6 +73,8 @@ declare module "*.gleam" {
   export const mount_dialog_sticky_footer: MountStatic
   export const mount_dialog_scrollable: MountStatic
   export const mount_dialog_rtl: MountStatic
+  // Controlled (lustre.application) dialog that lazily renders its body on open.
+  export const mount_dialog_lazy_content: MountStatic
 
   // tooltip stories
   // Basic additionally exposes the trigger's variant/size + the open delay (ms).

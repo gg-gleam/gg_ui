@@ -4,8 +4,10 @@ import gleam/list
 import gleam/option
 import lustre
 import lustre/attribute
+import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html
+import lustre/event
 
 // --- mounts --------------------------------------------------------------
 //
@@ -59,6 +61,15 @@ pub fn mount_dialog_scrollable(selector: String) -> Nil {
 
 pub fn mount_dialog_rtl(selector: String) -> Nil {
   mount_static(selector, view_rtl())
+}
+
+// The one *controlled* dialog (see its section below): it owns open state so it
+// can render its body lazily, so it needs an event loop — `lustre.application`,
+// not `lustre.element`.
+pub fn mount_dialog_lazy_content(selector: String) -> Nil {
+  let app = lustre.application(lazy_init, lazy_update, lazy_view)
+  let assert Ok(_) = lustre.start(app, selector, Nil)
+  Nil
 }
 
 fn mount_static(selector: String, view: Element(Nil)) -> Nil {
@@ -473,5 +484,107 @@ fn view_rtl() -> Element(Nil) {
         dialog.close_icon(d),
       ],
     ),
+  ])
+}
+
+// --- view: controlled, lazily-mounted body -------------------------------
+//
+// Every other dialog here is static (`lustre.element`): the platform owns
+// open/close via Invoker Commands and the body is *always* in the `<dialog>`
+// (the UA hides it until shown). That's the right default — for a small dialog,
+// always-mounted content costs nothing visible (`display:none` skips paint + the
+// a11y tree).
+//
+// This one is the deliberate exception: a **host-controlled** dialog that renders
+// its body ONLY while open — the userland answer to "a heavy dialog body
+// shouldn't sit in every closed dialog's DOM." The `<dialog>` *shell* still
+// always renders (so `show`, the focus-trap, the top layer, and the enter/exit
+// animation are unchanged); we gate the *children*, never the container. Because
+// we have to know "is it open?" to gate the body, the trigger is a plain `button`
+// wired to `show` — not the native `command="show-modal"` Invoker, which would
+// open without ever telling the host. (Async + a loading spinner aren't shown
+// here — the combobox Remote story already demonstrates that against a real mock
+// fetch; this story is purely about the mount/unmount of the body.)
+
+type LazyModel {
+  LazyModel(open: Bool, anatomy: dialog.Anatomy)
+}
+
+type LazyMsg {
+  Open
+  Closed
+}
+
+fn lazy_init(_flags: Nil) -> #(LazyModel, Effect(LazyMsg)) {
+  #(
+    LazyModel(open: False, anatomy: dialog.anatomy_with_id("dialog-lazy")),
+    effect.none(),
+  )
+}
+
+fn lazy_update(
+  model: LazyModel,
+  msg: LazyMsg,
+) -> #(LazyModel, Effect(LazyMsg)) {
+  case msg {
+    // Open the native dialog and render the body (it didn't exist in the DOM
+    // while closed). `show` runs after the re-render, so the body is present.
+    Open -> #(LazyModel(..model, open: True), dialog.show(model.anatomy))
+    // Every close path (Esc, backdrop, Cancel, corner ✕) routes here via
+    // `on_close`; drop the body so it leaves the DOM again.
+    Closed -> #(LazyModel(..model, open: False), effect.none())
+  }
+}
+
+fn lazy_view(model: LazyModel) -> Element(LazyMsg) {
+  let d = model.anatomy
+  page([
+    button.button(
+      variant: button.Outline,
+      size: button.Medium,
+      attrs: [event.on_click(Open)],
+      children: [html.text("Edit profile")],
+    ),
+    dialog.content(
+      d,
+      dismiss: dialog.LightDismiss,
+      role: dialog.Standard,
+      on_close: option.Some(fn() { Closed }),
+      attrs: [attribute.class("sm:max-w-sm")],
+      // The container is always rendered; its CONTENTS only while open.
+      children: case model.open {
+        False -> []
+        True -> [
+          dialog.header([], [
+            dialog.title(d, [html.text("Edit profile")]),
+            dialog.description(d, [
+              html.text("Make changes to your profile here."),
+            ]),
+          ]),
+          lazy_form(d),
+          dialog.close_icon(d),
+        ]
+      },
+    ),
+  ])
+}
+
+// The lazily-mounted body: the edit form + footer (reuses the shared `field`
+// helpers). Stands in for whatever heavy content you'd rather not keep in the
+// DOM while the dialog is closed.
+fn lazy_form(d: dialog.Anatomy) -> Element(LazyMsg) {
+  element.fragment([
+    field_group([
+      field(label: "Name", id: "lazy-name", value: "Pedro Duarte"),
+      field(label: "Username", id: "lazy-username", value: "@peduarte"),
+    ]),
+    dialog.footer([], [
+      dialog.close(d, variant: button.Outline, size: button.Medium, children: [
+        html.text("Cancel"),
+      ]),
+      dialog.close(d, variant: button.Default, size: button.Medium, children: [
+        html.text("Save changes"),
+      ]),
+    ]),
   ])
 }

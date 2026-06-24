@@ -10,6 +10,16 @@
 //// default-query page; typing emits a debounced search; scrolling to the bottom
 //// auto-loads the next page. Loading feedback is built into the field — the
 //// combobox swaps its trailing chevron for a spinner while `is_loading`.
+////
+//// **Lazy DOM, not just lazy fetch.** The `list` — and the accumulated,
+//// infinitely-paginated `option` nodes it holds — is rendered ONLY while the
+//// popup is open (gated on `combobox.is_open`). Closed, the popup keeps just its
+//// one-node `empty` announcer, so N closed comboboxes on a page cost ~0 option
+//// nodes instead of N × every-page-ever-loaded. The native-popover *shell*
+//// (`content`) stays mounted, so open/positioning/animation are unchanged — we
+//// gate the *contents*, never the container. This is the userland pattern that
+//// keeps the DOM small without virtualization (only a single huge *open* list
+//// would still need windowing).
 
 import gg_ui/positioning.{type Align, type Side, Bottom, Start}
 import gg_ui/ui/combobox
@@ -257,9 +267,27 @@ fn widget(model: Model) -> Element(combobox.Msg) {
   let a = model.anatomy
   let cb = model.cb
   let first_load = combobox.is_loading(cb) && combobox.visible_count(cb) == 0
-  let placeholder = case first_load {
-    True -> [combobox.loading_state_text(text: "Loading…")]
+  // The popup body — the first-open placeholder and the option-bearing `list` —
+  // exists only while the popup is open. Closed, only the `empty` announcer
+  // stays mounted (it must, so its live-region message can fire); the option
+  // nodes leave the DOM entirely. See the module header.
+  let body = case combobox.is_open(cb) {
     False -> []
+    True ->
+      list.flatten([
+        case first_load {
+          True -> [combobox.loading_state_text(text: "Loading…")]
+          False -> []
+        },
+        [
+          combobox.list(
+            a,
+            cb,
+            [combobox.on_scroll_end(threshold: 48)],
+            combobox.options(a, cb),
+          ),
+        ],
+      ])
   }
   html.div([], [
     combobox.input(
@@ -275,18 +303,10 @@ fn widget(model: Model) -> Element(combobox.Msg) {
       side: model.side,
       align: model.align,
       attrs: [],
-      children: list.flatten([
-        [combobox.empty([], [html.text("No repositories found.")])],
-        placeholder,
-        [
-          combobox.list(
-            a,
-            cb,
-            [combobox.on_scroll_end(threshold: 48)],
-            combobox.options(a, cb),
-          ),
-        ],
-      ]),
+      children: [
+        combobox.empty([], [html.text("No repositories found.")]),
+        ..body
+      ],
     ),
   ])
 }
