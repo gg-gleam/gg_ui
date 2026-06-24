@@ -49,10 +49,6 @@
  */
 .cn-dialog {
   position: fixed;
-  /* Safari 16.1 does not respect dimensions. Force block */
-  display: flex;
-  flex-direction: column;
-
   inset: auto;
   top: 50%;
   left: 50%;

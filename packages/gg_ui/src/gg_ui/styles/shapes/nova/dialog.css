@@ -8,7 +8,7 @@
  * A fragment; no tailwind import. */
 .style-nova {
   .cn-dialog {
-    @apply grid max-h-[calc(100%-2rem)] w-full max-w-[calc(100%-2rem)] gap-4 rounded-xl bg-popover p-4 text-sm text-popover-foreground outline-none ring-1 ring-foreground/10 sm:max-w-sm [--cn-dialog-overlay:rgb(0_0_0/0.1)] [--cn-dialog-overlay-blur:2px];
+    @apply flex flex-col max-h-[calc(100%-2rem)] w-full max-w-[calc(100%-2rem)] gap-4 rounded-xl bg-popover p-4 text-sm text-popover-foreground outline-none ring-1 ring-foreground/10 sm:max-w-sm [--cn-dialog-overlay:rgb(0_0_0/0.1)] [--cn-dialog-overlay-blur:2px];
   }
 
   .cn-dialog-header {

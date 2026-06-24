@@ -8,7 +8,7 @@
  * A fragment; no tailwind import. */
 .style-sera {
   .cn-dialog {
-    @apply grid max-h-[calc(100%-2rem)] w-full max-w-[calc(100%-2rem)] gap-6 rounded-none bg-popover p-6 text-sm text-popover-foreground shadow-md outline-none ring-1 ring-foreground/10 sm:max-w-md [--cn-dialog-overlay:rgb(0_0_0/0.2)] [--cn-dialog-overlay-blur:4px];
+    @apply flex flex-col max-h-[calc(100%-2rem)] w-full max-w-[calc(100%-2rem)] gap-6 rounded-none bg-popover p-6 text-sm text-popover-foreground shadow-md outline-none ring-1 ring-foreground/10 sm:max-w-md [--cn-dialog-overlay:rgb(0_0_0/0.2)] [--cn-dialog-overlay-blur:4px];
   }
 
   .cn-dialog-header {
