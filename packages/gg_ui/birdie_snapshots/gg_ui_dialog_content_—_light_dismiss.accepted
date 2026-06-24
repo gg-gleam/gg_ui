@@ -5,7 +5,9 @@ file: ./test/dialog_test.gleam
 test_name: content_light_dismiss_test
 ---
 <dialog aria-describedby="demo-description" aria-labelledby="demo-title" class="cn-dialog" closedby="any" id="demo-content">
-  <h2 class="cn-dialog-title" id="demo-title">
-    Title
-  </h2>
+  <div class="cn-dialog-content">
+    <h2 class="cn-dialog-title" id="demo-title">
+      Title
+    </h2>
+  </div>
 </dialog>

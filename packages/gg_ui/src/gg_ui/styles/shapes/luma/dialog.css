@@ -8,7 +8,11 @@
  * A fragment; no tailwind import. */
 .style-luma {
   .cn-dialog {
-    @apply flex flex-col max-h-[calc(100%-2rem)] w-full max-w-[calc(100%-2rem)] gap-6 rounded-4xl bg-popover p-6 text-sm text-popover-foreground shadow-xl outline-none ring-1 ring-foreground/5 sm:max-w-md dark:ring-foreground/10 [--cn-dialog-overlay:rgb(0_0_0/0.3)] [--cn-dialog-overlay-blur:4px];
+    @apply flex flex-col max-h-[calc(100%-2rem)] w-full max-w-[calc(100%-2rem)] outline-none sm:max-w-md [--cn-dialog-overlay:rgb(0_0_0/0.3)] [--cn-dialog-overlay-blur:4px];
+  }
+
+  .cn-dialog-content {
+    @apply relative grid gap-6 rounded-4xl bg-popover p-6 text-sm text-popover-foreground shadow-xl ring-1 ring-foreground/5 dark:ring-foreground/10;
   }
 
   .cn-dialog-header {

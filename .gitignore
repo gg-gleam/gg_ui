@@ -9,3 +9,4 @@ dist/
 .vite/
 storybook-static/
 coverage/
+debug-storybook.log
