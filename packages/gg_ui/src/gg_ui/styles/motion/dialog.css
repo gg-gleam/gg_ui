@@ -46,12 +46,13 @@
  * adrift, huge whitespace. A definite `fit-content` height makes the panel
  * content-sized by definition, so a leaked bottom edge can't stretch it
  * (`max-height` from the shape recipe still clamps tall content).
- *
- * BUG: Safari 16.1+ not respecting top property
- * https://github.com/tailwindlabs/tailwindcss/issues/19363
  */
 .cn-dialog {
   position: fixed;
+  /* Safari 16.1 does not respect dimensions. Force block */
+  display: flex;
+  flex-direction: column;
+
   inset: auto;
   top: 50%;
   left: 50%;
