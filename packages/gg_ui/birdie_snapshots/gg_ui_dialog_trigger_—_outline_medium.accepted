@@ -1,0 +1,9 @@
+---
+version: 1.5.5
+title: gg_ui dialog trigger — outline / medium
+file: ./test/dialog_test.gleam
+test_name: trigger_outline_medium_test
+---
+<button aria-controls="demo-content" aria-expanded="false" aria-haspopup="dialog" class="cn-button cn-button-variant-outline cn-button-size-default" command="show-modal" commandfor="demo-content" data-slot="button" type="button">
+  Open
+</button>

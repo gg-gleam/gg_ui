@@ -1,0 +1,9 @@
+---
+version: 1.5.5
+title: gg_ui dialog close — outline button
+file: ./test/dialog_test.gleam
+test_name: close_button_test
+---
+<button class="cn-button cn-button-variant-outline cn-button-size-default" command="close" commandfor="demo-content" data-slot="button" type="button">
+  Cancel
+</button>

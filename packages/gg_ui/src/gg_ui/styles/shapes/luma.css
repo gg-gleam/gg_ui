@@ -1,6 +1,7 @@
 /* luma — shape fragment index: one import per component recipe.
  * A fragment; no tailwind import (the entry provides Tailwind). */
 @import "./luma/button.css";
+@import "./luma/dialog.css";
 @import "./luma/input-group.css";
 @import "./luma/popover.css";
 @import "./luma/combobox.css";

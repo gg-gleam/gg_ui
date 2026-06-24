@@ -55,6 +55,25 @@ declare module "*.gleam" {
     iconVariant: string,
   ) => void
 
+  // dialog stories — Playground wires the closedby/role/close-button controls
+  // plus the trigger's variant/size; Alert + Imperative are selector-only.
+  export const mount_dialog_playground: (
+    selector: string,
+    text: string,
+    dismiss: string,
+    role: string,
+    closeButton: boolean,
+    variant: string,
+    size: string,
+  ) => void
+  // shadcn doc examples — all selector-only static renders.
+  export const mount_dialog_demo: MountStatic
+  export const mount_dialog_close_button: MountStatic
+  export const mount_dialog_no_close_button: MountStatic
+  export const mount_dialog_sticky_footer: MountStatic
+  export const mount_dialog_scrollable: MountStatic
+  export const mount_dialog_rtl: MountStatic
+
   // tooltip stories
   // Basic additionally exposes the trigger's variant/size + the open delay (ms).
   export const mount_tooltip_basic: (

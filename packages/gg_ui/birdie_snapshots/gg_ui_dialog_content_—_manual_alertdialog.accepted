@@ -1,0 +1,14 @@
+---
+version: 1.5.5
+title: gg_ui dialog content — manual / alertdialog
+file: ./test/dialog_test.gleam
+test_name: content_manual_alert_test
+---
+<dialog aria-describedby="demo-description" aria-labelledby="demo-title" class="cn-dialog" closedby="none" id="demo-content" role="alertdialog">
+  <h2 class="cn-dialog-title" id="demo-title">
+    Delete file?
+  </h2>
+  <p class="cn-dialog-description" id="demo-description">
+    This cannot be undone.
+  </p>
+</dialog>
