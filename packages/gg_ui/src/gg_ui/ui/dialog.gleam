@@ -162,6 +162,15 @@ pub fn trigger_attributes(anatomy: Anatomy) -> List(attribute.Attribute(msg)) {
 /// `className` escape hatch in Gleam form (e.g. `attribute.class("sm:max-w-md")`
 /// to widen it, or `attribute.attribute("dir", "rtl")`). Pass `[]` for the
 /// default. Extra `class` attributes concatenate with `cn-dialog`.
+///
+/// **Structure:** when present, the children are wrapped once in an inner
+/// `<div class="cn-dialog-content">`. The native `<dialog>` (`cn-dialog`) is a
+/// bare positioning + top-layer shell; the inner div carries shadcn's actual
+/// `DialogContent` recipe (the `grid` layout, padding, surface). This split
+/// works around a Safari bug: WebKit distorts the size of a top-layer
+/// `<dialog>`, which mis-sizes a `grid`/`flex-row` footer to the dialog's
+/// border-box. Doing the layout on a *normal* inner `<div>` sizes it to the
+/// padded content-box correctly, in every browser, with no feature detection.
 pub fn content(
   anatomy: Anatomy,
   dismiss dismiss: Dismiss,
@@ -170,6 +179,14 @@ pub fn content(
   attrs attrs: List(attribute.Attribute(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
+  // Wrap the children in the inner panel only when there *are* children: a
+  // host-controlled dialog that mounts its body lazily passes `[]` while closed
+  // (see the Lazy Content story), and an empty `.cn-dialog-content` wrapper
+  // would defeat that "closed shell is empty" contract.
+  let body = case children {
+    [] -> []
+    _ -> [html.div([attribute.class("cn-dialog-content")], children)]
+  }
   base_dialog.popup(
     anatomy,
     dismiss_to_base(dismiss),
@@ -181,7 +198,7 @@ pub fn content(
       base_dialog.described_by(anatomy),
       ..attrs
     ],
-    children,
+    body,
   )
 }
 

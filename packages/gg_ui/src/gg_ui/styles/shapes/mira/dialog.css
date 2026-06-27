@@ -8,7 +8,11 @@
  * A fragment; no tailwind import. */
 .style-mira {
   .cn-dialog {
-    @apply flex flex-col max-h-[calc(100%-2rem)] w-full max-w-[calc(100%-2rem)] gap-4 rounded-xl bg-popover p-4 text-xs/relaxed text-popover-foreground outline-none ring-1 ring-foreground/10 sm:max-w-sm [--cn-dialog-overlay:rgb(0_0_0/0.8)] [--cn-dialog-overlay-blur:2px];
+    @apply flex flex-col max-h-[calc(100%-2rem)] w-full max-w-[calc(100%-2rem)] outline-none sm:max-w-sm [--cn-dialog-overlay:rgb(0_0_0/0.8)] [--cn-dialog-overlay-blur:2px];
+  }
+
+  .cn-dialog-content {
+    @apply relative grid gap-4 rounded-xl bg-popover p-4 text-xs/relaxed text-popover-foreground ring-1 ring-foreground/10;
   }
 
   .cn-dialog-header {

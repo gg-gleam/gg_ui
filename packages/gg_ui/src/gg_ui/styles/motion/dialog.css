@@ -60,6 +60,13 @@
   transition-duration: var(--motion-duration-dialog);
   transition-timing-function: var(--motion-ease, ease);
   transition-behavior: allow-discrete;
+  background-color: transparent; /* the shape recipe paints the panel, not this layer */
+  /* The shell paints nothing, so it must not clip the inner panel either: the
+     UA `<dialog>` `overflow: auto` clips `.cn-dialog-content`'s 1px `ring`
+     box-shadow along the straight edges (the shell's square corners leave it
+     showing only at the rounded corners — a ghost outline). `visible` lets the
+     ring render whole; the scrollable stories scroll their own inner region. */
+  overflow: visible;
 }
 
 .cn-dialog[open] {
