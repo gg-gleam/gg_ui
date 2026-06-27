@@ -1,0 +1,13 @@
+---
+version: 1.5.5
+title: gg_ui popover content — unpadded (bare surface)
+file: ./test/popover_test.gleam
+test_name: content_unpadded_test
+---
+<div aria-describedby="demo-description" aria-labelledby="demo-title" class="cn-popover-positioner" data-align="start" data-side="bottom" id="demo-content" popover="auto" role="dialog" style="position-anchor:--gg-demo-anchor;position-area:block-end span-inline-end;inset:auto;position-try-fallbacks:flip-block, flip-inline, flip-block flip-inline;margin-inline:0;margin-block:4px;">
+  <div class="cn-popover" data-slot="popover-content">
+    <h2 class="cn-popover-title" id="demo-title">
+      Title
+    </h2>
+  </div>
+</div>

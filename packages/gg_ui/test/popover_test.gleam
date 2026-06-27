@@ -73,6 +73,7 @@ pub fn content_auto_dismiss_test() {
     pop,
     side: positioning.Bottom,
     align: positioning.Center,
+    padding: popover.Padded,
     dismiss: popover.Auto,
     arrow: False,
     on_toggle: None,
@@ -89,6 +90,7 @@ pub fn content_manual_dismiss_test() {
     pop,
     side: positioning.Bottom,
     align: positioning.Center,
+    padding: popover.Padded,
     dismiss: popover.Manual,
     arrow: False,
     on_toggle: None,
@@ -97,6 +99,30 @@ pub fn content_manual_dismiss_test() {
   )
   |> element.to_readable_string
   |> birdie.snap(title: "gg_ui popover content — manual dismiss")
+}
+
+// --- content: padding (the date-picker enabler) --------------------------
+//
+// `Padded` (default) renders the text-popover box (`cn-popover cn-popover-padded`
+// — fixed width + padding). `Unpadded` drops to the bare surface (`cn-popover`
+// only — auto width, no padding) for content that brings its own box, e.g. a
+// calendar in the date picker. `attrs` merge onto the card.
+
+pub fn content_unpadded_test() {
+  let pop = handle()
+  popover.content(
+    pop,
+    side: positioning.Bottom,
+    align: positioning.Start,
+    padding: popover.Unpadded,
+    dismiss: popover.Auto,
+    arrow: False,
+    on_toggle: None,
+    attrs: [],
+    children: [popover.title(pop, [], [html.text("Title")])],
+  )
+  |> element.to_readable_string
+  |> birdie.snap(title: "gg_ui popover content — unpadded (bare surface)")
 }
 
 // --- content: arrow markup is geometry-free ------------------------------
@@ -114,6 +140,7 @@ pub fn content_with_arrow_test() {
     pop,
     side: positioning.Bottom,
     align: positioning.Center,
+    padding: popover.Padded,
     dismiss: popover.Auto,
     arrow: True,
     on_toggle: None,

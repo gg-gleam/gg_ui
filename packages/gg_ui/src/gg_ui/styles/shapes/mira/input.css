@@ -1,0 +1,10 @@
+/* mira · input — shape recipe, translated from shadcn style-base-mira's Input. A
+ * fragment; no tailwind import. One rule per cn-* class (rule 7): the field's
+ * border + focus ring + aria-invalid + disabled states are all Tailwind variants
+ * on the single class. Radius is per-Style (rounded-md), matching the style's
+ * control radius (its buttons). */
+.style-mira {
+  .cn-input {
+    @apply h-8 rounded-md border border-input bg-transparent px-3 py-1 text-base text-foreground shadow-xs transition-[color,box-shadow] selection:bg-primary selection:text-primary-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:aria-invalid:ring-destructive/40;
+  }
+}

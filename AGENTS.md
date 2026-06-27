@@ -123,6 +123,21 @@ shadcn. When they disagree on behavior, Base UI wins.*
    ejected user code; only the trivial styled `ui/` component ejects. **Do not**
    bury overridable structural utilities inside `@apply`. Mirror the shadcn
    component's exact split per component.
+9. **shadcn source is the tie-breaker for the styled surface — check it before
+   asking.** When you're unsure how to style/split/structure a component's
+   *looks or API* (which utilities are raw vs `cn-*`, variant sets, sizing,
+   prop shape, recipe contents), **read the actual shadcn source for that exact
+   part** in `/Users/andres/code/opensource/shadcn-ui` (the Base UI `style-mira`
+   components: `apps/v4/registry/bases/base/ui/<component>.tsx` +
+   `apps/v4/registry/styles/style-mira.css`, plus `apps/v4/examples/base/` for
+   call-site usage) and follow it — don't guess, and don't open a question you
+   could have answered from the source. This is the **default** path and resolves
+   almost every "how should this look" doubt. **Only if what shadcn does
+   genuinely conflicts with our system** (a non-negotiable rule above — e.g. it
+   needs Radix behavior, a non-dual-target shortcut, or a structure that breaks
+   the `gg_base_ui`/`gg_ui` boundary) do you **stop and ask** rather than silently
+   diverge. (Behavior, as always, still comes from Base UI — rule 1 and the
+   rule-of-thumb above.)
 
 ## Project map
 

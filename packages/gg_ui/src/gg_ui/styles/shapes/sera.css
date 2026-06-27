@@ -1,8 +1,10 @@
 /* sera — shape fragment index: one import per component recipe.
  * A fragment; no tailwind import (the entry provides Tailwind). */
 @import "./sera/button.css";
+@import "./sera/calendar.css";
 @import "./sera/dialog.css";
 @import "./sera/input-group.css";
+@import "./sera/input.css";
 @import "./sera/popover.css";
 @import "./sera/combobox.css";
 @import "./sera/tooltip.css";

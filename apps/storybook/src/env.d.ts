@@ -32,6 +32,7 @@ declare module "*.gleam" {
     side: string,
     align: string,
     arrow: boolean,
+    padding: string,
     variant: string,
     size: string,
     iconSet: string,
@@ -126,6 +127,49 @@ declare module "*.gleam" {
   export const mount_combobox_remote_multiple: (selector: string) => void
   // remote combobox with custom items (owner avatar + name) and custom chips.
   export const mount_combobox_avatars: (selector: string) => void
+
+  // calendar story — stateful (lustre.application). Playground takes the
+  // week-start / show-outside / mode / caption / months controls; the showcases
+  // are selector-only.
+  export const mount_calendar_playground: (
+    selector: string,
+    weekStart: string,
+    showOutside: boolean,
+    mode: string,
+    caption: string,
+    months: number,
+  ) => void
+  export const mount_calendar_with_selected: MountStatic
+  export const mount_calendar_range: (
+    selector: string,
+    showOutside: boolean,
+  ) => void
+  export const mount_calendar_multiple: MountStatic
+  export const mount_calendar_count_bounds: MountStatic
+  export const mount_calendar_two_months: MountStatic
+  export const mount_calendar_dropdown: MountStatic
+  export const mount_calendar_disabled: MountStatic
+  export const mount_calendar_blocked: MountStatic
+  export const mount_calendar_locale: (selector: string, locale: string) => void
+
+  // date-picker stories — Popover + Calendar compositions (stateful).
+  export const mount_date_picker_single: MountStatic
+  export const mount_date_picker_dob: MountStatic
+  export const mount_date_picker_time: MountStatic
+  export const mount_date_picker_rtl: MountStatic
+  export const mount_date_picker_input: MountStatic
+  export const mount_date_picker_range: MountStatic
+
+  // input stories — static styled native <input>.
+  export const mount_input_playground: (
+    selector: string,
+    type: string,
+    placeholder: string,
+    disabled: boolean,
+    invalid: boolean,
+  ) => void
+  export const mount_input_types: MountStatic
+  export const mount_input_states: MountStatic
 
   // avatar stories — static (lustre.element). Playground takes size + shape + a
   // broken toggle + the fallback initials; the showcases just take a selector.

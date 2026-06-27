@@ -1,8 +1,10 @@
 /* vega — shape fragment index: one import per component recipe.
  * A fragment; no tailwind import (the entry provides Tailwind). */
 @import "./vega/button.css";
+@import "./vega/calendar.css";
 @import "./vega/dialog.css";
 @import "./vega/input-group.css";
+@import "./vega/input.css";
 @import "./vega/popover.css";
 @import "./vega/combobox.css";
 @import "./vega/tooltip.css";

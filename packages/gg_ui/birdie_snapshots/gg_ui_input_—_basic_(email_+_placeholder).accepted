@@ -1,0 +1,7 @@
+---
+version: 1.5.5
+title: gg_ui input — basic (email + placeholder)
+file: ./test/input_test.gleam
+test_name: input_basic_test
+---
+<input class="cn-input w-full min-w-0 outline-none placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50" data-slot="input" placeholder="Email" type="email">

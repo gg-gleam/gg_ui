@@ -50,6 +50,16 @@ Layered roughly bottom-up (foundations first):
   split into a **pure, both-target-tested core** and a thin **effectful shell**
   that quarantines the DOM/FFI. Controlled-vs-uncontrolled and where FFI is
   allowed.
+- **[calendar.md](calendar.md)** — the date-grid component, the engine of the date
+  picker **and** range picker. The three selection modes — **single · multiple ·
+  range** — as one design. A **primer on calendar/date terminology** (instant vs
+  civil time, the Gregorian calendar + leap years, day-of-week numbering, week start,
+  the month-grid + outside days, selection modes incl. range preview/anchoring, time
+  zones at the edge, i18n) then **how it works**: the `gleam_time` value type, the
+  pure `date_math` engine (Hinnant serial-day arithmetic), the unified
+  `Mode`/`Selection`/`day_state` model, the keyboard/ARIA model, the one roving-focus
+  FFI, the per-Style `cn-*` recipe, and the popover-based picker compositions. The one
+  component with **no Base UI source** (react-day-picker is the behaviour reference).
 
 ## The registry & CLI
 

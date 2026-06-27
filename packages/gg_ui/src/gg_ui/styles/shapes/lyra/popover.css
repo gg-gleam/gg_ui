@@ -2,7 +2,11 @@
  * A fragment; no tailwind import. */
 .style-lyra {
   .cn-popover {
-    @apply rounded-none border border-border bg-popover p-4 text-sm text-popover-foreground shadow-md;
+    @apply rounded-none border border-border bg-popover text-sm text-popover-foreground shadow-md;
+  }
+
+  .cn-popover-padded {
+    @apply w-72 p-4;
   }
 
   .cn-popover-positioner {

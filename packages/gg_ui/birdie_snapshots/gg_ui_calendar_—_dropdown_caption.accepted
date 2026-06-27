@@ -1,0 +1,305 @@
+---
+version: 1.5.5
+title: gg_ui calendar — dropdown caption
+file: ./test/calendar_test.gleam
+test_name: calendar_dropdown_caption_test
+---
+<div class="cn-calendar" data-slot="calendar" id="cal">
+  <div class="cn-calendar-months">
+    <div class="cn-calendar-nav">
+      <button aria-label="Go to the previous month" class="cn-button group/button inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-all outline-none select-none disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:shrink-0 cn-button-variant-ghost cn-button-size-icon cn-calendar-nav-button cn-calendar-nav-previous" type="button">
+        <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="cn-icon cn-icon-size-md" data-slot="icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+          <path d="m15 18-6-6 6-6"></path>
+        </svg>
+      </button>
+      <button aria-label="Go to the next month" class="cn-button group/button inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-all outline-none select-none disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:shrink-0 cn-button-variant-ghost cn-button-size-icon cn-calendar-nav-button cn-calendar-nav-next" type="button">
+        <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="cn-icon cn-icon-size-md" data-slot="icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+          <path d="m9 18 6-6-6-6"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="cn-calendar-month">
+      <div aria-live="polite" class="cn-calendar-dropdowns" id="cal-label-0">
+        <div class="cn-calendar-dropdown">
+          <select aria-label="Month" class="cn-calendar-dropdown-select">
+            <option value="1">
+              January
+            </option>
+            <option value="2">
+              February
+            </option>
+            <option value="3">
+              March
+            </option>
+            <option value="4">
+              April
+            </option>
+            <option value="5">
+              May
+            </option>
+            <option selected value="6">
+              June
+            </option>
+            <option value="7">
+              July
+            </option>
+            <option value="8">
+              August
+            </option>
+            <option value="9">
+              September
+            </option>
+            <option value="10">
+              October
+            </option>
+            <option value="11">
+              November
+            </option>
+            <option value="12">
+              December
+            </option>
+          </select>
+          <span aria-hidden="true" class="cn-calendar-dropdown-label">
+            June
+            <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="cn-icon cn-icon-size-sm" data-slot="icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+              <path d="m6 9 6 6 6-6"></path>
+            </svg>
+          </span>
+        </div>
+        <div class="cn-calendar-dropdown">
+          <select aria-label="Year" class="cn-calendar-dropdown-select">
+            <option value="2025">
+              2025
+            </option>
+            <option selected value="2026">
+              2026
+            </option>
+            <option value="2027">
+              2027
+            </option>
+          </select>
+          <span aria-hidden="true" class="cn-calendar-dropdown-label">
+            2026
+            <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="cn-icon cn-icon-size-sm" data-slot="icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+              <path d="m6 9 6 6 6-6"></path>
+            </svg>
+          </span>
+        </div>
+      </div>
+      <table aria-labelledby="cal-label-0" class="cn-calendar-grid" id="cal-grid-0" role="grid">
+        <thead>
+          <tr class="cn-calendar-weekdays" role="row">
+            <th abbr="Sunday" class="cn-calendar-weekday" role="columnheader" scope="col">
+              Su
+            </th>
+            <th abbr="Monday" class="cn-calendar-weekday" role="columnheader" scope="col">
+              Mo
+            </th>
+            <th abbr="Tuesday" class="cn-calendar-weekday" role="columnheader" scope="col">
+              Tu
+            </th>
+            <th abbr="Wednesday" class="cn-calendar-weekday" role="columnheader" scope="col">
+              We
+            </th>
+            <th abbr="Thursday" class="cn-calendar-weekday" role="columnheader" scope="col">
+              Th
+            </th>
+            <th abbr="Friday" class="cn-calendar-weekday" role="columnheader" scope="col">
+              Fr
+            </th>
+            <th abbr="Saturday" class="cn-calendar-weekday" role="columnheader" scope="col">
+              Sa
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="cn-calendar-week" role="row">
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="May 31, 2026" class="cn-calendar-day-button" data-outside="true" data-slot="calendar-day" tabindex="-1" type="button">
+                31
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 1, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260601" tabindex="-1" type="button">
+                1
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 2, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260602" tabindex="-1" type="button">
+                2
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 3, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260603" tabindex="-1" type="button">
+                3
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 4, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260604" tabindex="-1" type="button">
+                4
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 5, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260605" tabindex="-1" type="button">
+                5
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 6, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260606" tabindex="-1" type="button">
+                6
+              </button>
+            </td>
+          </tr>
+          <tr class="cn-calendar-week" role="row">
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 7, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260607" tabindex="-1" type="button">
+                7
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 8, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260608" tabindex="-1" type="button">
+                8
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 9, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260609" tabindex="-1" type="button">
+                9
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 10, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260610" tabindex="-1" type="button">
+                10
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 11, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260611" tabindex="-1" type="button">
+                11
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 12, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260612" tabindex="-1" type="button">
+                12
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 13, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260613" tabindex="-1" type="button">
+                13
+              </button>
+            </td>
+          </tr>
+          <tr class="cn-calendar-week" role="row">
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 14, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260614" tabindex="-1" type="button">
+                14
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 15, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260615" tabindex="-1" type="button">
+                15
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 16, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260616" tabindex="-1" type="button">
+                16
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 17, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260617" tabindex="-1" type="button">
+                17
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 18, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260618" tabindex="-1" type="button">
+                18
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 19, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260619" tabindex="-1" type="button">
+                19
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 20, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260620" tabindex="-1" type="button">
+                20
+              </button>
+            </td>
+          </tr>
+          <tr class="cn-calendar-week" role="row">
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 21, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260621" tabindex="-1" type="button">
+                21
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 22, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260622" tabindex="-1" type="button">
+                22
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 23, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260623" tabindex="-1" type="button">
+                23
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 24, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260624" tabindex="-1" type="button">
+                24
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 25, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260625" tabindex="-1" type="button">
+                25
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 26, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260626" tabindex="-1" type="button">
+                26
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" data-today="true" data-today-pill="true" role="gridcell">
+              <button aria-label="June 27, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260627" tabindex="0" type="button">
+                27
+              </button>
+            </td>
+          </tr>
+          <tr class="cn-calendar-week" role="row">
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 28, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260628" tabindex="-1" type="button">
+                28
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 29, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260629" tabindex="-1" type="button">
+                29
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="June 30, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260630" tabindex="-1" type="button">
+                30
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="July 1, 2026" class="cn-calendar-day-button" data-outside="true" data-slot="calendar-day" tabindex="-1" type="button">
+                1
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="July 2, 2026" class="cn-calendar-day-button" data-outside="true" data-slot="calendar-day" tabindex="-1" type="button">
+                2
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="July 3, 2026" class="cn-calendar-day-button" data-outside="true" data-slot="calendar-day" tabindex="-1" type="button">
+                3
+              </button>
+            </td>
+            <td aria-selected="false" class="cn-calendar-day" role="gridcell">
+              <button aria-label="July 4, 2026" class="cn-calendar-day-button" data-outside="true" data-slot="calendar-day" tabindex="-1" type="button">
+                4
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

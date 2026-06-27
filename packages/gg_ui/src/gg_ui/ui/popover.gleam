@@ -92,6 +92,23 @@ fn dismiss_to_base(dismiss: Dismiss) -> base_popover.Dismiss {
   }
 }
 
+/// How the content box is sized. `Padded` (the default) is the text-popover box —
+/// a fixed width with inner padding (`cn-popover-padded`). `Unpadded` is the bare
+/// surface only (border/radius/shadow/background, auto width, no padding) — for
+/// content that brings its own box, like a `calendar` in the date picker (shadcn's
+/// `<PopoverContent className="w-auto p-0">`).
+pub type Padding {
+  Padded
+  Unpadded
+}
+
+fn padding_class(padding: Padding) -> String {
+  case padding {
+    Padded -> "cn-popover cn-popover-padded"
+    Unpadded -> "cn-popover"
+  }
+}
+
 /// Show the popover imperatively (the **command** capability), keyed by the
 /// handle. No-op if already open. Drive it from `update`, an async task, or an
 /// external (non-trigger) button — no host state required. (Named after the
@@ -128,7 +145,8 @@ pub fn trigger(
   children children: List(Element(msg)),
 ) -> Element(msg) {
   // User attrs first, behaviour attrs last so the Invoker Command + anchor + aria
-  // wiring always wins a conflict; a caller `class` is merged by `button` itself.
+  // wiring always wins a conflict; a caller `class` (e.g. the date picker's
+  // `justify-start font-normal` + width) still resolves through `button`'s cn.merge.
   button.button(
     variant:,
     size:,
@@ -194,6 +212,7 @@ pub type Options(msg) {
     arrow: Bool,
     on_toggle: Option(fn(Bool) -> msg),
     dismiss: Dismiss,
+    padding: Padding,
   )
 }
 
@@ -213,6 +232,7 @@ pub fn options() -> Options(msg) {
     arrow: False,
     on_toggle: None,
     dismiss: Auto,
+    padding: Padded,
   )
 }
 
@@ -264,7 +284,8 @@ pub fn popover_with_trigger(
   options options: Options(msg),
   children children: fn(Anatomy) -> List(Element(msg)),
 ) -> Element(msg) {
-  let Options(id:, side:, align:, arrow:, on_toggle:, dismiss:, ..) = options
+  let Options(id:, side:, align:, arrow:, on_toggle:, dismiss:, padding:, ..) =
+    options
   let anatomy = case id {
     Some(id) -> anatomy_with_id(id)
     None -> anatomy()
@@ -275,6 +296,7 @@ pub fn popover_with_trigger(
       anatomy,
       side:,
       align:,
+      padding:,
       dismiss:,
       arrow:,
       on_toggle:,
@@ -309,15 +331,26 @@ pub fn content(
   anatomy: Anatomy,
   side side: Side,
   align align: Align,
+  padding padding: Padding,
   dismiss dismiss: Dismiss,
   arrow arrow: Bool,
   on_toggle on_toggle: Option(fn(Bool) -> msg),
   attrs attrs: List(attribute.Attribute(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  // `attrs` land on the visible card (shadcn's `PopoverContent className`); the
-  // card's `w-72` is raw so a width override (`w-80`) wins via cn.merge.
-  let card = html.div(cn.merge(own: "cn-popover w-72", attrs:), children)
+  // `data-slot="popover-content"` is shadcn's marker; it's also what lets a child
+  // (e.g. the calendar) detect it's inside a popover via `in-data-[slot=…]` and
+  // drop its own surface so the popover's rounded corners show. `padding_class`
+  // selects Padded/Unpadded; `cn.merge` folds a caller's `class` (in `attrs`) so
+  // additive overrides resolve through tailwind-merge.
+  let card =
+    html.div(
+      [
+        attribute.attribute("data-slot", "popover-content"),
+        ..cn.merge(own: padding_class(padding), attrs:)
+      ],
+      children,
+    )
   // Render one arrow at the requested side. When the popup flips on viewport
   // collision (`position-try-fallbacks`), the JS observer installed by
   // `arrow.arrow` rewrites this single SVG's geometry + positioning to match
@@ -329,8 +362,8 @@ pub fn content(
   base_popover.popup(
     anatomy,
     positioning.to_base(side, align),
-    // nova's anchor↔popup gap, in px. The shape layer owns this number.
-    8,
+    // anchor↔popup gap, in px — shadcn's `sideOffset` default.
+    4,
     dismiss_to_base(dismiss),
     on_toggle,
     [

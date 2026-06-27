@@ -11,6 +11,7 @@ target = "javascript"
 
 [dependencies]
 gleam_stdlib = ">= 1.0.0 and < 2.0.0"
+gleam_time = ">= 1.8.0 and < 2.0.0"
 lustre = ">= 5.7.0 and < 6.0.0"
 gg_base_ui = { path = "../../packages/gg_base_ui" }
 gg_ui = { path = "../../packages/gg_ui" }
