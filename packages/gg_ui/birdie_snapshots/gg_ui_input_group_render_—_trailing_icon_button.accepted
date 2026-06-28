@@ -4,9 +4,9 @@ title: gg_ui input_group render — trailing icon button
 file: ./test/input_group_test.gleam
 test_name: render_trailing_button_test
 ---
-<div class="cn-input-group group/input-group" data-slot="input-group" role="group">
-  <input class="cn-input-group-input" data-slot="input-group-control">
-  <div class="cn-input-group-addon cn-input-group-addon-align-inline-end" data-align="inline-end" data-slot="input-group-addon" role="group">
+<div class="cn-input-group group/input-group relative flex w-full min-w-0 items-center outline-none has-[&gt;textarea]:h-auto" data-slot="input-group" role="group">
+  <input class="cn-input-group-input flex w-full min-w-0 flex-1 outline-none" data-slot="input-group-control">
+  <div class="cn-input-group-addon cn-input-group-addon-align-inline-end flex cursor-text items-center justify-center" data-align="inline-end" data-slot="input-group-addon" role="group">
     <button aria-label="Open" class="cn-button group/button inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-all outline-none select-none disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:shrink-0 cn-button-variant-ghost cn-button-size-icon-xs cn-input-group-button" data-slot="input-group-button" data-slot="button" type="button">
       ▾
     </button>

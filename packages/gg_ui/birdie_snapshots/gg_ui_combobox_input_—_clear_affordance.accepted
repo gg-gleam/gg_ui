@@ -4,9 +4,9 @@ title: gg_ui combobox input — clear affordance
 file: ./test/combobox_test.gleam
 test_name: input_clear_affordance_test
 ---
-<div class="cn-input-group group/input-group cn-combobox-input" data-slot="input-group" role="group" style="anchor-name:--gg-cb-input;">
+<div class="cn-input-group group/input-group relative flex w-full min-w-0 items-center outline-none has-[&gt;textarea]:h-auto cn-combobox-input" data-slot="input-group" role="group" style="anchor-name:--gg-cb-input;">
   <input aria-autocomplete="list" aria-controls="cb-listbox" aria-expanded="false" autocapitalize="none" autocomplete="off" autocorrect="off" class="cn-input-group-input" data-slot="input-group-control" id="cb-input" placeholder="Search…" role="combobox" spellcheck="false" value="Apple">
-  <div class="cn-input-group-addon cn-input-group-addon-align-inline-end" data-align="inline-end" data-slot="input-group-addon" role="group">
+  <div class="cn-input-group-addon cn-input-group-addon-align-inline-end flex cursor-text items-center justify-center" data-align="inline-end" data-slot="input-group-addon" role="group">
     <button aria-label="Clear selection" class="cn-button cn-button-variant-ghost cn-button-size-icon-xs cn-input-group-button cn-combobox-clear" data-slot="combobox-clear" type="button">
       <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="cn-icon cn-icon-size-md" data-slot="icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
         <path d="M18 6 6 18"></path>

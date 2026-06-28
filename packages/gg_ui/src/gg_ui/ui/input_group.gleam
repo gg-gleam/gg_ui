@@ -1,11 +1,13 @@
 //// shadcn-flavoured `InputGroup` — the **thin** styled layer over the headless
 //// `gg_base_ui/input_group`. A bordered control row: an `<input>` plus leading /
 //// trailing *addons* (icons, text, or buttons). Mirrors shadcn's authoring
-//// model — this layer emits *class names* (`cn-input-group`,
-//// `cn-input-group-addon`, …) whose Tailwind recipes live in
-//// `styles/shapes/<style>/input-group.css` (scoped under `.style-<name>`); it
-//// never writes raw Tailwind. Grouping semantics (`role="group"`, the structural
-//// `data-align` marker, the control slot) come from the headless layer.
+//// model (rule 8) — each part emits raw **structural** utilities (layout /
+//// positioning, the override surface) plus `cn-*` recipe names for the
+//// **themeable** surface, whose Tailwind lives in
+//// `styles/shapes/<style>/input-group.css` (scoped under `.style-<name>`). A
+//// caller's `class` in `attrs` is folded through `cn.merge`, so an override wins.
+//// Grouping semantics (`role="group"`, the structural `data-align` marker, the
+//// control slot) come from the headless layer.
 ////
 //// **`gg_base_ui` never appears in this module's public API** (rule 2 facade):
 //// the caller-constructed `Align` / `Size` enums are gg_ui's own, mapped to the
@@ -16,14 +18,10 @@
 //// ported yet (see the headless module); clicking the input focuses it natively
 //// and a button addon owns its own behaviour.
 ////
-//// One Tailwind class *is* emitted in markup here: the `group/input-group`
-//// relationship marker on the container. That's deliberate and faithful to
-//// shadcn (which sets it in the component's class list): a `group` marker is a
-//// relationship hook with no style of its own — nothing for `cn` to merge — and
-//// it can't live in the `@apply` recipe (the marker isn't an applyable utility),
-//// so the addons' `group-*` variants in `styles/shapes/<style>/input-group.css`
-//// have an ancestor to target. The "emit only `cn-*`" guideline is about not
-//// leaking *conflicting style utilities* into markup; a marker isn't that.
+//// Note the `group/input-group` relationship marker on the container: it can't
+//// live in the `@apply` recipe (a marker isn't an applyable utility), so it's
+//// emitted in markup — faithful to shadcn — giving the addons' `group-*`
+//// variants in `styles/shapes/<style>/input-group.css` an ancestor to target.
 
 import gg_base_ui/helpers/cn
 import gg_base_ui/input_group/input_group as base_input_group
@@ -79,13 +77,15 @@ pub fn input_group(
   html.div(
     list.flatten([
       base_input_group.group_attributes(),
-      [
-        attribute.attribute("data-slot", "input-group"),
-        // `cn-input-group` carries the recipe; `group/input-group` is shadcn's
-        // named-group marker the addons' `group-*` variants target (see header).
-        attribute.class(cn.cn([group_base, "group/input-group"])),
-      ],
-      attrs,
+      [attribute.attribute("data-slot", "input-group")],
+      // `cn-input-group` carries the themeable recipe; the structural utilities
+      // are raw (so a caller can override them), and `group/input-group` is
+      // shadcn's named-group marker the addons' `group-*` variants target.
+      cn.merge(
+        own: group_base
+          <> " group/input-group relative flex w-full min-w-0 items-center outline-none has-[>textarea]:h-auto",
+        attrs:,
+      ),
     ]),
     children,
   )
@@ -103,11 +103,12 @@ pub fn addon(
   html.div(
     list.flatten([
       base_input_group.addon_attributes(align: align_to_base(align)),
-      [
-        attribute.attribute("data-slot", "input-group-addon"),
-        attribute.class(addon_classes(align)),
-      ],
-      attrs,
+      [attribute.attribute("data-slot", "input-group-addon")],
+      cn.merge(
+        own: addon_classes(align)
+          <> " flex cursor-text items-center justify-center",
+        attrs:,
+      ),
     ]),
     children,
   )
@@ -120,8 +121,10 @@ pub fn input(attrs attrs: List(Attribute(msg))) -> Element(msg) {
   html.input(
     list.flatten([
       base_input_group.input_attributes(),
-      [attribute.class(cn.cn([input_base]))],
-      attrs,
+      cn.merge(
+        own: input_base <> " flex w-full min-w-0 flex-1 outline-none",
+        attrs:,
+      ),
     ]),
   )
 }
@@ -135,12 +138,14 @@ pub fn button(
   attrs attrs: List(Attribute(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
+  // `button` folds its own classes + any `class` in attrs via cn.merge, so the
+  // `cn-input-group-button` recipe and a caller override resolve together.
   button.button(
     variant: button.Ghost,
     size: button_size_to_base(size),
     attrs: [
       attribute.attribute("data-slot", "input-group-button"),
-      attribute.class(cn.cn([button_base])),
+      attribute.class(button_base),
       ..attrs
     ],
     children:,
@@ -153,7 +158,7 @@ pub fn text(
   attrs attrs: List(Attribute(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  html.span([attribute.class(cn.cn([text_base])), ..attrs], children)
+  html.span(cn.merge(own: text_base <> " flex items-center", attrs:), children)
 }
 
 fn addon_classes(align: Align) -> String {
