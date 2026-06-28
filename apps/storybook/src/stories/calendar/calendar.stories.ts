@@ -11,6 +11,7 @@ import {
   mount_calendar_playground,
   mount_calendar_range,
   mount_calendar_two_months,
+  mount_calendar_week_numbers,
   mount_calendar_with_selected,
 } from "./calendar.gleam"
 
@@ -250,6 +251,25 @@ export const MinMaxCount: Story = {
     await waitFor(() => expect(selected(12)).toBe("true"))
     await pick(12)
     await waitFor(() => expect(selected(12)).toBe("true"))
+  }),
+}
+
+/** The leading ISO week-number column (Monday week-start — ISO weeks are
+ *  Monday-based). June 2026 starts on a Monday → weeks 23–27. */
+export const WeekNumbers: Story = {
+  name: "Week numbers",
+  parameters: { controls: { disable: true } },
+  render: () => mountLustre(mount_calendar_week_numbers),
+  play: testOnly(async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    await waitFor(() => expect(canvas.getByRole("grid")).toBeVisible())
+    // Query the week-number cells by class — their numbers (23–27) overlap with
+    // day numbers, so getByText would be ambiguous.
+    await waitFor(() => {
+      const weeks = canvasElement.querySelectorAll(".cn-calendar-week-number")
+      expect(weeks.length).toBe(5)
+      expect(weeks[0]?.textContent?.trim()).toBe("23")
+    })
   }),
 }
 

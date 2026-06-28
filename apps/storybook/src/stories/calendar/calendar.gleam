@@ -209,6 +209,18 @@ pub fn mount_calendar_multiple(selector: String) -> Nil {
   )
 }
 
+pub fn mount_calendar_week_numbers(selector: String) -> Nil {
+  // The leading ISO week-number column, paired with a Monday week-start (the
+  // natural pairing — ISO weeks are Monday-based).
+  start(
+    flags(calendar.with_locale(
+      calendar.with_week_numbers(calendar.config(), True),
+      calendar.with_week_start(calendar.english(), 1),
+    )),
+    selector,
+  )
+}
+
 pub fn mount_calendar_two_months(selector: String) -> Nil {
   start(
     flags(

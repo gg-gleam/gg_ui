@@ -60,6 +60,7 @@ pub type Config {
     mode: Mode,
     localization: Localization,
     show_outside_days: Bool,
+    show_week_numbers: Bool,
     caption_layout: CaptionLayout,
     number_of_months: Int,
     year_range: #(Int, Int),
@@ -130,6 +131,7 @@ pub fn config() -> Config {
     mode: single,
     localization: english(),
     show_outside_days: True,
+    show_week_numbers: False,
     caption_layout: label,
     number_of_months: 1,
     year_range: #(1970, 2060),
@@ -170,6 +172,12 @@ pub fn localization(
 /// Set the locale on a `Config` — e.g. `config() |> with_locale(es.locale())`.
 pub fn with_locale(config: Config, localization: Localization) -> Config {
   Config(..config, localization:)
+}
+
+/// Toggle the leading ISO week-number column (shadcn's `showWeekNumber`) — e.g.
+/// `config() |> with_week_numbers(True)`. Off by default.
+pub fn with_week_numbers(config: Config, show: Bool) -> Config {
+  Config(..config, show_week_numbers: show)
 }
 
 /// Override just the week-start day on a localization (`0 = Sunday … 6 =
@@ -353,6 +361,8 @@ fn classes() -> base_calendar.Classes {
     grid: "cn-calendar-grid",
     weekdays: "cn-calendar-weekdays",
     weekday: "cn-calendar-weekday",
+    week_number_header: "cn-calendar-week-number-header",
+    week_number: "cn-calendar-week-number",
     week: "cn-calendar-week",
     day: "cn-calendar-day",
     day_button: "cn-calendar-day-button",
@@ -369,6 +379,7 @@ fn config_to_base(config: Config) -> base_calendar.Config {
     mode: config.mode,
     localization: config.localization,
     show_outside_days: config.show_outside_days,
+    show_week_numbers: config.show_week_numbers,
     caption_layout: config.caption_layout,
     number_of_months: config.number_of_months,
     year_range: config.year_range,

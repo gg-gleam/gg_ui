@@ -33,6 +33,24 @@ pub fn day_of_week_anchors_test() {
   date_math.day_of_week(date(2026, June, 27)) |> should.equal(6)
 }
 
+// --- ISO 8601 week numbers (Monday-based; week 1 holds the first Thursday) --
+
+pub fn iso_week_number_test() {
+  // 2026-01-01 is a Thursday → ISO week 1.
+  date_math.iso_week_number(date(2026, January, 1)) |> should.equal(1)
+  // 2026-06-27 → ISO week 26.
+  date_math.iso_week_number(date(2026, June, 27)) |> should.equal(26)
+  // Year-boundary cases that trip naive algorithms:
+  // 2021-01-01 (Fri) belongs to 2020's last ISO week, 53.
+  date_math.iso_week_number(date(2021, January, 1)) |> should.equal(53)
+  // 2023-01-01 (Sun) belongs to 2022's week 52.
+  date_math.iso_week_number(date(2023, January, 1)) |> should.equal(52)
+  // 2024-12-30 (Mon) rolls into 2025's week 1.
+  date_math.iso_week_number(date(2024, December, 30)) |> should.equal(1)
+  // A 53-week year: 2020-12-31 (Thu) is week 53.
+  date_math.iso_week_number(date(2020, December, 31)) |> should.equal(53)
+}
+
 // --- leap years / days in month ------------------------------------------
 
 pub fn days_in_month_test() {

@@ -58,6 +58,28 @@ pub fn calendar_monday_start_test() {
   |> birdie.snap(title: "gg_ui calendar — June 2026, week starts Monday")
 }
 
+pub fn calendar_week_numbers_test() {
+  // Monday-start + the ISO week-number column (the natural pairing).
+  let config =
+    calendar.with_locale(
+      calendar.with_week_numbers(calendar.config(), True),
+      calendar.with_week_start(calendar.english(), 1),
+    )
+  calendar.calendar(
+    anatomy(),
+    calendar.init(
+      config:,
+      selected: None,
+      today: Some(time_calendar.Date(2026, time_calendar.June, 27)),
+    ),
+    [],
+  )
+  |> element.to_readable_string
+  |> birdie.snap(
+    title: "gg_ui calendar — June 2026, week numbers (Monday start)",
+  )
+}
+
 pub fn calendar_disabled_bounds_test() {
   // Disable everything before the 10th — those day buttons render disabled.
   calendar.calendar(

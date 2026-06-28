@@ -137,6 +137,7 @@ pub type Config {
     mode: Mode,
     localization: Localization,
     show_outside_days: Bool,
+    show_week_numbers: Bool,
     caption_layout: CaptionLayout,
     number_of_months: Int,
     year_range: #(Int, Int),
@@ -148,12 +149,14 @@ pub type Config {
 }
 
 /// The defaults: single select, English (Sunday-start, LTR), outside days shown,
-/// label caption, one month, a 1970–2060 year dropdown range, no bounds.
+/// no week-number column, label caption, one month, a 1970–2060 year dropdown
+/// range, no bounds.
 pub fn config() -> Config {
   Config(
     mode: Single,
     localization: english(),
     show_outside_days: True,
+    show_week_numbers: False,
     caption_layout: Label,
     number_of_months: 1,
     year_range: #(1970, 2060),
@@ -735,6 +738,8 @@ pub type Classes {
     grid: String,
     weekdays: String,
     weekday: String,
+    week_number_header: String,
+    week_number: String,
     week: String,
     day: String,
     day_button: String,
@@ -1001,10 +1006,13 @@ fn grid(
             attribute.attribute("role", "row"),
             attribute.class(classes.weekdays),
           ],
-          list.map(
-            date_math.weekday_order(model.config.localization.week_starts_on),
-            fn(wd) { weekday_header(classes, model, wd) },
-          ),
+          list.flatten([
+            week_number_header(classes, model),
+            list.map(
+              date_math.weekday_order(model.config.localization.week_starts_on),
+              fn(wd) { weekday_header(classes, model, wd) },
+            ),
+          ]),
         ),
       ]),
       html.tbody(
@@ -1029,18 +1037,61 @@ fn week_row(
   let flags = list.map(week, fn(day) { cell_in_range(model, day) })
   html.tr(
     [attribute.attribute("role", "row"), attribute.class(classes.week)],
-    list.index_map(week, fn(day, i) {
-      let here = at_bool(flags, i)
-      day_cell(
-        anatomy,
-        classes,
-        model,
-        day,
-        here && !at_bool(flags, i - 1),
-        here && !at_bool(flags, i + 1),
-      )
-    }),
+    list.flatten([
+      week_number_cell(classes, model, week),
+      list.index_map(week, fn(day, i) {
+        let here = at_bool(flags, i)
+        day_cell(
+          anatomy,
+          classes,
+          model,
+          day,
+          here && !at_bool(flags, i - 1),
+          here && !at_bool(flags, i + 1),
+        )
+      }),
+    ]),
   )
+}
+
+// The leading ISO week-number column (shadcn's `showWeekNumber`), opt-in via
+// `Config.show_week_numbers`. The header is a blank spacer cell; each row carries
+// the ISO week number of its first day (ISO weeks are Monday-based, so this is
+// the date-fns/react-day-picker convention). Hidden from a11y — it's a visual
+// aid, not part of the date-grid semantics.
+fn week_number_header(classes: Classes, model: Model) -> List(Element(Msg)) {
+  case model.config.show_week_numbers {
+    False -> []
+    True -> [
+      html.th(
+        [
+          attribute.attribute("scope", "col"),
+          attribute.attribute("aria-hidden", "true"),
+          attribute.class(classes.week_number_header),
+        ],
+        [],
+      ),
+    ]
+  }
+}
+
+fn week_number_cell(
+  classes: Classes,
+  model: Model,
+  week: List(Day),
+) -> List(Element(Msg)) {
+  case model.config.show_week_numbers, week {
+    True, [first, ..] -> [
+      html.td(
+        [
+          attribute.attribute("aria-hidden", "true"),
+          attribute.class(classes.week_number),
+        ],
+        [html.text(int.to_string(date_math.iso_week_number(first.date)))],
+      ),
+    ]
+    _, _ -> []
+  }
 }
 
 // A *rendered* cell that's part of the range — contributes to the row's track.

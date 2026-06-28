@@ -59,6 +59,14 @@
     @apply flex-1 rounded-(--cell-radius) text-[0.8rem] font-normal text-muted-foreground select-none;
   }
 
+  .cn-calendar-week-number-header {
+    @apply w-(--cell-size) select-none;
+  }
+
+  .cn-calendar-week-number {
+    @apply flex w-(--cell-size) items-center justify-center text-[0.8rem] text-muted-foreground select-none;
+  }
+
   .cn-calendar-week {
     @apply mt-2 flex w-full;
   }

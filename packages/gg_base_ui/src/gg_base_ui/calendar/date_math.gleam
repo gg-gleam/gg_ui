@@ -128,6 +128,20 @@ pub fn month_grid(
   |> list.sized_chunk(into: 7)
 }
 
+/// The ISO 8601 week number (1–53) of the week containing `date`. ISO weeks run
+/// **Monday–Sunday** and week 1 is the week holding the year's first Thursday, so
+/// the number is derived from that week's Thursday (whose civil year is the ISO
+/// week-year). Independent of `week_starts_on` — ISO is always Monday-based.
+pub fn iso_week_number(date: Date) -> Int {
+  let serial = days_from_civil(date)
+  // ISO weekday, Monday = 0 … Sunday = 6 (serial 0 is a Thursday → `+ 3`).
+  let iso_weekday = mod7(serial + 3)
+  let thursday = serial + { 3 - iso_weekday }
+  let iso_year = civil_from_days(thursday).year
+  let jan1 = days_from_civil(Date(iso_year, calendar.January, 1))
+  { thursday - jan1 } / 7 + 1
+}
+
 // --- internal: serial-day arithmetic (Hinnant) ---------------------------
 
 // Days from 1970-01-01 (the serial epoch) for a proleptic-Gregorian date.
