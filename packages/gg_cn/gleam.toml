@@ -2,7 +2,7 @@ name = "gg_cn"
 version = "1.0.0"
 description = "Pure-Gleam tailwind-merge — clsx join + Tailwind class conflict resolution, ported from cnfast. No FFI, dual-target (JS + BEAM)."
 licences = ["MIT"]
-repository = { type = "github", user = "gg-gleam", repo = "gg_ui", path = "packages/gg_cn" }
+repository = { type = "github", user = "gg-gleam", repo = "gg_ui", path = "packages/gg_cn", tag_prefix = "gg_cn-" }
 links = [{ title = "Repository", href = "https://github.com/gg-gleam/gg_ui/tree/main/packages/gg_cn" }]
 
 [dependencies]
