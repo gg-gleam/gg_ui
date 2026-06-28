@@ -4,13 +4,13 @@ title: gg_ui avatar group — with count
 file: ./test/avatar_test.gleam
 test_name: render_group_test
 ---
-<div class="cn-avatar-group group/avatar-group" data-slot="avatar-group">
-  <span class="cn-avatar cn-avatar-size-default cn-avatar-shape-circle group/avatar" data-avatar-root data-shape="circle" data-size="default" data-slot="avatar">
-    <span class="cn-avatar-fallback" data-slot="avatar-fallback">
+<div class="cn-avatar-group group/avatar-group flex -space-x-2" data-slot="avatar-group">
+  <span class="cn-avatar cn-avatar-size-default cn-avatar-shape-circle group/avatar relative flex shrink-0 select-none" data-avatar-root data-shape="circle" data-size="default" data-slot="avatar">
+    <span class="cn-avatar-fallback flex size-full items-center justify-center" data-slot="avatar-fallback">
       CN
     </span>
   </span>
-  <div class="cn-avatar-group-count" data-slot="avatar-group-count">
+  <div class="cn-avatar-group-count relative flex shrink-0 items-center justify-center" data-slot="avatar-group-count">
     +3
   </div>
 </div>

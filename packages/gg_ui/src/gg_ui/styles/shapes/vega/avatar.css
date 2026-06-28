@@ -7,7 +7,7 @@
    * switch to overflow-visible so the corner badge isn't cropped — the image
    * self-clips via rounded-[inherit] instead. */
   .cn-avatar {
-    @apply relative flex shrink-0 overflow-hidden select-none has-[[data-slot=avatar-badge]]:overflow-visible;
+    @apply overflow-hidden has-[[data-slot=avatar-badge]]:overflow-visible;
   }
 
   .cn-avatar-size-xs {
@@ -45,26 +45,26 @@
    * root). On load failure the observer sets data-status=error on the root; the
    * image hides itself so the fallback behind it shows. */
   .cn-avatar-image {
-    @apply absolute inset-0 size-full rounded-[inherit] object-cover group-data-[status=error]/avatar:hidden;
+    @apply rounded-[inherit] group-data-[status=error]/avatar:hidden;
   }
 
   .cn-avatar-fallback {
-    @apply flex size-full items-center justify-center rounded-[inherit] bg-muted text-sm text-foreground group-data-[size=xs]/avatar:text-xs group-data-[size=sm]/avatar:text-xs group-data-[status=loaded]/avatar:hidden;
+    @apply rounded-[inherit] bg-muted text-sm text-foreground group-data-[size=xs]/avatar:text-xs group-data-[size=sm]/avatar:text-xs group-data-[status=loaded]/avatar:hidden;
   }
 
   /* Corner status indicator; sizes off the avatar's data-size (svg hidden at the
    * smaller sizes where it wouldn't read). */
   .cn-avatar-badge {
-    @apply absolute right-0 bottom-0 z-10 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground ring-2 ring-background select-none group-data-[size=xs]/avatar:size-2 group-data-[size=xs]/avatar:[&>svg]:hidden group-data-[size=sm]/avatar:size-2 group-data-[size=sm]/avatar:[&>svg]:hidden group-data-[size=default]/avatar:size-2.5 group-data-[size=default]/avatar:[&>svg]:size-2 group-data-[size=lg]/avatar:size-3 group-data-[size=lg]/avatar:[&>svg]:size-2;
+    @apply ring-background group-data-[size=xs]/avatar:size-2 group-data-[size=xs]/avatar:[&>svg]:hidden group-data-[size=sm]/avatar:size-2 group-data-[size=sm]/avatar:[&>svg]:hidden group-data-[size=default]/avatar:size-2.5 group-data-[size=default]/avatar:[&>svg]:size-2 group-data-[size=lg]/avatar:size-3 group-data-[size=lg]/avatar:[&>svg]:size-2;
   }
 
   /* Overlapping row; each avatar gets a ring so the overlap reads cleanly. */
   .cn-avatar-group {
-    @apply flex -space-x-2 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:ring-background;
+    @apply *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:ring-background;
   }
 
   /* Trailing overflow count; sizes off the group's avatars via group-has. */
   .cn-avatar-group-count {
-    @apply relative flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-sm text-foreground ring-2 ring-background group-has-data-[size=xs]/avatar-group:size-4 group-has-data-[size=sm]/avatar-group:size-6 group-has-data-[size=lg]/avatar-group:size-10 [&>svg]:size-4 group-has-data-[size=sm]/avatar-group:[&>svg]:size-3 group-has-data-[size=lg]/avatar-group:[&>svg]:size-5;
+    @apply size-8 rounded-full bg-muted text-sm text-foreground ring-2 ring-background group-has-data-[size=xs]/avatar-group:size-4 group-has-data-[size=sm]/avatar-group:size-6 group-has-data-[size=lg]/avatar-group:size-10 [&>svg]:size-4 group-has-data-[size=sm]/avatar-group:[&>svg]:size-3 group-has-data-[size=lg]/avatar-group:[&>svg]:size-5;
   }
 }
