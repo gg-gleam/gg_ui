@@ -229,9 +229,9 @@ fn profile_card(anatomy: popover.Anatomy) -> List(Element(msg)) {
   [
     html.div([attribute.class("flex items-center gap-3")], [
       avatar.avatar(avatar.Default, avatar.Circle, [], image("CN")),
-      popover.header([
-        popover.title(anatomy, [html.text("shadcn")]),
-        popover.description(anatomy, [html.text("shadcn@example.com")]),
+      popover.header([], [
+        popover.title(anatomy, [], [html.text("shadcn")]),
+        popover.description(anatomy, [], [html.text("shadcn@example.com")]),
       ]),
     ]),
     html.div([attribute.class("mt-3")], [

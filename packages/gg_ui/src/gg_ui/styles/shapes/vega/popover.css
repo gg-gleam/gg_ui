@@ -2,7 +2,7 @@
  * A fragment; no tailwind import. */
 .style-vega {
   .cn-popover {
-    @apply w-72 rounded-md border border-border bg-popover p-4 text-sm text-popover-foreground shadow-md;
+    @apply rounded-md border border-border bg-popover p-4 text-sm text-popover-foreground shadow-md;
   }
 
   .cn-popover-positioner {
