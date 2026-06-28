@@ -298,15 +298,21 @@ model and keyboard:
 
 ```gleam
 Config(
+  mode,                // Single | Multiple | Range
   localization,        // names + week start + direction
   show_outside_days,
+  show_week_numbers,   // the leading ISO week-number column
   caption_layout,      // Label | Dropdown
   number_of_months,    // 1+, rendered side by side
-  show_week_numbers,
-  disabled,            // fn(Date) -> Bool predicate (min/max are the convenience case)
-  bounds,              // per-mode: min/max count (Multiple) or length (Range), + required
+  year_range,          // #(from, to) for the year dropdown
+  min_count, max_count,    // Multiple bounds
+  min_length, max_length,  // Range bounds (in days)
 )
 ```
+
+(The `disabled` predicate and `min`/`max` date bounds aren't `Config` fields —
+they're applied to the `Model` via `disable` / `disable_before` / `disable_after`.
+`required` is not yet implemented.)
 
 The subtle field is **`focused`**: only **one** day is tabbable at a time (a *roving
 tabindex*, the standard grid a11y pattern). `focused` is `Some` only while a day holds
@@ -372,6 +378,21 @@ threads). It fills a `Classes` record — the seam carrying the `cn-*` slot name
 passes the built-in **lucide** chevrons (icons aren't a public-API concern). So a
 consumer imports **only** `gg_ui/ui/calendar` + `gleam/time/calendar`.
 
+**The structural/themeable split (rule 8), as shadcn does it.** shadcn's calendar
+inlines its layout into the markup (react-day-picker's `classNames` prop), keeping
+the per-style CSS tiny; we match that. The facade's `Classes` strings carry each
+slot's `cn-*` hook **plus the constant layout utilities raw** (e.g.
+`months: "cn-calendar-months relative flex flex-col gap-4 md:flex-row"`), so they
+emit into the markup and a caller could override them. The per-style
+`styles/shapes/<style>/calendar.css` then holds **only four** rules: the root
+`.cn-calendar` (the per-style `padding` + `--cell-radius` + `--cell-size`, the
+single thing that differs between shapes), the themeable `.cn-calendar-day` /
+`.cn-calendar-day-button` state colours, and `.cn-calendar-nav-button`. Layout is
+constant across shapes and themes through the root vars + colour CSS vars, so
+moving it raw loses no theming. (`nav-button` *must* stay a recipe: it has to
+out-specify the `button` component's own recipe in the cascade — a raw utility
+would lose to `.style-x .cn-button-size-icon`.)
+
 Day state is emitted as `data-*` and styled as Tailwind variants on
 `cn-calendar-day-button` — one rule per `cn-*` class (rule 7). The range visuals follow
 shadcn's recipe: `data-range-start` / `data-range-end` get the primary fill + a rounded
@@ -381,10 +402,9 @@ same way — the kit owns the recipe, keyed off the headless `data-<name>` flag 
 variant on the single `cn-calendar-day` class (rule 7): `booked` is
 `data-[booked=true]:[&>button]:line-through`. The facade exposes a semantic
 constructor per modifier (`booked(matches)`), so the consumer passes only the
-predicate and never a class. The recipe is **per Style**
-(`styles/shapes/<style>/calendar.css`, all 7 shapes); bodies are identical and only the
-root line differs (`padding` + `--cell-radius` + `--cell-size`), since radii flow
-through per-style `--radius-*` tokens — matching shadcn's `style-base-<x>` calendars.
+predicate and never a class. The leading **week-number** column (opt-in via
+`show_week_numbers`) adds a blank `cn-calendar-week-number-header` + a per-row
+`cn-calendar-week-number` carrying the ISO week, both `aria-hidden`.
 
 > **A11y note:** outside days use bare `text-muted-foreground` — **not** stacked with
 > `opacity-50`, which drops contrast below 4.5:1 and fails axe on the (non-disabled)

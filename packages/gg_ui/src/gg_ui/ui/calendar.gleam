@@ -341,29 +341,34 @@ fn nav_button(side: String) -> String {
   <> side
 }
 
-// The constant `cn-*` slot names (no variants → no `gva`; the Tailwind recipes
-// live in `styles/shapes/<style>/calendar.css`). Day-cell state (selected /
-// today / outside / disabled / focused) is set by the headless layer as `data-*`
-// and styled as Tailwind variants on `cn-calendar-day-button`.
+// Each slot carries its `cn-*` hook **plus the constant layout utilities raw**
+// (rule 8 — mirrors shadcn's inline calendar `classNames`, e.g.
+// `months: "relative flex flex-col gap-4 md:flex-row"`). Only the per-style root
+// and the themeable day / day-button state colors stay in the `@apply` recipes
+// (`styles/shapes/<style>/calendar.css`); everything here is style-agnostic and
+// themes through the root's `--cell-size` / `--cell-radius` + colour CSS vars.
+// `nav_*` keep their recipe (via `nav_button`) so they out-specify `button`'s.
+// `day` / `day_button` keep the recipe `cn-*` only — their layout *and* state
+// colours live in the recipe (the themeable heart; not split).
 fn classes() -> base_calendar.Classes {
   base_calendar.Classes(
-    root: "cn-calendar",
-    months: "cn-calendar-months",
-    month: "cn-calendar-month",
-    nav: "cn-calendar-nav",
+    root: "cn-calendar w-fit",
+    months: "cn-calendar-months relative flex flex-col gap-4 md:flex-row",
+    month: "cn-calendar-month flex w-full flex-col gap-4",
+    nav: "cn-calendar-nav absolute inset-x-0 top-0 flex items-center justify-between gap-1",
     nav_previous: nav_button("cn-calendar-nav-previous"),
     nav_next: nav_button("cn-calendar-nav-next"),
-    caption: "cn-calendar-caption",
-    dropdowns: "cn-calendar-dropdowns",
-    dropdown: "cn-calendar-dropdown",
-    dropdown_select: "cn-calendar-dropdown-select",
-    dropdown_label: "cn-calendar-dropdown-label",
-    grid: "cn-calendar-grid",
-    weekdays: "cn-calendar-weekdays",
-    weekday: "cn-calendar-weekday",
-    week_number_header: "cn-calendar-week-number-header",
-    week_number: "cn-calendar-week-number",
-    week: "cn-calendar-week",
+    caption: "cn-calendar-caption flex h-(--cell-size) items-center justify-center px-(--cell-size) text-sm font-medium select-none",
+    dropdowns: "cn-calendar-dropdowns flex h-(--cell-size) w-full items-center justify-center gap-1.5 px-(--cell-size) text-sm font-medium",
+    dropdown: "cn-calendar-dropdown relative inline-flex items-center rounded-(--cell-radius) hover:bg-muted has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/50",
+    dropdown_select: "cn-calendar-dropdown-select absolute inset-0 z-10 cursor-pointer opacity-0",
+    dropdown_label: "cn-calendar-dropdown-label inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium [&>svg]:size-3.5 [&>svg]:text-muted-foreground",
+    grid: "cn-calendar-grid w-full border-collapse",
+    weekdays: "cn-calendar-weekdays flex",
+    weekday: "cn-calendar-weekday flex-1 rounded-(--cell-radius) text-[0.8rem] font-normal text-muted-foreground select-none",
+    week_number_header: "cn-calendar-week-number-header w-(--cell-size) select-none",
+    week_number: "cn-calendar-week-number flex w-(--cell-size) items-center justify-center text-[0.8rem] text-muted-foreground select-none",
+    week: "cn-calendar-week mt-2 flex w-full",
     day: "cn-calendar-day",
     day_button: "cn-calendar-day-button",
   )

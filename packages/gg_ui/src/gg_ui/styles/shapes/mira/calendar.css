@@ -7,68 +7,17 @@
  * selected pill text; the button has no hover:text override. Focus ring is
  * `:focus`. The grid is a real <table>. */
 .style-mira {
+  /* Only the per-style root + the themeable day / day-button states live here;
+   * all constant layout is emitted raw in `ui/calendar.gleam` (rule 8, matching
+   * shadcn's inline calendar classNames). `cn-calendar-nav-button` stays a recipe
+   * because it must out-specify the `button` component's own recipe (a raw
+   * utility would lose the cascade to `.style-mira .cn-button-size-icon`). */
   .cn-calendar {
     @apply w-fit bg-background p-3 [--cell-radius:var(--radius-md)] [--cell-size:--spacing(6)] in-data-[slot=popover-content]:bg-transparent;
   }
 
-  .cn-calendar-months {
-    @apply relative flex flex-col gap-4 md:flex-row;
-  }
-
-  .cn-calendar-month {
-    @apply flex w-full flex-col gap-4;
-  }
-
-  .cn-calendar-nav {
-    @apply absolute inset-x-0 top-0 flex items-center justify-between gap-1;
-  }
-
   .cn-calendar-nav-button {
     @apply size-(--cell-size) rounded-(--cell-radius) rtl:[&_svg]:-scale-x-100;
-  }
-
-  .cn-calendar-caption {
-    @apply flex h-(--cell-size) items-center justify-center px-(--cell-size) text-sm font-medium select-none;
-  }
-
-  .cn-calendar-dropdowns {
-    @apply flex h-(--cell-size) w-full items-center justify-center gap-1.5 px-(--cell-size) text-sm font-medium;
-  }
-
-  .cn-calendar-dropdown {
-    @apply relative inline-flex items-center rounded-(--cell-radius) hover:bg-muted has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/50;
-  }
-
-  .cn-calendar-dropdown-select {
-    @apply absolute inset-0 z-10 cursor-pointer opacity-0;
-  }
-
-  .cn-calendar-dropdown-label {
-    @apply inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium [&>svg]:size-3.5 [&>svg]:text-muted-foreground;
-  }
-
-  .cn-calendar-grid {
-    @apply w-full border-collapse;
-  }
-
-  .cn-calendar-weekdays {
-    @apply flex;
-  }
-
-  .cn-calendar-weekday {
-    @apply flex-1 rounded-(--cell-radius) text-[0.8rem] font-normal text-muted-foreground select-none;
-  }
-
-  .cn-calendar-week-number-header {
-    @apply w-(--cell-size) select-none;
-  }
-
-  .cn-calendar-week-number {
-    @apply flex w-(--cell-size) items-center justify-center text-[0.8rem] text-muted-foreground select-none;
-  }
-
-  .cn-calendar-week {
-    @apply mt-2 flex w-full;
   }
 
   .cn-calendar-day {

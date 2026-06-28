@@ -4,9 +4,9 @@ title: gg_ui calendar — two months (June + July)
 file: ./test/calendar_test.gleam
 test_name: calendar_two_months_test
 ---
-<div class="cn-calendar" data-slot="calendar" id="cal">
-  <div class="cn-calendar-months">
-    <div class="cn-calendar-nav">
+<div class="cn-calendar w-fit" data-slot="calendar" id="cal">
+  <div class="cn-calendar-months relative flex flex-col gap-4 md:flex-row">
+    <div class="cn-calendar-nav absolute inset-x-0 top-0 flex items-center justify-between gap-1">
       <button aria-label="Go to the previous month" class="cn-button group/button inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-all outline-none select-none disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:shrink-0 cn-button-variant-ghost cn-button-size-icon cn-calendar-nav-button cn-calendar-nav-previous" type="button">
         <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="cn-icon cn-icon-size-md" data-slot="icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
           <path d="m15 18-6-6 6-6"></path>
@@ -18,38 +18,38 @@ test_name: calendar_two_months_test
         </svg>
       </button>
     </div>
-    <div class="cn-calendar-month">
-      <div aria-live="polite" class="cn-calendar-caption" id="cal-label-0">
+    <div class="cn-calendar-month flex w-full flex-col gap-4">
+      <div aria-live="polite" class="cn-calendar-caption flex h-(--cell-size) items-center justify-center px-(--cell-size) text-sm font-medium select-none" id="cal-label-0">
         June 2026
       </div>
-      <table aria-labelledby="cal-label-0" class="cn-calendar-grid" id="cal-grid-0" role="grid">
+      <table aria-labelledby="cal-label-0" class="cn-calendar-grid w-full border-collapse" id="cal-grid-0" role="grid">
         <thead>
-          <tr class="cn-calendar-weekdays" role="row">
-            <th abbr="Sunday" class="cn-calendar-weekday" role="columnheader" scope="col">
+          <tr class="cn-calendar-weekdays flex" role="row">
+            <th abbr="Sunday" class="cn-calendar-weekday flex-1 rounded-(--cell-radius) text-[0.8rem] font-normal text-muted-foreground select-none" role="columnheader" scope="col">
               Su
             </th>
-            <th abbr="Monday" class="cn-calendar-weekday" role="columnheader" scope="col">
+            <th abbr="Monday" class="cn-calendar-weekday flex-1 rounded-(--cell-radius) text-[0.8rem] font-normal text-muted-foreground select-none" role="columnheader" scope="col">
               Mo
             </th>
-            <th abbr="Tuesday" class="cn-calendar-weekday" role="columnheader" scope="col">
+            <th abbr="Tuesday" class="cn-calendar-weekday flex-1 rounded-(--cell-radius) text-[0.8rem] font-normal text-muted-foreground select-none" role="columnheader" scope="col">
               Tu
             </th>
-            <th abbr="Wednesday" class="cn-calendar-weekday" role="columnheader" scope="col">
+            <th abbr="Wednesday" class="cn-calendar-weekday flex-1 rounded-(--cell-radius) text-[0.8rem] font-normal text-muted-foreground select-none" role="columnheader" scope="col">
               We
             </th>
-            <th abbr="Thursday" class="cn-calendar-weekday" role="columnheader" scope="col">
+            <th abbr="Thursday" class="cn-calendar-weekday flex-1 rounded-(--cell-radius) text-[0.8rem] font-normal text-muted-foreground select-none" role="columnheader" scope="col">
               Th
             </th>
-            <th abbr="Friday" class="cn-calendar-weekday" role="columnheader" scope="col">
+            <th abbr="Friday" class="cn-calendar-weekday flex-1 rounded-(--cell-radius) text-[0.8rem] font-normal text-muted-foreground select-none" role="columnheader" scope="col">
               Fr
             </th>
-            <th abbr="Saturday" class="cn-calendar-weekday" role="columnheader" scope="col">
+            <th abbr="Saturday" class="cn-calendar-weekday flex-1 rounded-(--cell-radius) text-[0.8rem] font-normal text-muted-foreground select-none" role="columnheader" scope="col">
               Sa
             </th>
           </tr>
         </thead>
         <tbody>
-          <tr class="cn-calendar-week" role="row">
+          <tr class="cn-calendar-week mt-2 flex w-full" role="row">
             <td aria-selected="false" class="cn-calendar-day" role="gridcell">
               <button aria-label="May 31, 2026" class="cn-calendar-day-button" data-outside="true" data-slot="calendar-day" tabindex="-1" type="button">
                 31
@@ -86,7 +86,7 @@ test_name: calendar_two_months_test
               </button>
             </td>
           </tr>
-          <tr class="cn-calendar-week" role="row">
+          <tr class="cn-calendar-week mt-2 flex w-full" role="row">
             <td aria-selected="false" class="cn-calendar-day" role="gridcell">
               <button aria-label="June 7, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260607" tabindex="-1" type="button">
                 7
@@ -123,7 +123,7 @@ test_name: calendar_two_months_test
               </button>
             </td>
           </tr>
-          <tr class="cn-calendar-week" role="row">
+          <tr class="cn-calendar-week mt-2 flex w-full" role="row">
             <td aria-selected="false" class="cn-calendar-day" role="gridcell">
               <button aria-label="June 14, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260614" tabindex="-1" type="button">
                 14
@@ -160,7 +160,7 @@ test_name: calendar_two_months_test
               </button>
             </td>
           </tr>
-          <tr class="cn-calendar-week" role="row">
+          <tr class="cn-calendar-week mt-2 flex w-full" role="row">
             <td aria-selected="false" class="cn-calendar-day" role="gridcell">
               <button aria-label="June 21, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260621" tabindex="-1" type="button">
                 21
@@ -197,7 +197,7 @@ test_name: calendar_two_months_test
               </button>
             </td>
           </tr>
-          <tr class="cn-calendar-week" role="row">
+          <tr class="cn-calendar-week mt-2 flex w-full" role="row">
             <td aria-selected="false" class="cn-calendar-day" role="gridcell">
               <button aria-label="June 28, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260628" tabindex="-1" type="button">
                 28
@@ -237,38 +237,38 @@ test_name: calendar_two_months_test
         </tbody>
       </table>
     </div>
-    <div class="cn-calendar-month">
-      <div aria-live="polite" class="cn-calendar-caption" id="cal-label-1">
+    <div class="cn-calendar-month flex w-full flex-col gap-4">
+      <div aria-live="polite" class="cn-calendar-caption flex h-(--cell-size) items-center justify-center px-(--cell-size) text-sm font-medium select-none" id="cal-label-1">
         July 2026
       </div>
-      <table aria-labelledby="cal-label-1" class="cn-calendar-grid" id="cal-grid-1" role="grid">
+      <table aria-labelledby="cal-label-1" class="cn-calendar-grid w-full border-collapse" id="cal-grid-1" role="grid">
         <thead>
-          <tr class="cn-calendar-weekdays" role="row">
-            <th abbr="Sunday" class="cn-calendar-weekday" role="columnheader" scope="col">
+          <tr class="cn-calendar-weekdays flex" role="row">
+            <th abbr="Sunday" class="cn-calendar-weekday flex-1 rounded-(--cell-radius) text-[0.8rem] font-normal text-muted-foreground select-none" role="columnheader" scope="col">
               Su
             </th>
-            <th abbr="Monday" class="cn-calendar-weekday" role="columnheader" scope="col">
+            <th abbr="Monday" class="cn-calendar-weekday flex-1 rounded-(--cell-radius) text-[0.8rem] font-normal text-muted-foreground select-none" role="columnheader" scope="col">
               Mo
             </th>
-            <th abbr="Tuesday" class="cn-calendar-weekday" role="columnheader" scope="col">
+            <th abbr="Tuesday" class="cn-calendar-weekday flex-1 rounded-(--cell-radius) text-[0.8rem] font-normal text-muted-foreground select-none" role="columnheader" scope="col">
               Tu
             </th>
-            <th abbr="Wednesday" class="cn-calendar-weekday" role="columnheader" scope="col">
+            <th abbr="Wednesday" class="cn-calendar-weekday flex-1 rounded-(--cell-radius) text-[0.8rem] font-normal text-muted-foreground select-none" role="columnheader" scope="col">
               We
             </th>
-            <th abbr="Thursday" class="cn-calendar-weekday" role="columnheader" scope="col">
+            <th abbr="Thursday" class="cn-calendar-weekday flex-1 rounded-(--cell-radius) text-[0.8rem] font-normal text-muted-foreground select-none" role="columnheader" scope="col">
               Th
             </th>
-            <th abbr="Friday" class="cn-calendar-weekday" role="columnheader" scope="col">
+            <th abbr="Friday" class="cn-calendar-weekday flex-1 rounded-(--cell-radius) text-[0.8rem] font-normal text-muted-foreground select-none" role="columnheader" scope="col">
               Fr
             </th>
-            <th abbr="Saturday" class="cn-calendar-weekday" role="columnheader" scope="col">
+            <th abbr="Saturday" class="cn-calendar-weekday flex-1 rounded-(--cell-radius) text-[0.8rem] font-normal text-muted-foreground select-none" role="columnheader" scope="col">
               Sa
             </th>
           </tr>
         </thead>
         <tbody>
-          <tr class="cn-calendar-week" role="row">
+          <tr class="cn-calendar-week mt-2 flex w-full" role="row">
             <td aria-selected="false" class="cn-calendar-day" role="gridcell">
               <button aria-label="June 28, 2026" class="cn-calendar-day-button" data-outside="true" data-slot="calendar-day" tabindex="-1" type="button">
                 28
@@ -305,7 +305,7 @@ test_name: calendar_two_months_test
               </button>
             </td>
           </tr>
-          <tr class="cn-calendar-week" role="row">
+          <tr class="cn-calendar-week mt-2 flex w-full" role="row">
             <td aria-selected="false" class="cn-calendar-day" role="gridcell">
               <button aria-label="July 5, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260705" tabindex="-1" type="button">
                 5
@@ -342,7 +342,7 @@ test_name: calendar_two_months_test
               </button>
             </td>
           </tr>
-          <tr class="cn-calendar-week" role="row">
+          <tr class="cn-calendar-week mt-2 flex w-full" role="row">
             <td aria-selected="false" class="cn-calendar-day" role="gridcell">
               <button aria-label="July 12, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260712" tabindex="-1" type="button">
                 12
@@ -379,7 +379,7 @@ test_name: calendar_two_months_test
               </button>
             </td>
           </tr>
-          <tr class="cn-calendar-week" role="row">
+          <tr class="cn-calendar-week mt-2 flex w-full" role="row">
             <td aria-selected="false" class="cn-calendar-day" role="gridcell">
               <button aria-label="July 19, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260719" tabindex="-1" type="button">
                 19
@@ -416,7 +416,7 @@ test_name: calendar_two_months_test
               </button>
             </td>
           </tr>
-          <tr class="cn-calendar-week" role="row">
+          <tr class="cn-calendar-week mt-2 flex w-full" role="row">
             <td aria-selected="false" class="cn-calendar-day" role="gridcell">
               <button aria-label="July 26, 2026" class="cn-calendar-day-button" data-slot="calendar-day" id="cal-day-20260726" tabindex="-1" type="button">
                 26
