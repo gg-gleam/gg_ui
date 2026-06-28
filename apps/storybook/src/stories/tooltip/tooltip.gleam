@@ -204,9 +204,16 @@ fn one_side(side: Side, label: String) -> Element(msg) {
       attrs: [],
       children: [html.text(label)],
     ),
-    tooltip.content(tip, side:, align: Center, arrow: True, attrs: [], children: [
-      html.text("On " <> label),
-    ]),
+    tooltip.content(
+      tip,
+      side:,
+      align: Center,
+      arrow: True,
+      attrs: [],
+      children: [
+        html.text("On " <> label),
+      ],
+    ),
   ])
 }
 

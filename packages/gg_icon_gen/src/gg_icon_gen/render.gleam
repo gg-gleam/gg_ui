@@ -115,9 +115,15 @@ pub fn manifest(
     |> string.join(",\n")
 
   "{\n"
-  <> "  \"set\": \"" <> set <> "\",\n"
-  <> "  \"variants\": [" <> variant_list <> "],\n"
-  <> "  \"defaultVariant\": \"" <> default_variant <> "\",\n"
+  <> "  \"set\": \""
+  <> set
+  <> "\",\n"
+  <> "  \"variants\": ["
+  <> variant_list
+  <> "],\n"
+  <> "  \"defaultVariant\": \""
+  <> default_variant
+  <> "\",\n"
   <> "  \"icons\": {\n"
   <> icon_blocks
   <> "\n  }\n"
