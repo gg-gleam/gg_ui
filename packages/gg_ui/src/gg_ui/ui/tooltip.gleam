@@ -18,12 +18,16 @@
 //// headless capability under gg_ui's name. This matches how `popover` and
 //// `button` keep the headless layer behind the styled surface.
 ////
+//// Per rule 8, the pill emits its overridable `w-fit` raw and folds a caller's
+//// `class` (in `content`'s `attrs`) via `cn.merge`; the themeable surface stays
+//// in the `cn-tooltip` recipe.
+////
 //// Native-first behavior is preserved verbatim: opening on **interest** (hover /
 //// focus / long-press) via the Interest Invoker API, the native `popover="hint"`
 //// top layer, native `interest-delay-*` timing, and the `:popover-open` visual
-//// state are *behavior*, not looks — they stay in `gg_base_ui`, not the CSS. Only
-//// pure-visual utilities move to `cn-*` class names.
+//// state are *behavior*, not looks — they stay in `gg_base_ui`, not the CSS.
 
+import gg_base_ui/helpers/cn
 import gg_base_ui/tooltip/tooltip as base_tooltip
 import gg_ui/positioning.{type Align, type Side, Center, Top}
 import gg_ui/ui/button
@@ -144,9 +148,12 @@ pub fn content(
   side side: Side,
   align align: Align,
   arrow arrow: Bool,
+  attrs attrs: List(attribute.Attribute(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  let pill = html.div([attribute.class("cn-tooltip")], children)
+  // `attrs` land on the visible pill (shadcn's `TooltipContent className`); its
+  // `w-fit` is raw so a width override wins via cn.merge.
+  let pill = html.div(cn.merge(own: "cn-tooltip w-fit", attrs:), children)
   let kids = case arrow {
     True -> [pill, arrow_element(anatomy)]
     False -> [pill]
@@ -293,6 +300,6 @@ pub fn tooltip_with_trigger(
   }
   element.fragment([
     trigger(anatomy),
-    content(anatomy, side:, align:, arrow:, children: tip),
+    content(anatomy, side:, align:, arrow:, attrs: [], children: tip),
   ])
 }

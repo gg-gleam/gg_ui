@@ -8,7 +8,7 @@ test_name: terse_defaults_test
   Hover
 </button>
 <div class="cn-tooltip-positioner" data-align="center" data-side="top" id="demo-content" popover="hint" role="tooltip" style="position-anchor:--gg-demo-anchor;position-area:block-start;inset:auto;position-try-fallbacks:flip-block, flip-inline, flip-block flip-inline;margin-inline:0;margin-block:4px;">
-  <div class="cn-tooltip">
+  <div class="cn-tooltip w-fit">
     Add to library
   </div>
 </div>

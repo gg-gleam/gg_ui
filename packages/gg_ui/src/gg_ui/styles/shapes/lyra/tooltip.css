@@ -3,7 +3,7 @@
  * the transparent positioner and the caret skin. A fragment; no tailwind import. */
 .style-lyra {
   .cn-tooltip {
-    @apply w-fit rounded-none bg-foreground px-3 py-1.5 text-xs text-balance text-background;
+    @apply rounded-none bg-foreground px-3 py-1.5 text-xs text-balance text-background;
   }
 
   .cn-tooltip-positioner {
