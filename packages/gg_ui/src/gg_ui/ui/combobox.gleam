@@ -24,11 +24,11 @@
 //// `role=status` empty/loading announcer, are supported.
 
 import gg_base_ui/combobox/combobox as base_combobox
+import gg_base_ui/helpers/cn
 import gg_icon/icon
 import gg_icons_lucide/lucide/c as lu_c
 import gg_icons_lucide/lucide/l as lu_l
 import gg_icons_lucide/lucide/x as lu_x
-import gg_ui/helpers/cn
 import gg_ui/positioning.{type Align, type Side}
 import gg_ui/ui/input_group
 import gleam/int

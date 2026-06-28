@@ -146,6 +146,7 @@ declare module "*.gleam" {
   // button stories
   export const mount_variants: MountStatic
   export const mount_as_link: MountStatic
+  export const mount_class_override: MountWithIcons
   export const mount_sizes: MountWithIcons // icon-only buttons follow the globals
   export const mount_playground: (
     selector: string,

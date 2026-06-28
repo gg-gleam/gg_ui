@@ -48,14 +48,16 @@ shadcn. When they disagree on behavior, Base UI wins.*
    (`gg_base_ui`, `gg_ui`) pin **no** `target`; they must compile *and behave
    identically* on **JS *and* the BEAM** (see [`dev-docs/vision.md`](dev-docs/vision.md)
    rule 2). Prefer **pure Gleam** for anything in the styled output so it's
-   target-agnostic by construction — e.g. `cn` is a plain whitespace-collapsing
-   join (gg_ui emits semantic `cn-*` names, never raw Tailwind utilities, so
-   there's nothing to "merge"; this is also why we carry **no** tailwind-merge /
-   `tails` dependency and **CI needs no Elixir**). Where a target-specific engine
-   *is* unavoidable, make sure both targets produce the same bytes — a JS-only
-   shortcut that diverges on SSR is a rule-3 violation. Client-only behavior (DOM
-   FFI) lives behind the headless boundary with a Gleam fallback body so the
-   markup still renders server-side with no client effect.
+   target-agnostic by construction — e.g. `cn` is `clsx + tailwind-merge` backed
+   by **`packages/gg_cn`**, our own **pure-Gleam** tailwind-merge port (no FFI,
+   no Elixir `tails`, so **CI needs no Elixir** and the engine behaves identically
+   on JS + BEAM). `cn` resolves real Tailwind conflicts because components now
+   emit **raw structural utilities** alongside `cn-*` recipe names (see rule 8);
+   the engine (class trie) is built once via `gg_cn.default()`. Where a
+   target-specific engine *is* unavoidable, make sure both targets produce the
+   same bytes — a JS-only shortcut that diverges on SSR is a rule-3 violation.
+   Client-only behavior (DOM FFI) lives behind the headless boundary with a Gleam
+   fallback body so the markup still renders server-side with no client effect.
 4. **Web-first / native primitives.** Build on the platform even when browser
    coverage isn't universal — native Popover API (top layer + light-dismiss),
    CSS Anchor Positioning (no JS positioning lib), `:popover-open` for visual
@@ -95,6 +97,32 @@ shadcn. When they disagree on behavior, Base UI wins.*
    `group-*`/`peer-*`/`in-*`/`*:`, etc. (e.g. *not*
    `.cn-avatar[data-status=error] .cn-avatar-image { … }` but
    `.cn-avatar-image { @apply … group-data-[status=error]/avatar:hidden; }`).
+8. **Structural utilities raw, themeable surface in `cn-*` (the shadcn split).**
+   A component's class string has **two buckets**, exactly as shadcn's Base UI
+   `style-mira` components do (e.g.
+   `shadcn-ui/apps/v4/registry/bases/base/ui/button.tsx` +
+   `registry/styles/style-mira.css`): (a) **structural / overridable** utilities
+   that are constant across styles — layout, flex, svg pointer rules
+   (`inline-flex items-center justify-center shrink-0 …`) — are emitted as **raw
+   Tailwind directly in the component** (the Gleam `base` string), so a caller's
+   `class` override can win; (b) the **themeable surface** that varies by
+   style/theme — color, radius, border, rings, font — lives in the `cn-*` `@apply`
+   recipe (rule 7). Keeping (a) raw is what makes overrides work: `cn` runs
+   tailwind-merge so e.g. `justify-between` **removes** the default
+   `justify-center` (CSS cascade is decided by stylesheet order, so merely
+   appending the override is unreliable — the loser must be dropped, and a
+   `.style-x .cn-y` recipe would out-specify a plain utility anyway). A caller
+   passes the override as a normal `class` attribute in `attrs`; the component
+   folds it in with **`cn.merge(own: classes(variant:, size:), attrs: attrs)`**
+   (from **`gg_base_ui/helpers/cn`**), which pulls every `class` value out of
+   `attrs` and runs them through tailwind-merge with the component's own classes,
+   emitting a single merged `class`. (Not a separate `attribute.class` — Lustre
+   would concatenate without resolving conflicts.) The helper lives in
+   **`gg_base_ui`** (imported, never ejected) so its logic and its
+   `lustre/vdom/vattr` read are updated **once** centrally, never frozen into
+   ejected user code; only the trivial styled `ui/` component ejects. **Do not**
+   bury overridable structural utilities inside `@apply`. Mirror the shadcn
+   component's exact split per component.
 
 ## Project map
 
@@ -109,22 +137,25 @@ are separate repos that depend on the published `gg_icon`. See
 ```
 packages/
   gg_base_ui/                # LAYER 1 — headless behavior + a11y. Own Hex package;
-    src/gg_base_ui/          #   IMPORTED, never ejected. Tailwind-free, no stylesheet.
+    src/gg_base_ui/          #   IMPORTED, never ejected. Emits no Tailwind/CSS.
       button/  popover/      #   Native-first; relative `./*_ffi.ts` only where the
       positioning/  arrow/   #   platform needs glue (positioning/arrow are shared).
       helpers/id_gen/        #   the `useId` analogue (popover depends on it)
+      helpers/cn.gleam       #   cn = clsx+tailwind-merge (via gg_cn) + cn.merge (folds class from attrs).
+                             #   Imported, never ejected → fixed once, not frozen per user. (deps gg_cn)
   gg_ui/                     # LAYER 2 — thin styled kit. Depends on gg_base_ui + gg_icons_lucide
                              #   (default icon set / source of truth; CLI swaps it per components.json at eject).
     src/gg_ui/
-      ui/button.gleam        #   Emit `cn-*` class names (gva+cn), never raw Tailwind.
+      ui/button.gleam        #   Emit raw structural utils + `cn-*` recipe names (gva+cn); see rule 8.
       ui/popover.gleam       #   Native-first preserved. (ui/ is what the CLI ejects.)
-      helpers/cn.gleam       #   class-join helper, pure Gleam (the `utils` ejectable)
       styles/                #   shippable CSS *fragments* — NO `@import "tailwindcss"`:
         tokens.css           #     shared `@theme inline` map + `:root { --radius }`
         base_colors/<name>.css   # BASE COLOR axis  → `.base-color-<name>` (7 neutrals)
         themes/<name>.css        # THEME axis (accents) → `.theme-<name>` (17 colors)
         shapes/<style>/{button,popover}.css (+ <style>.css index)  # STYLE axis → `.style-<name>`
         motion/<comp>.css (+ motion.css index)   # shared MOTION layer (native)
+  gg_cn/                     # TAILWIND-MERGE — pure-Gleam clsx+tailwind-merge port (from cnfast).
+    src/gg_cn.gleam          #   Backs gg_ui's `cn`. No FFI, both-target; `default()` = lazy global.
   gg_icon/                   # ICON INTERFACE — set-agnostic Hex pkg: Size, the icon.svg()
     src/gg_icon/icon.gleam   #   wrapper, placeholder (fallback box). Tailwind-free, no set.
   gg_icon_gen/               # ICON GENERATOR engine (dev tool, own Hex pkg): SVG→Gleam +
@@ -185,19 +216,24 @@ pub fn attributes(config config: Config, target target: Target) -> List(Attribut
 pub fn button(config, attrs, children) -> Element(msg)  // renders <button> + attributes
 ```
 
-The **thin** styled layer follows shadcn's authoring model: it emits *class
-names* (`cn-button cn-button-variant-default cn-button-size-default`), **never
-raw Tailwind**. **`gva`** (Gleam Variance Authority — the CVA analogue) assembles
-the `cn-*` recipe and **`cn`** joins the fragments into one clean class string (a
-pure whitespace-collapsing join — the `cn-*` names carry no conflicting Tailwind
-utilities, so there's nothing to merge and no tailwind-merge dependency). The actual Tailwind for each
-class lives in the per-component shape fragment (`styles/shapes/nova/button.css`,
-under `.style-nova`); `gg_base_ui/button/button` is imported as `base_button`:
+The **thin** styled layer follows shadcn's authoring model (rule 8): the `base`
+string mixes **raw structural utilities** (constant across styles, overridable)
+with the `cn-*` recipe names (`cn-button cn-button-variant-default
+cn-button-size-default`) whose Tailwind lives in the shape fragment. **`gva`**
+(Gleam Variance Authority — the CVA analogue) assembles the recipe, and **`cn`**
+(= `clsx + tailwind-merge` via `gg_cn`) folds everything into one class string,
+**resolving real conflicts** (`cn-*` names have none and pass through; raw
+utilities dedupe by group). The themeable Tailwind for each `cn-*` lives in the
+per-component shape fragment (`styles/shapes/nova/button.css`, under
+`.style-nova`); `gg_base_ui/button/button` is imported as `base_button`:
 
 ```gleam
 // packages/gg_ui/src/gg_ui/ui/button.gleam
 import gg_base_ui/button/button as base_button
-const base = "cn-button"                     // not raw Tailwind
+import gg_base_ui/helpers/cn                  // cn + cn.merge (imported, never ejected)
+// cn-button = themeable recipe; the rest are raw structural utilities, kept raw
+// so a caller's `class` can override them (mirrors shadcn's button base string).
+const base = "cn-button group/button inline-flex shrink-0 items-center justify-center whitespace-nowrap …"
 
 pub fn classes(variant variant: Variant, size size: Size) -> String {
   gva.gva(default: base, resolver: resolve, defaults: [])
@@ -212,8 +248,9 @@ pub fn button(variant, size, attrs, children) -> Element(msg) {
     config: base_button.config(),
     attrs: [
       attribute.attribute("data-slot", "button"),
-      attribute.class(classes(variant:, size:)),   // …+ cn-* class names on top
-      ..attrs,
+      // cn.merge folds the caller's `class` (from attrs) through tailwind-merge
+      // with the component's own classes → one merged `class`, overrides win.
+      ..cn.merge(own: classes(variant:, size:), attrs: attrs)
     ],
     children:,
   )
@@ -221,9 +258,11 @@ pub fn button(variant, size, attrs, children) -> Element(msg) {
 ```
 
 ```css
-/* styles/shapes/nova/button.css — the Tailwind recipe, keyed by the cn-* names */
+/* styles/shapes/nova/button.css — themeable surface only, keyed by cn-* names.
+ * Structural utilities (inline-flex/items-center/justify-center) are NOT here —
+ * they're raw in the component `base` so callers can override them (rule 8). */
 .style-nova {
-  .cn-button { @apply inline-flex items-center justify-center …; }
+  .cn-button { @apply rounded-lg border bg-clip-padding text-sm font-medium …; }
   .cn-button-variant-default { @apply bg-primary text-primary-foreground; }
   .cn-button-size-default    { @apply h-8 gap-1.5 px-2.5; }
 }
@@ -240,12 +279,15 @@ inline`. Three independent axes — `style-<x>` + `base-color-<y>` +
 Color / Theme. The CSS entry (`apps/storybook/src/gg_ui.css`) imports Tailwind,
 then the fragments; see [`styling.md`](dev-docs/styling.md) + [`themes.md`](dev-docs/themes.md).
 
-> ⚠️ **`cn` doesn't merge.** It's a plain whitespace-collapsing join — it does
-> **not** dedupe or resolve conflicting Tailwind utilities (the `cn-*` recipe
-> names never conflict, so it has nothing to resolve, and that keeps it pure
-> Gleam / dependency-free / both-target). A caller mixing in raw Tailwind
-> utilities owns their own conflicts: which one wins is decided by **CSS
-> source/layer order**, not by `cn`.
+> ✅ **`cn` merges (via `gg_cn`).** It runs `clsx + tailwind-merge`, so a caller
+> mixing in raw Tailwind utilities gets real conflict resolution — last wins, the
+> loser is **removed** (`cn(["… justify-center", "justify-between"])` →
+> `justify-between`). `cn-*` recipe names carry no conflicting utilities, so they
+> pass through untouched. `gg_cn` is our **pure-Gleam** tailwind-merge port (no
+> FFI / no `tails` / both-target); the engine is built once via `gg_cn.default()`.
+> This only works because overridable utilities are **raw in the component**
+> (rule 8) — utilities buried in a `cn-*` `@apply` recipe are invisible to the
+> merge engine *and* out-specified by the `.style-x .cn-y` selector.
 
 Other conventions worth knowing: **controlled vs uncontrolled** mirrors Base UI's
 `open`/`defaultOpen` (`Uncontrolled` = browser owns state, the default;

@@ -41,7 +41,7 @@ attributes + children. Two consequences:
 The two layers are now two **packages**:
 
 ```
-packages/gg_base_ui/src/gg_base_ui/<name>/<name>.gleam   — headless: attributes only (Tailwind-free, own Hex package, imported not ejected)
+packages/gg_base_ui/src/gg_base_ui/<name>/<name>.gleam   — headless: attributes only (emits no Tailwind/CSS, own Hex package, imported not ejected)
 packages/gg_ui/src/gg_ui/ui/<name>.gleam                 — thin styled: cn-* class names + convenience renderers
 ```
 
@@ -219,25 +219,28 @@ arrives — e.g. `"border-transparent border-border"` becomes `"border-border"`.
 shadcn leans on this because its recipes emit **raw Tailwind utilities**, which
 genuinely collide.
 
-**We don't, so we don't need it.** Under the thin-component model the recipe
-emits **`cn-*` class names** (`cn-button cn-button-variant-outline
-cn-button-size-default`), never raw Tailwind — so there are no conflicting
-utilities for a merge step to resolve. `gg_ui/helpers/cn.gleam` is therefore a
-**pure Gleam whitespace-collapsing join** (`cn(List(String)) -> String`): it
-flattens fragments to one clean class string and nothing more. That keeps it
-**dependency-free** (no tailwind-merge / `glailwind_merge` / `tails`) and
-**identical on JS and the BEAM** — see [vision.md](vision.md) rule 2, "Both
-targets, or it doesn't ship." Every styled `classes(...)` recipe pipes its
-`gva.build` output through `cn`.
+**We do too — so we ship our own.** A component's class string has two buckets
+(see [AGENTS.md](../AGENTS.md) rule 8, mirroring shadcn's Base UI `style-mira`):
+**structural / overridable** utilities are emitted as **raw Tailwind** in the
+component's `base` string (`inline-flex items-center justify-center …`, constant
+across styles), and only the **themeable surface** (color, radius, rings) goes in
+the `cn-*` `@apply` recipe. Because the overridable utilities are raw, a caller's
+`class` genuinely collides with them — so `cn` must resolve conflicts, exactly
+like shadcn's.
 
-> The Tailwind lives in the per-component shape fragments
-> `styles/shapes/<style>/<component>.css` (e.g. `styles/shapes/nova/button.css`),
-> where cross-rule conflicts (base `border-transparent` vs
-> `.cn-button-variant-outline border-border`) resolve by **source order** —
-> variant/size rules come after the base, so they win (shadcn's own ordering).
-> That CSS-layer ordering — not a JS merge step — is what makes overrides work,
-> which is exactly why dropping tailwind-merge changes nothing visually. Base
-> classes still stay shape-for-shape with the upstream React port.
+`cn` is backed by **[`gg_cn`](../packages/gg_cn)**, our **pure-Gleam**
+`clsx + tailwind-merge` port (no FFI, no Elixir `tails`), so it stays
+**identical on JS and the BEAM** — see [vision.md](vision.md) rule 2, "Both
+targets, or it doesn't ship." The class trie builds once via `gg_cn.default()`.
+
+The helper lives in **`gg_base_ui/helpers/cn.gleam`** — *not* the ejected styled
+layer — so it's **imported, never copied/frozen** into user code. It exposes two
+functions:
+
+- `cn(fragments: List(String)) -> String` — clsx-join + tailwind-merge.
+- `cn.merge(own:, attrs:) -> List(Attribute)` — the component-authoring helper:
+  pulls every `class` value out of `attrs`, folds them through `cn` with the
+  component's own classes, and returns one merged `class` attribute.
 
 ```gleam
 pub fn classes(variant variant: Variant, size size: Size) -> String {
@@ -251,40 +254,42 @@ pub fn classes(variant variant: Variant, size size: Size) -> String {
 
 ### Caller-side conflict resolution
 
-Caller extras passed through `attrs` as `attribute.class("…")` are merged by
-Lustre via plain string concat — they're appended to the recipe's class string
-but don't go through `cn` together. For non-conflicting additions (`ml-2
-shadow-sm`) that's fine. Overriding a utility is subtler now: the recipe only
-carries `cn-*` names, and the actual utility (e.g. `border-border`) lives in the
-shape fragment `styles/shapes/<style>/<component>.css`. A caller adding
-`border-red-500` simply layers a Tailwind
-utility on top of the `cn-*` cascade — at equal specificity the later-defined
-rule wins, so it usually works, but route it through `cn` at the call site (as
-shadcn does with `cn(buttonVariants(...), className)`) to make intent explicit
-and to dedup against any other Tailwind extras:
+A caller's `class` (in `attrs`) must actually override the component's default,
+which means the conflicting default has to be **removed** — appending isn't
+enough, because the CSS cascade is decided by **stylesheet order**, not by the
+order of names in the class attribute. So the component folds the caller's class
+in with `cn.merge`, which runs tailwind-merge over `[own, ..caller_classes]`:
 
 ```gleam
-import gg_ui/helpers/cn
+import gg_base_ui/helpers/cn
 
+pub fn button(variant, size, attrs, children) {
+  base_button.button(
+    config: base_button.config(),
+    attrs: [
+      attribute.attribute("data-slot", "button"),
+      ..cn.merge(own: classes(variant:, size:), attrs: attrs)
+    ],
+    children:,
+  )
+}
+```
+
+A caller then just passes the override like any other attribute, and it wins:
+
+```gleam
 styled_button.button(
   variant: styled_button.Outline,
   size: styled_button.Medium,
-  attrs: [
-    attribute.class(cn.cn([
-      styled_button.classes(variant: styled_button.Outline, size: styled_button.Medium),
-      "border-red-500",
-    ])),
-    ..rest
-  ],
-  children: [html.text("Danger")],
+  attrs: [attribute.class("justify-between"), ..rest],   // removes justify-center
+  children: [html.text("Spread")],
 )
 ```
 
-Note we evaluate `classes(...)` twice here — once for the `cn` merge, once
-inside `button` itself. The redundancy is cheap (string ops) and avoids a more
-invasive renderer signature. If this becomes hot, we'll add a renderer
-variant that accepts a pre-merged class string and skips the internal
-recipe step.
+This only resolves conflicts against utilities that are **raw in the component**
+(rule 8). A utility buried inside a `cn-*` `@apply` recipe is invisible to the
+merge engine (and out-specified by the `.style-x .cn-y` selector), so anything a
+caller should be able to override stays raw in `base`.
 
 ## Limitations
 
@@ -314,8 +319,11 @@ recipe step.
 - [ ] Never set `class` (or `style`) in the headless layer.
 - [ ] Use labeled arguments on all public functions.
 - [ ] Don't add an `extra` / `extra_class` param — callers pass
-      `attribute.class("…")` through `attrs` and Lustre merges it.
-- [ ] Pipe `classes(...)` through `cn.cn([_])` to normalize the recipe into one
-      clean class string (a pure join — see [Class joining](#class-joining-our-cn)).
+      `attribute.class("…")` through `attrs`, and the component folds it in with
+      `cn.merge(own:, attrs:)` so overrides resolve via tailwind-merge.
+- [ ] Keep overridable structural utilities **raw in `base`**; put only the
+      themeable surface in the `cn-*` `@apply` recipe (rule 8). Build the recipe
+      with `cn.cn([_])` (clsx + tailwind-merge — see
+      [Class joining](#class-joining-our-cn)).
 - [ ] If the component has non-`<button>` semantics that need a `Target`-like
       split, mirror the pattern here.

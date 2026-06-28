@@ -16,7 +16,6 @@ gg_ui_registry/
   items/
     button.json
     popover.json
-    utils.json                 ← shared helper (gg_ui/helpers/cn — the only Gleam file copied)
     positioning.json
     theme-neutral.json         ← registry:theme item
     style-nova.json            ← registry:style item
@@ -173,19 +172,22 @@ When a user runs `gg-ui add button` against a project with
    (skipping any already present in `gleam.toml`).
 3. Reads `files` → writes the thin `ui/button.gleam` to
    `src/my_app/components/ui/button.gleam`.
-4. Rewrites only the *copied* imports — `import gg_ui/helpers/cn` →
-   `import my_app/lib/utils as cn`. The headless import
-   `import gg_base_ui/button/button as base_button` **stays verbatim**:
-   `gg_base_ui` is a real Hex dependency (added in step 2), exactly like a Base
-   UI import survives a shadcn eject. The headless layer is never copied.
+4. Rewrites only the *copied* imports (alias-relative paths). The `gg_base_ui`
+   imports — `import gg_base_ui/button/button as base_button` **and**
+   `import gg_base_ui/helpers/cn` — **stay verbatim**: `gg_base_ui` is a real Hex
+   dependency (added in step 2), exactly like a Base UI import survives a shadcn
+   eject. The headless layer and the `cn` helper are never copied.
 
 ## Eject model
 
-shadcn-faithful: ejecting copies the **thin styled `ui/<component>.gleam`** plus
-the shared `helpers/cn` (the `utils` analogue) into the app, and adds
-`gg_base_ui` as a Hex dependency. The headless layer in `gg_base_ui` is
+shadcn-faithful with one improvement: ejecting copies only the **thin styled
+`ui/<component>.gleam`** into the app and adds `gg_base_ui` as a Hex dependency.
+The headless layer **and the `cn`/`cn.merge` helper** live in `gg_base_ui` and are
 **imported, never copied** — the same way shadcn imports Base UI rather than
-vendoring it. The headless import line is left untouched by the rewrite.
+vendoring it. (This is where we diverge from shadcn deliberately: shadcn ejects
+its `cn` into `lib/utils.ts`; we keep ours imported so a non-trivial,
+Lustre-coupled helper is updated centrally, never frozen across user repos.) The
+`gg_base_ui` import lines are left untouched by the rewrite.
 
 Path-rewrite rules live in the CLI — see [`cli.md`](cli.md). The registry JSON
 itself doesn't encode them; it just describes what files exist and how they
@@ -200,12 +202,14 @@ packages/
   gg_base_ui/                            ← LAYER 1, own Hex package (imported, never copied)
     src/gg_base_ui/<name>/<name>.gleam
     src/gg_base_ui/helpers/id_gen/id_gen.gleam
+    src/gg_base_ui/helpers/cn.gleam       ← cn + cn.merge (deps gg_cn; imported, never copied)
+  gg_cn/                                 ← pure-Gleam clsx + tailwind-merge engine
+    src/gg_cn.gleam
   gg_ui/                                 ← LAYER 2, the thin styled kit
     src/gg_ui/ui/<name>.gleam
     src/gg_ui/styles/shapes/<style>.css
     src/gg_ui/styles/base_colors/<name>.css
     src/gg_ui/styles/themes/<theme>.css
-    src/gg_ui/helpers/cn.gleam
 ```
 
 There's no `gg_ui_registry/` directory yet, and no `registry.json`. Adding it is

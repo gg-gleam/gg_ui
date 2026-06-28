@@ -8,11 +8,12 @@ classes by keeping the last one per conflict group, so `px-2 px-4` collapses to
 It is **pure Gleam, no FFI**, so it compiles and behaves identically on **both**
 the JavaScript and Erlang targets.
 
-> **Not the same as `gg_ui`'s `cn`.** `gg_ui/helpers/cn` is a deliberate plain
-> whitespace-collapsing *join* — gg_ui emits non-conflicting semantic `cn-*`
-> names, so there is nothing to merge and it carries no merge dependency.
-> `gg_cn` is the real conflict-resolution engine, for consumers who *do* mix raw
-> Tailwind utilities. gg_ui does **not** depend on it.
+> **Backs `gg_ui`'s `cn`.** `gg_base_ui/helpers/cn` (used by `gg_ui` and the
+> components it ships) is `clsx + tailwind-merge` built on `gg_cn`, so a
+> consumer's `class` override resolves against a component's raw structural
+> utilities. `gg_cn` itself is framework-agnostic (no Lustre dependency) and can
+> also be used standalone anywhere you mix raw Tailwind and need conflict
+> resolution.
 
 ## Usage
 

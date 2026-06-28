@@ -142,8 +142,9 @@ Built and working:
   root as the `gg_ui_docs` host
 - Headless layer for `button`, `popover`, `positioning`, `arrow` +
   `gg_base_ui/helpers/id_gen` — relative TypeScript FFI, no stylesheet
-- Thin styled layer for `button`, `popover` in `gg_ui/ui/` (emit `cn-*` class
-  names via `gva` + `cn`, never raw Tailwind)
+- Thin styled layer for `button`, `popover` in `gg_ui/ui/` (emit raw structural
+  utilities + `cn-*` recipe names via `gva` + `cn`; `cn` = clsx + tailwind-merge
+  via `gg_cn`, in `gg_base_ui/helpers/cn` — see AGENTS.md rule 8)
 - The fragments-vs-entry CSS model: `gg_ui/styles/` ships fragments
   (`shapes/`, `base_colors/`, `themes/`, `motion/`, `tokens.css`); the
   `gg_ui_docs` host owns the entry `src/docs/gg_ui.css`

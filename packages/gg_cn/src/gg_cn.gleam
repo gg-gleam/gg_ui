@@ -5,11 +5,11 @@
 //// conflicting Tailwind utility classes by keeping the last one per conflict
 //// group: `tw_merge("px-2 px-4") == "px-4"`.
 ////
-//// Unlike `gg_ui/helpers/cn` — a plain whitespace-collapsing join used because
-//// gg_ui emits non-conflicting semantic `cn-*` names — this is the real merge
-//// engine, for consumers who *do* mix raw Tailwind utilities and need conflict
-//// resolution. It is pure Gleam (no FFI), so it compiles and behaves
-//// identically on JS and the BEAM.
+//// This is the engine behind `gg_base_ui/helpers/cn` (which `gg_ui` and its
+//// components use): a real `clsx + tailwind-merge`, for any markup that mixes
+//// raw Tailwind utilities and needs conflict resolution. It is pure Gleam (no
+//// FFI), so it compiles and behaves identically on JS and the BEAM — which is
+//// why it can back gg_ui's `cn` without bringing Elixir `tails` into the build.
 ////
 //// ## Usage
 ////
@@ -21,12 +21,13 @@
 //// ```
 ////
 //// `new()` builds the class trie once (it is moderately expensive); reuse the
-//// returned `Merger` across calls rather than rebuilding it per merge. The
-//// top-level `tw_merge`/`cn` helpers build a fresh `Merger` per call for
-//// convenience — fine for one-offs, but bind `new()` once on a hot path.
+//// returned `Merger` across calls rather than rebuilding it per merge. For
+//// render-time callers, prefer [`default`](#default) — a process-global `Merger`
+//// built once and reused (what `gg_base_ui/helpers/cn` uses).
 
 import gleam/list
 import gleam/string
+import global_value
 
 import gg_cn/internal/config
 import gg_cn/internal/merge
@@ -43,6 +44,19 @@ pub fn new() -> Merger {
   let regexes = validators.compile()
   let cfg = config.default_config(regexes)
   Merger(engine: merge.new(cfg))
+}
+
+/// A process-global default `Merger`, built **once** on first use and reused
+/// forever after. Backed by `global_value` (persistent_term on the BEAM, a
+/// singleton object on JS), so the expensive trie + regex build happens a single
+/// time per runtime — the right thing for render-time callers (e.g. gg_ui's
+/// `cn`) that shouldn't thread a `Merger` around or rebuild it per call.
+///
+/// This memoizes only the *engine* (the trie). It does not yet cache per-input
+/// merge *results*; that LRU is a separate, optional layer (see the package
+/// README / gg_ui follow-up).
+pub fn default() -> Merger {
+  global_value.create_with_unique_name("gg_cn.default_merger", new)
 }
 
 /// A class value, mirroring `clsx`/`tailwind-merge`'s accepted inputs: a string,

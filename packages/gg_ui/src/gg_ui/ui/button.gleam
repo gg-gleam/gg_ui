@@ -1,15 +1,19 @@
 //// shadcn-flavoured `Button` — the **thin** styled layer. Mirrors shadcn's
-//// authoring model: the component emits *class names* (`cn-button
-//// cn-button-variant-* cn-button-size-*`), never raw Tailwind. The Tailwind
-//// recipe for each class lives in the per-style CSS (`styles/nova.css`,
-//// scoped under `.style-nova`). This is the layer a future CLI copies into an
-//// app and flattens.
+//// authoring model (its Base UI `style-mira` button): the component emits the
+//// **structural / overridable** utilities as *raw Tailwind* right here
+//// (`inline-flex items-center justify-center …`), plus the `cn-*` recipe names
+//// (`cn-button cn-button-variant-* cn-button-size-*`) whose Tailwind lives in
+//// the per-style CSS (`styles/shapes/<style>/button.css`, scoped under
+//// `.style-<style>`) and carries only the **themeable surface** (color, radius,
+//// rings, font). Keeping the structural utilities raw is what lets a caller's
+//// `class` override win — `cn` runs tailwind-merge so e.g. `justify-between`
+//// removes the default `justify-center`. This is the layer a future CLI copies.
 ////
 //// Behavior + a11y come from the headless `gg_base_ui/button` layer; this
-//// layer only owns appearance (the `cn-*` names) and the `data-slot` hook.
+//// layer only owns appearance and the `data-slot` hook.
 
 import gg_base_ui/button/button as base_button
-import gg_ui/helpers/cn
+import gg_base_ui/helpers/cn
 import gleam/list
 import gva
 import lustre/attribute.{type Attribute}
@@ -41,7 +45,11 @@ type Key {
   SizeKey(Size)
 }
 
-const base = "cn-button"
+// `cn-button` carries the per-style themeable surface (in the CSS recipe); the
+// rest are raw structural utilities, constant across styles, kept raw so a
+// caller's `class` can override them via tailwind-merge (e.g. `justify-between`).
+// Mirrors shadcn's Base UI button base string verbatim.
+const base = "cn-button group/button inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-all outline-none select-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0"
 
 pub fn classes(variant variant: Variant, size size: Size) -> String {
   gva.gva(default: base, resolver: resolve, defaults: [])
@@ -61,8 +69,9 @@ pub fn button(
     config: base_button.config(),
     attrs: [
       attribute.attribute("data-slot", "button"),
-      attribute.class(classes(variant:, size:)),
-      ..attrs
+      // A caller's `class` (in attrs) folds through tailwind-merge with the
+      // component's own classes, so an override wins (the default is removed).
+      ..cn.merge(own: classes(variant:, size:), attrs: attrs)
     ],
     children:,
   )
@@ -80,11 +89,8 @@ pub fn link(
         config: base_button.config(),
         target: base_button.NonNative,
       ),
-      [
-        attribute.attribute("data-slot", "button"),
-        attribute.class(classes(variant:, size:)),
-      ],
-      attrs,
+      [attribute.attribute("data-slot", "button")],
+      cn.merge(own: classes(variant:, size:), attrs: attrs),
     ]),
     children,
   )

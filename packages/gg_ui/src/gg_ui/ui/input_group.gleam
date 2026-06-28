@@ -25,8 +25,8 @@
 //// have an ancestor to target. The "emit only `cn-*`" guideline is about not
 //// leaking *conflicting style utilities* into markup; a marker isn't that.
 
+import gg_base_ui/helpers/cn
 import gg_base_ui/input_group/input_group as base_input_group
-import gg_ui/helpers/cn
 import gg_ui/ui/button
 import gleam/list
 import gva

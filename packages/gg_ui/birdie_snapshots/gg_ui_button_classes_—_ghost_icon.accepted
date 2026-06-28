@@ -4,4 +4,4 @@ title: gg_ui button classes — ghost / icon
 file: ./test/button_test.gleam
 test_name: classes_ghost_icon_test
 ---
-cn-button cn-button-variant-ghost cn-button-size-icon
+cn-button group/button inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-all outline-none select-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 cn-button-variant-ghost cn-button-size-icon

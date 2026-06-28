@@ -25,7 +25,7 @@
 //// markup, its consumers live in the `@apply` recipe (the group-marker idiom).
 
 import gg_base_ui/avatar/avatar as base_avatar
-import gg_ui/helpers/cn
+import gg_base_ui/helpers/cn
 import gva
 import lustre/attribute.{type Attribute}
 import lustre/element.{type Element}

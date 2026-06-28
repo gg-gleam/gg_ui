@@ -4,4 +4,4 @@ title: gg_ui button classes — default / medium
 file: ./test/button_test.gleam
 test_name: classes_default_medium_test
 ---
-cn-button cn-button-variant-default cn-button-size-default
+cn-button group/button inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-all outline-none select-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 cn-button-variant-default cn-button-size-default

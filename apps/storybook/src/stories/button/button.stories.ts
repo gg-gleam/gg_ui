@@ -7,6 +7,7 @@ import {
 } from "../shared/button-controls"
 import {
   mount_as_link,
+  mount_class_override,
   mount_playground,
   mount_sizes,
   mount_variants,
@@ -89,4 +90,22 @@ export const WithIcon: Story = {
 export const AsLink: Story = {
   parameters: { controls: { disable: true } },
   render: () => mountLustre(mount_as_link),
+}
+
+/**
+ * A caller `class` override resolved by tailwind-merge (the shadcn
+ * `cn(variants({ className }))` model): `justify-between` *removes* the
+ * component's default `justify-center`, so the label and arrow spread apart.
+ */
+export const ClassOverride: Story = {
+  parameters: { controls: { disable: true } },
+  render: (_args, { globals }) => {
+    const { iconSet, iconVariant } = globals as {
+      iconSet: string
+      iconVariant: string
+    }
+    return mountLustre((selector) =>
+      mount_class_override(selector, iconSet, iconVariant),
+    )
+  },
 }
