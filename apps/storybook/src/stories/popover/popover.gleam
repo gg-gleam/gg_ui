@@ -265,7 +265,7 @@ fn view_basic(
   // generated anatomy here is minted once and safe (see `id_gen` call-once).
   let pop = popover.anatomy()
   html.div([attribute.class("text-foreground")], [
-    popover.trigger(pop, variant:, size:, children: [
+    popover.trigger(pop, variant:, size:, attrs: [], children: [
       leading_icon(set, icon_variant, demo_icons.Settings),
       html.text("Open Popover"),
     ]),
@@ -313,6 +313,7 @@ fn view_scroll_collision(
       pop,
       variant: button.Outline,
       size: button.Medium,
+      attrs: [],
       children: [
         leading_icon(set, icon_variant, demo_icons.Settings),
         html.text("Open popover"),
@@ -338,7 +339,7 @@ fn view_scroll_collision(
           ]),
         ]),
         html.div([attribute.class("mt-3 flex justify-end")], [
-          popover.close(pop, [
+          popover.close(pop, attrs: [], children: [
             leading_icon(set, icon_variant, demo_icons.Close),
             html.text("Close"),
           ]),
@@ -378,6 +379,7 @@ fn view_imperative(
         pop,
         variant: button.Outline,
         size: button.Medium,
+        attrs: [],
         children: [
           leading_icon(set, icon_variant, demo_icons.Settings),
           html.text("Trigger"),

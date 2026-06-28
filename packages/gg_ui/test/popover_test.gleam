@@ -24,6 +24,7 @@ pub fn trigger_outline_medium_test() {
     handle(),
     variant: button.Outline,
     size: button.Medium,
+    attrs: [],
     children: [
       html.text("Open"),
     ],
@@ -37,6 +38,7 @@ pub fn trigger_destructive_lg_test() {
     handle(),
     variant: button.Destructive,
     size: button.Lg,
+    attrs: [],
     children: [
       html.text("Open"),
     ],
@@ -46,9 +48,15 @@ pub fn trigger_destructive_lg_test() {
 }
 
 pub fn trigger_ghost_sm_test() {
-  popover.trigger(handle(), variant: button.Ghost, size: button.Sm, children: [
-    html.text("Open"),
-  ])
+  popover.trigger(
+    handle(),
+    variant: button.Ghost,
+    size: button.Sm,
+    attrs: [],
+    children: [
+      html.text("Open"),
+    ],
+  )
   |> element.to_readable_string
   |> birdie.snap(title: "gg_ui popover trigger — ghost / sm")
 }

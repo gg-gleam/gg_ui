@@ -128,12 +128,15 @@ pub fn trigger(
   anatomy: Anatomy,
   variant variant: button.Variant,
   size size: button.Size,
+  attrs attrs: List(attribute.Attribute(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
+  // User attrs first, behaviour attrs last so the Invoker Command + aria wiring
+  // always wins a conflict; a caller `class` is merged by `button` itself.
   button.button(
     variant:,
     size:,
-    attrs: base_dialog.trigger_attributes(anatomy),
+    attrs: list.append(attrs, base_dialog.trigger_attributes(anatomy)),
     children:,
   )
 }
@@ -248,12 +251,13 @@ pub fn close(
   anatomy: Anatomy,
   variant variant: button.Variant,
   size size: button.Size,
+  attrs attrs: List(attribute.Attribute(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
   button.button(
     variant:,
     size:,
-    attrs: base_dialog.close_attributes(anatomy),
+    attrs: list.append(attrs, base_dialog.close_attributes(anatomy)),
     children:,
   )
 }
@@ -356,9 +360,13 @@ pub fn dialog(
 ) -> Element(msg) {
   dialog_with_trigger(
     trigger: fn(anatomy) {
-      trigger(anatomy, variant: options.variant, size: options.size, children: [
-        html.text(options.text),
-      ])
+      trigger(
+        anatomy,
+        variant: options.variant,
+        size: options.size,
+        attrs: [],
+        children: [html.text(options.text)],
+      )
     },
     options:,
     children:,

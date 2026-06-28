@@ -22,6 +22,7 @@ pub fn trigger_outline_medium_test() {
     handle(),
     variant: button.Outline,
     size: button.Medium,
+    attrs: [],
     children: [
       html.text("Open"),
     ],
@@ -35,6 +36,7 @@ pub fn trigger_destructive_lg_test() {
     handle(),
     variant: button.Destructive,
     size: button.Lg,
+    attrs: [],
     children: [html.text("Delete")],
   )
   |> element.to_readable_string
@@ -85,6 +87,7 @@ pub fn close_button_test() {
     handle(),
     variant: button.Outline,
     size: button.Medium,
+    attrs: [],
     children: [
       html.text("Cancel"),
     ],

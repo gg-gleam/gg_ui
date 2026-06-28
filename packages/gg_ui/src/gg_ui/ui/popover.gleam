@@ -34,6 +34,7 @@
 import gg_base_ui/popover/popover as base_popover
 import gg_ui/positioning.{type Align, type Side, Bottom, End}
 import gg_ui/ui/button
+import gleam/list
 import gleam/option.{type Option, None, Some}
 import lustre/attribute
 import lustre/effect.{type Effect}
@@ -118,12 +119,15 @@ pub fn trigger(
   anatomy: Anatomy,
   variant variant: button.Variant,
   size size: button.Size,
+  attrs attrs: List(attribute.Attribute(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
+  // User attrs first, behaviour attrs last so the Invoker Command + anchor + aria
+  // wiring always wins a conflict; a caller `class` is merged by `button` itself.
   button.button(
     variant:,
     size:,
-    attrs: base_popover.trigger_attributes(anatomy),
+    attrs: list.append(attrs, base_popover.trigger_attributes(anatomy)),
     children:,
   )
 }
@@ -230,9 +234,13 @@ pub fn popover(
 ) -> Element(msg) {
   popover_with_trigger(
     trigger: fn(anatomy) {
-      trigger(anatomy, variant: options.variant, size: options.size, children: [
-        html.text(options.text),
-      ])
+      trigger(
+        anatomy,
+        variant: options.variant,
+        size: options.size,
+        attrs: [],
+        children: [html.text(options.text)],
+      )
     },
     options:,
     children:,
@@ -350,11 +358,15 @@ pub fn description(
 /// `PopoverClose`: a ghost `Button` that closes the popover natively via the
 /// `command="hide-popover"` Invoker Command — no JS, works inside the
 /// declarative flow.
-pub fn close(anatomy: Anatomy, children: List(Element(msg))) -> Element(msg) {
+pub fn close(
+  anatomy: Anatomy,
+  attrs attrs: List(attribute.Attribute(msg)),
+  children children: List(Element(msg)),
+) -> Element(msg) {
   button.button(
     variant: button.Ghost,
     size: button.Sm,
-    attrs: base_popover.close_attributes(anatomy),
+    attrs: list.append(attrs, base_popover.close_attributes(anatomy)),
     children:,
   )
 }
