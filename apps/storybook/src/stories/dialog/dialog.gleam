@@ -202,8 +202,8 @@ fn view_playground(
       children: fn(d) {
         [
           dialog.header([], [
-            dialog.title(d, [html.text("Edit profile")]),
-            dialog.description(d, [
+            dialog.title(d, [], [html.text("Edit profile")]),
+            dialog.description(d, [], [
               html.text(
                 "Make changes to your profile here. Click save when you're done.",
               ),
@@ -260,8 +260,8 @@ fn view_demo() -> Element(Nil) {
       attrs: [attribute.class("sm:max-w-sm")],
       children: [
         dialog.header([], [
-          dialog.title(d, [html.text("Edit profile")]),
-          dialog.description(d, [
+          dialog.title(d, [], [html.text("Edit profile")]),
+          dialog.description(d, [], [
             html.text(
               "Make changes to your profile here. Click save when you're done.",
             ),
@@ -320,8 +320,8 @@ fn view_close_button() -> Element(Nil) {
       attrs: [attribute.class("sm:max-w-md")],
       children: [
         dialog.header([], [
-          dialog.title(d, [html.text("Share link")]),
-          dialog.description(d, [
+          dialog.title(d, [], [html.text("Share link")]),
+          dialog.description(d, [], [
             html.text("Anyone who has this link will be able to view this."),
           ]),
         ]),
@@ -379,8 +379,8 @@ fn view_no_close_button() -> Element(Nil) {
       attrs: [],
       children: [
         dialog.header([], [
-          dialog.title(d, [html.text("No Close Button")]),
-          dialog.description(d, [
+          dialog.title(d, [], [html.text("No Close Button")]),
+          dialog.description(d, [], [
             html.text(
               "This dialog doesn't have a close button in the top-right corner.",
             ),
@@ -413,8 +413,8 @@ fn view_sticky_footer() -> Element(Nil) {
       attrs: [],
       children: [
         dialog.header([], [
-          dialog.title(d, [html.text("Sticky Footer")]),
-          dialog.description(d, [
+          dialog.title(d, [], [html.text("Sticky Footer")]),
+          dialog.description(d, [], [
             html.text(
               "This dialog has a sticky footer that stays visible while the "
               <> "content scrolls.",
@@ -460,8 +460,8 @@ fn view_scrollable() -> Element(Nil) {
       attrs: [],
       children: [
         dialog.header([], [
-          dialog.title(d, [html.text("Scrollable Content")]),
-          dialog.description(d, [
+          dialog.title(d, [], [html.text("Scrollable Content")]),
+          dialog.description(d, [], [
             html.text("This is a dialog with scrollable content."),
           ]),
         ]),
@@ -494,8 +494,8 @@ fn view_rtl() -> Element(Nil) {
       attrs: [attribute.attribute("dir", "rtl"), attribute.class("sm:max-w-sm")],
       children: [
         dialog.header([], [
-          dialog.title(d, [html.text("تعديل الملف الشخصي")]),
-          dialog.description(d, [
+          dialog.title(d, [], [html.text("تعديل الملف الشخصي")]),
+          dialog.description(d, [], [
             html.text(
               "قم بإجراء تغييرات على ملفك الشخصي هنا. انقر فوق حفظ عند الانتهاء.",
             ),
@@ -600,8 +600,8 @@ fn lazy_view(model: LazyModel) -> Element(LazyMsg) {
         False -> []
         True -> [
           dialog.header([], [
-            dialog.title(d, [html.text("Edit profile")]),
-            dialog.description(d, [
+            dialog.title(d, [], [html.text("Edit profile")]),
+            dialog.description(d, [], [
               html.text("Make changes to your profile here."),
             ]),
           ]),

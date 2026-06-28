@@ -16,7 +16,7 @@
   }
 
   .cn-dialog-header {
-    @apply flex flex-col gap-1;
+    @apply gap-1;
   }
 
   .cn-dialog-footer {

@@ -9,7 +9,7 @@ test_name: terse_defaults_test
 </button>
 <dialog aria-describedby="demo-description" aria-labelledby="demo-title" class="cn-dialog" closedby="any" id="demo-content">
   <div class="cn-dialog-content">
-    <div class="cn-dialog-header">
+    <div class="cn-dialog-header flex flex-col">
       <h2 class="cn-dialog-title" id="demo-title">
         Title
       </h2>
