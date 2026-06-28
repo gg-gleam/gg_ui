@@ -91,7 +91,10 @@ export const DateOfBirth: Story = {
   render: () => mountLustre(mount_date_picker_dob),
   play: testOnly(async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    await userEvent.click(canvas.getByRole("button", { name: /Select date/ }))
+    // The trigger is associated with its field label (shadcn's `FieldLabel
+    // htmlFor`), so its accessible name is "Date of birth" — not the visible
+    // placeholder/value, which lives in the button's text content.
+    await userEvent.click(canvas.getByRole("button", { name: /Date of birth/ }))
     // Dropdown caption: month + year selects (overlaid invisibly, so assert
     // presence/value, not visibility).
     await waitFor(() =>
@@ -101,11 +104,8 @@ export const DateOfBirth: Story = {
       "2026",
     )
     await userEvent.click(day("June 10, 2026"))
-    await waitFor(() =>
-      expect(
-        canvas.getByRole("button", { name: /June 10, 2026/ }),
-      ).toBeVisible(),
-    )
+    // Value reflected in the trigger's text content + popover closed.
+    await waitFor(() => expect(canvas.getByText("June 10, 2026")).toBeVisible())
     await waitFor(() => expect(doc().queryByRole("grid")).toBeNull())
   }),
 }
