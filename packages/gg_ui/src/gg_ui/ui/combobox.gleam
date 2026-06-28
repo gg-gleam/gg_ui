@@ -537,13 +537,9 @@ pub fn content(
     popup_offset,
     popup_max_height,
     list.flatten([
-      [
-        attribute.class(cn.cn(["cn-combobox-content"])),
-        attribute.class("group/combobox-content"),
-        attribute.attribute("data-slot", "combobox-content"),
-      ],
+      [attribute.attribute("data-slot", "combobox-content")],
       empty_marker(is_empty(model) && !model.loading),
-      attrs,
+      cn.merge(own: "cn-combobox-content group/combobox-content", attrs:),
     ]),
     children,
   )
@@ -577,12 +573,9 @@ pub fn list(
     anatomy,
     base_combobox.selection_mode(model),
     list.flatten([
-      [
-        attribute.class(cn.cn(["cn-combobox-list"])),
-        attribute.attribute("data-slot", "combobox-list"),
-      ],
+      [attribute.attribute("data-slot", "combobox-list")],
       empty_marker(is_empty(model) && !model.loading),
-      attrs,
+      cn.merge(own: "cn-combobox-list", attrs:),
     ]),
     children,
   )
@@ -597,11 +590,8 @@ pub fn empty(
 ) -> Element(Msg) {
   base_combobox.status(
     list.flatten([
-      [
-        attribute.class(cn.cn(["cn-combobox-empty"])),
-        attribute.attribute("data-slot", "combobox-empty"),
-      ],
-      attrs,
+      [attribute.attribute("data-slot", "combobox-empty")],
+      cn.merge(own: "cn-combobox-empty", attrs:),
     ]),
     children,
   )
@@ -616,11 +606,8 @@ pub fn loading(
 ) -> Element(Msg) {
   base_combobox.status(
     list.flatten([
-      [
-        attribute.class(cn.cn(["cn-combobox-loading"])),
-        attribute.attribute("data-slot", "combobox-status"),
-      ],
-      attrs,
+      [attribute.attribute("data-slot", "combobox-status")],
+      cn.merge(own: "cn-combobox-loading", attrs:),
     ]),
     children,
   )
@@ -638,11 +625,8 @@ pub fn loading_state(
 ) -> Element(Msg) {
   base_combobox.status(
     list.flatten([
-      [
-        attribute.class(cn.cn(["cn-combobox-loading-state"])),
-        attribute.attribute("data-slot", "combobox-loading-state"),
-      ],
-      attrs,
+      [attribute.attribute("data-slot", "combobox-loading-state")],
+      cn.merge(own: "cn-combobox-loading-state", attrs:),
     ]),
     children,
   )
@@ -762,11 +746,8 @@ pub fn group(
     anatomy,
     gi,
     list.flatten([
-      [
-        attribute.class(cn.cn(["cn-combobox-group"])),
-        attribute.attribute("data-slot", "combobox-group"),
-      ],
-      attrs,
+      [attribute.attribute("data-slot", "combobox-group")],
+      cn.merge(own: "cn-combobox-group", attrs:),
     ]),
     children,
   )
@@ -784,11 +765,8 @@ pub fn label(
     anatomy,
     gi,
     list.flatten([
-      [
-        attribute.class(cn.cn(["cn-combobox-label"])),
-        attribute.attribute("data-slot", "combobox-label"),
-      ],
-      attrs,
+      [attribute.attribute("data-slot", "combobox-label")],
+      cn.merge(own: "cn-combobox-label", attrs:),
     ]),
     children,
   )
