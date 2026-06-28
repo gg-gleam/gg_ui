@@ -68,6 +68,7 @@ pub type Config {
     max_count: Option(Int),
     min_length: Option(Int),
     max_length: Option(Int),
+    required: Bool,
   )
 }
 
@@ -139,6 +140,7 @@ pub fn config() -> Config {
     max_count: option.None,
     min_length: option.None,
     max_length: option.None,
+    required: False,
   )
 }
 
@@ -178,6 +180,15 @@ pub fn with_locale(config: Config, localization: Localization) -> Config {
 /// `config() |> with_week_numbers(True)`. Off by default.
 pub fn with_week_numbers(config: Config, show: Bool) -> Config {
   Config(..config, show_week_numbers: show)
+}
+
+/// Require a non-empty selection (react-day-picker's `required`) — e.g.
+/// `config() |> with_required(True)`. In `single` a selected day can't be
+/// cleared by re-clicking; in `multiple` the last remaining day can't be removed.
+/// Off by default (re-clicking toggles a single selection off). No effect in
+/// `range` (range selection never empties).
+pub fn with_required(config: Config, required: Bool) -> Config {
+  Config(..config, required:)
 }
 
 /// Override just the week-start day on a localization (`0 = Sunday … 6 =
@@ -392,5 +403,6 @@ fn config_to_base(config: Config) -> base_calendar.Config {
     max_count: config.max_count,
     min_length: config.min_length,
     max_length: config.max_length,
+    required: config.required,
   )
 }

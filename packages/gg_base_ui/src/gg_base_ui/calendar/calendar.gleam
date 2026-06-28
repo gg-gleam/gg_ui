@@ -145,12 +145,13 @@ pub type Config {
     max_count: Option(Int),
     min_length: Option(Int),
     max_length: Option(Int),
+    required: Bool,
   )
 }
 
 /// The defaults: single select, English (Sunday-start, LTR), outside days shown,
 /// no week-number column, label caption, one month, a 1970–2060 year dropdown
-/// range, no bounds.
+/// range, no bounds, not required.
 pub fn config() -> Config {
   Config(
     mode: Single,
@@ -164,6 +165,7 @@ pub fn config() -> Config {
     max_count: None,
     min_length: None,
     max_length: None,
+    required: False,
   )
 }
 
@@ -282,12 +284,26 @@ pub fn select(model: Model, date: Date) -> Model {
     False -> {
       let revealed = reveal_selection(model, date)
       let selection = case model.config.mode {
-        Single -> One(date)
+        Single -> select_single(model, date)
         Multiple -> toggle_multiple(model, date)
         Range -> select_range(model, date)
       }
       Model(..revealed, selection:, preview: None)
     }
+  }
+}
+
+// Single: clicking the already-selected day clears it (react-day-picker's
+// toggle-off), unless `required` — then the selection can't be emptied, so a
+// re-click is a no-op and any other day replaces it.
+fn select_single(model: Model, date: Date) -> Selection {
+  case model.selection {
+    One(current) if current == date ->
+      case model.config.required {
+        True -> One(current)
+        False -> Unselected
+      }
+    _ -> One(date)
   }
 }
 
@@ -298,9 +314,13 @@ fn toggle_multiple(model: Model, date: Date) -> Selection {
     _ -> []
   }
   case list.contains(current, date) {
-    // Toggling off, but never below `min_count`.
+    // Toggling off, but never below `min_count` and never to empty when
+    // `required` (which floors the count at 1).
     True ->
-      case at_min_count(model, list.length(current)) {
+      case
+        at_min_count(model, list.length(current))
+        || { model.config.required && list.length(current) <= 1 }
+      {
         True -> Many(current)
         False -> Many(list.filter(current, fn(d) { d != date }))
       }

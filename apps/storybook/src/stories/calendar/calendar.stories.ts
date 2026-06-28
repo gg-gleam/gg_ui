@@ -10,6 +10,7 @@ import {
   mount_calendar_multiple,
   mount_calendar_playground,
   mount_calendar_range,
+  mount_calendar_required,
   mount_calendar_two_months,
   mount_calendar_week_numbers,
   mount_calendar_with_selected,
@@ -256,6 +257,24 @@ export const MinMaxCount: Story = {
 
 /** The leading ISO week-number column (Monday week-start — ISO weeks are
  *  Monday-based). June 2026 starts on a Monday → weeks 23–27. */
+/** `required` — a non-emptyable selection. Starts with June 15 selected; toggle
+ *  the **Required** control and re-click the selected day: OFF clears it (the
+ *  default toggle-off), ON keeps it. (The toggle behaviour itself is unit-tested
+ *  in `gg_base_ui`; this is the interactive demo.) */
+export const Required: Story = {
+  args: { required: false } as Partial<CalendarArgs>,
+  argTypes: {
+    required: { control: { type: "boolean" } },
+  } as Meta<CalendarArgs>["argTypes"],
+  render: (args) =>
+    mountLustre((selector) =>
+      mount_calendar_required(
+        selector,
+        (args as unknown as { required: boolean }).required,
+      ),
+    ),
+}
+
 export const WeekNumbers: Story = {
   name: "Week numbers",
   parameters: { controls: { disable: true } },

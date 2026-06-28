@@ -207,6 +207,42 @@ pub fn select_navigates_when_offscreen_test() {
   m.displayed |> should.equal(date(2026, September, 1))
 }
 
+pub fn single_toggle_off_test() {
+  // Default (not required): re-clicking the selected day clears it (RDP toggle).
+  let m = cal.select(model(), date(2026, June, 15))
+  cal.selected(m) |> should.equal(Some(date(2026, June, 15)))
+  let m = cal.select(m, date(2026, June, 15))
+  cal.selected(m) |> should.equal(None)
+  // A *different* day still just replaces.
+  let m =
+    cal.select(cal.select(model(), date(2026, June, 15)), date(2026, June, 20))
+  cal.selected(m) |> should.equal(Some(date(2026, June, 20)))
+}
+
+pub fn single_required_keeps_selection_test() {
+  let cfg = cal.Config(..cal.config(), required: True)
+  let m =
+    cal.init(config: cfg, selected: None, today: Some(date(2026, June, 27)))
+    |> cal.select(date(2026, June, 15))
+  // Re-clicking the selected day is a no-op — required can't be emptied.
+  let m = cal.select(m, date(2026, June, 15))
+  cal.selected(m) |> should.equal(Some(date(2026, June, 15)))
+}
+
+pub fn multiple_required_keeps_last_test() {
+  let cfg = cal.Config(..cal.config(), mode: cal.Multiple, required: True)
+  let m =
+    cal.init(config: cfg, selected: None, today: Some(date(2026, June, 27)))
+    |> cal.select(date(2026, June, 10))
+    |> cal.select(date(2026, June, 12))
+  // Toggling one off is fine while >1 remain…
+  let m = cal.select(m, date(2026, June, 12))
+  cal.selection(m) |> should.equal(cal.Many([date(2026, June, 10)]))
+  // …but the last remaining day can't be removed when required.
+  let m = cal.select(m, date(2026, June, 10))
+  cal.selection(m) |> should.equal(cal.Many([date(2026, June, 10)]))
+}
+
 pub fn month_nav_test() {
   cal.previous_month(model()).displayed |> should.equal(date(2026, May, 1))
   cal.next_month(model()).displayed |> should.equal(date(2026, July, 1))

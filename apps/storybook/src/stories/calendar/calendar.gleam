@@ -42,11 +42,12 @@ type Flags {
     config: calendar.Config,
     selected: Option(time_calendar.Date),
     disable_past: Bool,
+    hint: Option(String),
   )
 }
 
 type Model {
-  Model(cal: calendar.Model, anatomy: calendar.Anatomy)
+  Model(cal: calendar.Model, anatomy: calendar.Anatomy, hint: Option(String))
 }
 
 type Msg {
@@ -71,7 +72,7 @@ fn init(flags: Flags) -> #(Model, Effect(Msg)) {
     True -> calendar.disable_before(cal, today())
     False -> cal
   }
-  #(Model(cal:, anatomy:), effect.none())
+  #(Model(cal:, anatomy:, hint: flags.hint), effect.none())
 }
 
 fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
@@ -93,9 +94,13 @@ fn view(model: Model) -> Element(Msg) {
       ]),
       CalendarMsg,
     )
+  let hint = case model.hint {
+    Some(text_) -> [text.s6([text.color(text.Muted)], [html.text(text_)])]
+    None -> []
+  }
   html.div(
     [attribute.class("flex flex-col items-center gap-3 text-foreground")],
-    [widget, selected_line(model)],
+    list.flatten([hint, [widget, selected_line(model)]]),
   )
 }
 
@@ -137,7 +142,7 @@ fn start(flags: Flags, selector: String) -> Nil {
 }
 
 fn flags(config: calendar.Config) -> Flags {
-  Flags(config:, selected: None, disable_past: False)
+  Flags(config:, selected: None, disable_past: False, hint: None)
 }
 
 pub fn mount_calendar_playground(
@@ -205,6 +210,24 @@ pub fn mount_calendar_count_bounds(selector: String) -> Nil {
 pub fn mount_calendar_multiple(selector: String) -> Nil {
   start(
     flags(calendar.Config(..calendar.config(), mode: calendar.multiple)),
+    selector,
+  )
+}
+
+pub fn mount_calendar_required(selector: String, required: Bool) -> Nil {
+  // Starts with June 15 selected. `required` has no resting visual — the
+  // difference shows when you click the *already-selected* day: OFF clears it
+  // (RDP toggle-off), ON keeps it. The hint + status line make that observable.
+  let hint = case required {
+    True -> "Required is ON — click June 15 (selected): it stays selected."
+    False -> "Required is OFF — click June 15 (selected): it clears."
+  }
+  start(
+    Flags(
+      ..flags(calendar.with_required(calendar.config(), required)),
+      selected: Some(time_calendar.Date(2026, time_calendar.June, 15)),
+      hint: Some(hint),
+    ),
     selector,
   )
 }

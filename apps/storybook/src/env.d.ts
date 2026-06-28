@@ -148,6 +148,10 @@ declare module "*.gleam" {
   export const mount_calendar_count_bounds: MountStatic
   export const mount_calendar_two_months: MountStatic
   export const mount_calendar_week_numbers: MountStatic
+  export const mount_calendar_required: (
+    selector: string,
+    required: boolean,
+  ) => void
   export const mount_calendar_dropdown: MountStatic
   export const mount_calendar_disabled: MountStatic
   export const mount_calendar_blocked: MountStatic
