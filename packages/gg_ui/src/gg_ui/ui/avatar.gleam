@@ -1,10 +1,12 @@
 //// shadcn-flavoured `Avatar` — the **thin** styled layer over the headless
 //// `gg_base_ui/avatar`. Mirrors shadcn's parts (`Avatar` / `AvatarImage` /
-//// `AvatarFallback`) and its `size` prop, emitting `cn-*` class names whose
-//// Tailwind recipe lives in `styles/shapes/<style>/avatar.css`. Behavior (the
-//// load/fallback swap) + the markup structure come from the headless layer; this
-//// layer only owns appearance and the `data-slot` / `data-size` / `data-shape`
-//// hooks.
+//// `AvatarFallback`) and its `size` prop. Each part emits raw structural
+//// utilities (layout/positioning) **plus** `cn-*` recipe names for the themeable
+//// surface, whose Tailwind lives in `styles/shapes/<style>/avatar.css` (AGENTS.md
+//// rule 8). A caller's `class` in `attrs` is folded through `cn.merge`, so an
+//// override wins — e.g. the badge's default `bg-primary` is raw, so an "online
+//// green" `bg-green-500` replaces it instead of losing on cascade. Behavior (the
+//// load/fallback swap) + markup structure come from the headless layer.
 ////
 //// **Two divergences from shadcn**, both additive:
 //// - an extra-small `Xs` size, baked in for chip-sized avatars (shadcn stops at
@@ -25,7 +27,7 @@
 //// markup, its consumers live in the `@apply` recipe (the group-marker idiom).
 
 import gg_base_ui/avatar/avatar as base_avatar
-import gg_ui/helpers/cn
+import gg_base_ui/helpers/cn
 import gva
 import lustre/attribute.{type Attribute}
 import lustre/element.{type Element}
@@ -80,9 +82,11 @@ pub fn avatar(
       attribute.attribute("data-slot", "avatar"),
       attribute.attribute("data-size", size_value(size)),
       attribute.attribute("data-shape", shape_value(shape)),
-      attribute.class(classes(size:, shape:)),
-      attribute.class("group/avatar"),
-      ..attrs
+      ..cn.merge(
+        own: classes(size:, shape:)
+          <> " group/avatar relative flex shrink-0 select-none",
+        attrs:,
+      )
     ],
     children:,
   )
@@ -98,8 +102,10 @@ pub fn image(
 ) -> Element(msg) {
   base_avatar.image(src:, alt:, attrs: [
     attribute.attribute("data-slot", "avatar-image"),
-    attribute.class(cn.cn(["cn-avatar-image"])),
-    ..attrs
+    ..cn.merge(
+      own: "cn-avatar-image absolute inset-0 size-full object-cover",
+      attrs:,
+    )
   ])
 }
 
@@ -115,8 +121,10 @@ pub fn fallback(
   base_avatar.fallback(
     attrs: [
       attribute.attribute("data-slot", "avatar-fallback"),
-      attribute.class(cn.cn(["cn-avatar-fallback"])),
-      ..attrs
+      ..cn.merge(
+        own: "cn-avatar-fallback flex size-full items-center justify-center",
+        attrs:,
+      )
     ],
     children:,
   )
@@ -134,8 +142,10 @@ pub fn badge(
   html.span(
     [
       attribute.attribute("data-slot", "avatar-badge"),
-      attribute.class(cn.cn(["cn-avatar-badge"])),
-      ..attrs
+      ..cn.merge(
+        own: "cn-avatar-badge absolute right-0 bottom-0 z-10 inline-flex items-center justify-center rounded-full ring-2 select-none bg-primary text-primary-foreground",
+        attrs:,
+      )
     ],
     children,
   )
@@ -152,9 +162,10 @@ pub fn group(
   html.div(
     [
       attribute.attribute("data-slot", "avatar-group"),
-      attribute.class(cn.cn(["cn-avatar-group"])),
-      attribute.class("group/avatar-group"),
-      ..attrs
+      ..cn.merge(
+        own: "cn-avatar-group group/avatar-group flex -space-x-2",
+        attrs:,
+      )
     ],
     children,
   )
@@ -170,8 +181,10 @@ pub fn group_count(
   html.div(
     [
       attribute.attribute("data-slot", "avatar-group-count"),
-      attribute.class(cn.cn(["cn-avatar-group-count"])),
-      ..attrs
+      ..cn.merge(
+        own: "cn-avatar-group-count relative flex shrink-0 items-center justify-center",
+        attrs:,
+      )
     ],
     children,
   )

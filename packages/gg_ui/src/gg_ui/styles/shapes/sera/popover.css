@@ -2,7 +2,7 @@
  * A fragment; no tailwind import. */
 .style-sera {
   .cn-popover {
-    @apply w-72 rounded-none border border-border bg-popover p-4 text-sm text-popover-foreground shadow-md;
+    @apply rounded-none border border-border bg-popover p-4 text-sm text-popover-foreground shadow-md;
   }
 
   .cn-popover-positioner {

@@ -84,6 +84,19 @@ pub fn mount_as_link(selector: String) -> Nil {
   mount(selector, fn(_model) { view_as_link() })
 }
 
+pub fn mount_class_override(
+  selector: String,
+  set: String,
+  variant: String,
+) -> Nil {
+  mount(selector, fn(_model) {
+    view_class_override(
+      demo_icons.parse_set(set),
+      demo_icons.parse_variant(variant),
+    )
+  })
+}
+
 // --- args ----------------------------------------------------------------
 
 fn parse_variant(variant: String) -> Variant {
@@ -200,6 +213,27 @@ fn view_as_link() -> Element(Msg) {
         html.text("Inspired by Shadcn UI's Button"),
       ],
     ),
+  ])
+}
+
+/// Demonstrates a caller `class` override winning over a structural default via
+/// tailwind-merge (the shadcn `cn(variants({ className }))` model). The left
+/// button is a normal centred button; the right one is widened and passes
+/// `justify-between`, which *removes* the component's default `justify-center`
+/// (not just appends), so the label and icon spread to the edges. The label is
+/// its own `<span>` and the arrow is a real icon, so they're two flex children
+/// (adjacent text nodes would collapse into one inline run with nothing to space).
+fn view_class_override(set: IconSet, variant: IconVariant) -> Element(Msg) {
+  row([
+    button.button(Outline, Medium, [attribute.class("w-56")], [
+      html.span([], [html.text("Default (centered)")]),
+    ]),
+    button.button(Outline, Medium, [attribute.class("w-56 justify-between")], [
+      html.span([], [html.text("Spread")]),
+      demo_icons.render(set, variant, demo_icons.ArrowRight, [
+        attribute.attribute("data-icon", "inline-end"),
+      ]),
+    ]),
   ])
 }
 

@@ -202,8 +202,8 @@ fn view_playground(
       children: fn(d) {
         [
           dialog.header([], [
-            dialog.title(d, [html.text("Edit profile")]),
-            dialog.description(d, [
+            dialog.title(d, [], [html.text("Edit profile")]),
+            dialog.description(d, [], [
               html.text(
                 "Make changes to your profile here. Click save when you're done.",
               ),
@@ -214,6 +214,7 @@ fn view_playground(
               d,
               variant: button.Outline,
               size: button.Medium,
+              attrs: [],
               children: [
                 html.text("Cancel"),
               ],
@@ -222,6 +223,7 @@ fn view_playground(
               d,
               variant: button.Default,
               size: button.Medium,
+              attrs: [],
               children: [
                 html.text("Save changes"),
               ],
@@ -241,9 +243,15 @@ fn view_playground(
 fn view_demo() -> Element(Nil) {
   let d = dialog.anatomy()
   page([
-    dialog.trigger(d, variant: button.Outline, size: button.Medium, children: [
-      html.text("Open Dialog"),
-    ]),
+    dialog.trigger(
+      d,
+      variant: button.Outline,
+      size: button.Medium,
+      attrs: [],
+      children: [
+        html.text("Open Dialog"),
+      ],
+    ),
     dialog.content(
       d,
       dismiss: dialog.LightDismiss,
@@ -252,8 +260,8 @@ fn view_demo() -> Element(Nil) {
       attrs: [attribute.class("sm:max-w-sm")],
       children: [
         dialog.header([], [
-          dialog.title(d, [html.text("Edit profile")]),
-          dialog.description(d, [
+          dialog.title(d, [], [html.text("Edit profile")]),
+          dialog.description(d, [], [
             html.text(
               "Make changes to your profile here. Click save when you're done.",
             ),
@@ -268,6 +276,7 @@ fn view_demo() -> Element(Nil) {
             d,
             variant: button.Outline,
             size: button.Medium,
+            attrs: [],
             children: [
               html.text("Cancel"),
             ],
@@ -276,6 +285,7 @@ fn view_demo() -> Element(Nil) {
             d,
             variant: button.Default,
             size: button.Medium,
+            attrs: [],
             children: [
               html.text("Save changes"),
             ],
@@ -293,9 +303,15 @@ fn view_demo() -> Element(Nil) {
 fn view_close_button() -> Element(Nil) {
   let d = dialog.anatomy()
   page([
-    dialog.trigger(d, variant: button.Outline, size: button.Medium, children: [
-      html.text("Share"),
-    ]),
+    dialog.trigger(
+      d,
+      variant: button.Outline,
+      size: button.Medium,
+      attrs: [],
+      children: [
+        html.text("Share"),
+      ],
+    ),
     dialog.content(
       d,
       dismiss: dialog.LightDismiss,
@@ -304,8 +320,8 @@ fn view_close_button() -> Element(Nil) {
       attrs: [attribute.class("sm:max-w-md")],
       children: [
         dialog.header([], [
-          dialog.title(d, [html.text("Share link")]),
-          dialog.description(d, [
+          dialog.title(d, [], [html.text("Share link")]),
+          dialog.description(d, [], [
             html.text("Anyone who has this link will be able to view this."),
           ]),
         ]),
@@ -329,6 +345,7 @@ fn view_close_button() -> Element(Nil) {
             d,
             variant: button.Default,
             size: button.Medium,
+            attrs: [],
             children: [
               html.text("Close"),
             ],
@@ -345,9 +362,15 @@ fn view_close_button() -> Element(Nil) {
 fn view_no_close_button() -> Element(Nil) {
   let d = dialog.anatomy()
   page([
-    dialog.trigger(d, variant: button.Outline, size: button.Medium, children: [
-      html.text("No Close Button"),
-    ]),
+    dialog.trigger(
+      d,
+      variant: button.Outline,
+      size: button.Medium,
+      attrs: [],
+      children: [
+        html.text("No Close Button"),
+      ],
+    ),
     dialog.content(
       d,
       dismiss: dialog.LightDismiss,
@@ -356,8 +379,8 @@ fn view_no_close_button() -> Element(Nil) {
       attrs: [],
       children: [
         dialog.header([], [
-          dialog.title(d, [html.text("No Close Button")]),
-          dialog.description(d, [
+          dialog.title(d, [], [html.text("No Close Button")]),
+          dialog.description(d, [], [
             html.text(
               "This dialog doesn't have a close button in the top-right corner.",
             ),
@@ -373,9 +396,15 @@ fn view_no_close_button() -> Element(Nil) {
 fn view_sticky_footer() -> Element(Nil) {
   let d = dialog.anatomy()
   page([
-    dialog.trigger(d, variant: button.Outline, size: button.Medium, children: [
-      html.text("Sticky Footer"),
-    ]),
+    dialog.trigger(
+      d,
+      variant: button.Outline,
+      size: button.Medium,
+      attrs: [],
+      children: [
+        html.text("Sticky Footer"),
+      ],
+    ),
     dialog.content(
       d,
       dismiss: dialog.LightDismiss,
@@ -384,8 +413,8 @@ fn view_sticky_footer() -> Element(Nil) {
       attrs: [],
       children: [
         dialog.header([], [
-          dialog.title(d, [html.text("Sticky Footer")]),
-          dialog.description(d, [
+          dialog.title(d, [], [html.text("Sticky Footer")]),
+          dialog.description(d, [], [
             html.text(
               "This dialog has a sticky footer that stays visible while the "
               <> "content scrolls.",
@@ -398,6 +427,7 @@ fn view_sticky_footer() -> Element(Nil) {
             d,
             variant: button.Outline,
             size: button.Medium,
+            attrs: [],
             children: [
               html.text("Close"),
             ],
@@ -413,9 +443,15 @@ fn view_sticky_footer() -> Element(Nil) {
 fn view_scrollable() -> Element(Nil) {
   let d = dialog.anatomy()
   page([
-    dialog.trigger(d, variant: button.Outline, size: button.Medium, children: [
-      html.text("Scrollable Content"),
-    ]),
+    dialog.trigger(
+      d,
+      variant: button.Outline,
+      size: button.Medium,
+      attrs: [],
+      children: [
+        html.text("Scrollable Content"),
+      ],
+    ),
     dialog.content(
       d,
       dismiss: dialog.LightDismiss,
@@ -424,8 +460,8 @@ fn view_scrollable() -> Element(Nil) {
       attrs: [],
       children: [
         dialog.header([], [
-          dialog.title(d, [html.text("Scrollable Content")]),
-          dialog.description(d, [
+          dialog.title(d, [], [html.text("Scrollable Content")]),
+          dialog.description(d, [], [
             html.text("This is a dialog with scrollable content."),
           ]),
         ]),
@@ -441,9 +477,15 @@ fn view_scrollable() -> Element(Nil) {
 fn view_rtl() -> Element(Nil) {
   let d = dialog.anatomy()
   page([
-    dialog.trigger(d, variant: button.Outline, size: button.Medium, children: [
-      html.text("فتح الحوار"),
-    ]),
+    dialog.trigger(
+      d,
+      variant: button.Outline,
+      size: button.Medium,
+      attrs: [],
+      children: [
+        html.text("فتح الحوار"),
+      ],
+    ),
     dialog.content(
       d,
       dismiss: dialog.LightDismiss,
@@ -452,8 +494,8 @@ fn view_rtl() -> Element(Nil) {
       attrs: [attribute.attribute("dir", "rtl"), attribute.class("sm:max-w-sm")],
       children: [
         dialog.header([], [
-          dialog.title(d, [html.text("تعديل الملف الشخصي")]),
-          dialog.description(d, [
+          dialog.title(d, [], [html.text("تعديل الملف الشخصي")]),
+          dialog.description(d, [], [
             html.text(
               "قم بإجراء تغييرات على ملفك الشخصي هنا. انقر فوق حفظ عند الانتهاء.",
             ),
@@ -468,6 +510,7 @@ fn view_rtl() -> Element(Nil) {
             d,
             variant: button.Outline,
             size: button.Medium,
+            attrs: [],
             children: [
               html.text("إلغاء"),
             ],
@@ -476,6 +519,7 @@ fn view_rtl() -> Element(Nil) {
             d,
             variant: button.Default,
             size: button.Medium,
+            attrs: [],
             children: [
               html.text("حفظ التغييرات"),
             ],
@@ -556,8 +600,8 @@ fn lazy_view(model: LazyModel) -> Element(LazyMsg) {
         False -> []
         True -> [
           dialog.header([], [
-            dialog.title(d, [html.text("Edit profile")]),
-            dialog.description(d, [
+            dialog.title(d, [], [html.text("Edit profile")]),
+            dialog.description(d, [], [
               html.text("Make changes to your profile here."),
             ]),
           ]),
@@ -579,12 +623,24 @@ fn lazy_form(d: dialog.Anatomy) -> Element(LazyMsg) {
       field(label: "Username", id: "lazy-username", value: "@peduarte"),
     ]),
     dialog.footer([], [
-      dialog.close(d, variant: button.Outline, size: button.Medium, children: [
-        html.text("Cancel"),
-      ]),
-      dialog.close(d, variant: button.Default, size: button.Medium, children: [
-        html.text("Save changes"),
-      ]),
+      dialog.close(
+        d,
+        variant: button.Outline,
+        size: button.Medium,
+        attrs: [],
+        children: [
+          html.text("Cancel"),
+        ],
+      ),
+      dialog.close(
+        d,
+        variant: button.Default,
+        size: button.Medium,
+        attrs: [],
+        children: [
+          html.text("Save changes"),
+        ],
+      ),
     ]),
   ])
 }

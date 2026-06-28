@@ -19,21 +19,27 @@
 //// This keeps the styled surface stable even if the headless layer is
 //// restructured — and matches how `button` owns its own `Variant` / `Size`.
 ////
+//// Per rule 8, the visible card emits its overridable structural utility (`w-72`)
+//// raw and folds a caller's `class` (in `content`'s `attrs`) via `cn.merge`, so a
+//// width override (`w-80`) wins; the themeable surface stays in the `cn-*` recipe.
+//// `header` / `title` / `description` likewise take `attrs` for additive classes.
+////
 //// Native-first behavior is preserved verbatim: the two-box anatomy and the
 //// native `:popover-open` visual state are *behavior*, not looks — they stay
 //// here, not in the CSS. The arrow's per-side geometry and trigger-ward offset
 //// are pure visuals: they live in `styles/shapes/arrow.css` (keyed on the
 //// popup's `data-side`), with the offset value exposed as the `--arrow-offset`
-//// custom property on `cn-popover-arrow-icon`. Only pure-visual utilities move
-//// to `cn-*` class names.
+//// custom property on `cn-popover-arrow-icon`.
 ////
 //// Every trigger/close composes the headless behavior attributes onto our
 //// design-system `Button` — Base UI's `render` prop, in Gleam form. The
 //// headless layer never renders a `<button>` itself; this layer always does.
 
+import gg_base_ui/helpers/cn
 import gg_base_ui/popover/popover as base_popover
 import gg_ui/positioning.{type Align, type Side, Bottom, End}
 import gg_ui/ui/button
+import gleam/list
 import gleam/option.{type Option, None, Some}
 import lustre/attribute
 import lustre/effect.{type Effect}
@@ -118,12 +124,15 @@ pub fn trigger(
   anatomy: Anatomy,
   variant variant: button.Variant,
   size size: button.Size,
+  attrs attrs: List(attribute.Attribute(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
+  // User attrs first, behaviour attrs last so the Invoker Command + anchor + aria
+  // wiring always wins a conflict; a caller `class` is merged by `button` itself.
   button.button(
     variant:,
     size:,
-    attrs: base_popover.trigger_attributes(anatomy),
+    attrs: list.append(attrs, base_popover.trigger_attributes(anatomy)),
     children:,
   )
 }
@@ -230,9 +239,13 @@ pub fn popover(
 ) -> Element(msg) {
   popover_with_trigger(
     trigger: fn(anatomy) {
-      trigger(anatomy, variant: options.variant, size: options.size, children: [
-        html.text(options.text),
-      ])
+      trigger(
+        anatomy,
+        variant: options.variant,
+        size: options.size,
+        attrs: [],
+        children: [html.text(options.text)],
+      )
     },
     options:,
     children:,
@@ -265,6 +278,7 @@ pub fn popover_with_trigger(
       dismiss:,
       arrow:,
       on_toggle:,
+      attrs: [],
       children: children(anatomy),
     ),
   ])
@@ -298,9 +312,12 @@ pub fn content(
   dismiss dismiss: Dismiss,
   arrow arrow: Bool,
   on_toggle on_toggle: Option(fn(Bool) -> msg),
+  attrs attrs: List(attribute.Attribute(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
-  let card = html.div([attribute.class("cn-popover")], children)
+  // `attrs` land on the visible card (shadcn's `PopoverContent className`); the
+  // card's `w-72` is raw so a width override (`w-80`) wins via cn.merge.
+  let card = html.div(cn.merge(own: "cn-popover w-72", attrs:), children)
   // Render one arrow at the requested side. When the popup flips on viewport
   // collision (`position-try-fallbacks`), the JS observer installed by
   // `arrow.arrow` rewrites this single SVG's geometry + positioning to match
@@ -326,23 +343,35 @@ pub fn content(
 }
 
 /// `PopoverHeader`: stacks a title and description with tight spacing.
-pub fn header(children: List(Element(msg))) -> Element(msg) {
-  html.div([attribute.class("cn-popover-header")], children)
+pub fn header(
+  attrs attrs: List(attribute.Attribute(msg)),
+  children children: List(Element(msg)),
+) -> Element(msg) {
+  html.div(cn.merge(own: "cn-popover-header", attrs:), children)
 }
 
 /// `PopoverTitle`: the accessible heading the content is labelled by.
-pub fn title(anatomy: Anatomy, children: List(Element(msg))) -> Element(msg) {
-  base_popover.title(anatomy, [attribute.class("cn-popover-title")], children)
+pub fn title(
+  anatomy: Anatomy,
+  attrs attrs: List(attribute.Attribute(msg)),
+  children children: List(Element(msg)),
+) -> Element(msg) {
+  base_popover.title(
+    anatomy,
+    cn.merge(own: "cn-popover-title", attrs:),
+    children,
+  )
 }
 
 /// `PopoverDescription`: muted supplementary text the content is described by.
 pub fn description(
   anatomy: Anatomy,
-  children: List(Element(msg)),
+  attrs attrs: List(attribute.Attribute(msg)),
+  children children: List(Element(msg)),
 ) -> Element(msg) {
   base_popover.description(
     anatomy,
-    [attribute.class("cn-popover-description")],
+    cn.merge(own: "cn-popover-description", attrs:),
     children,
   )
 }
@@ -350,11 +379,15 @@ pub fn description(
 /// `PopoverClose`: a ghost `Button` that closes the popover natively via the
 /// `command="hide-popover"` Invoker Command — no JS, works inside the
 /// declarative flow.
-pub fn close(anatomy: Anatomy, children: List(Element(msg))) -> Element(msg) {
+pub fn close(
+  anatomy: Anatomy,
+  attrs attrs: List(attribute.Attribute(msg)),
+  children children: List(Element(msg)),
+) -> Element(msg) {
   button.button(
     variant: button.Ghost,
     size: button.Sm,
-    attrs: base_popover.close_attributes(anatomy),
+    attrs: list.append(attrs, base_popover.close_attributes(anatomy)),
     children:,
   )
 }

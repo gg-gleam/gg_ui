@@ -54,7 +54,13 @@ pub type Error {
 }
 
 type Built {
-  Built(kebab: String, fn_name: String, shard: String, snake: String, children: String)
+  Built(
+    kebab: String,
+    fn_name: String,
+    shard: String,
+    snake: String,
+    children: String,
+  )
 }
 
 /// Generate the whole set from its pinned upstream SVGs.
@@ -68,7 +74,10 @@ pub fn generate(config: Config) -> Result(Nil, Error) {
 
   let internal_src =
     render.internal(list.map(config.variants, fn(v) { #(v.name, v.defaults) }))
-  use _ <- result.try(write_file(config.out_src <> "/internal.gleam", internal_src))
+  use _ <- result.try(write_file(
+    config.out_src <> "/internal.gleam",
+    internal_src,
+  ))
 
   let manifest_src =
     render.manifest(

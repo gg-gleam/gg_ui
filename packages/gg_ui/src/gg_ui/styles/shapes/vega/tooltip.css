@@ -3,7 +3,7 @@
  * the transparent positioner and the caret skin. A fragment; no tailwind import. */
 .style-vega {
   .cn-tooltip {
-    @apply w-fit rounded-md bg-foreground px-3 py-1.5 text-xs text-balance text-background;
+    @apply rounded-md bg-foreground px-3 py-1.5 text-xs text-balance text-background;
   }
 
   .cn-tooltip-positioner {

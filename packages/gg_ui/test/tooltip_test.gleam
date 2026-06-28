@@ -83,6 +83,7 @@ pub fn content_no_arrow_test() {
     side: positioning.Top,
     align: positioning.Center,
     arrow: False,
+    attrs: [],
     children: [html.text("Add to library")],
   )
   |> element.to_readable_string
@@ -97,6 +98,7 @@ pub fn content_with_arrow_test() {
     side: positioning.Bottom,
     align: positioning.Center,
     arrow: True,
+    attrs: [],
     children: [html.text("Add to library")],
   )
   |> element.to_readable_string

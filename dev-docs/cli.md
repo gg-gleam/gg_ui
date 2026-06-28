@@ -131,14 +131,17 @@ When `gg-ui add <item>` writes a registry file to disk:
    - Different content → prompt `[O]verwrite / [S]kip / [D]iff` (matches
      shadcn UX).
    - `--yes` flag → overwrite without prompting.
-4. **What gets copied** — only the thin `ui/<component>.gleam` files plus
-   `helpers/cn` (the `utils` analogue). The **headless layer is never copied**:
-   each `ui/` file's `import gg_base_ui/<component>/<component> as base_<x>`
-   stays **verbatim**, because `gg_base_ui` is a real Hex dependency (exactly
-   like a Base UI import survives a shadcn eject).
+4. **What gets copied** — only the thin `ui/<component>.gleam` files. The
+   **headless layer and the `cn` helper are never copied**: each `ui/` file's
+   `import gg_base_ui/<component>/<component> as base_<x>` **and** its
+   `import gg_base_ui/helpers/cn` stay **verbatim**, because `gg_base_ui` is a
+   real Hex dependency (exactly like a Base UI import survives a shadcn eject).
+   `cn`/`cn.merge` live in `gg_base_ui` specifically so they're imported, never
+   frozen into user code — unlike shadcn's ejected `lib/utils.ts`, we update them
+   centrally.
 5. **Imports get rewritten** before writing — only the *alias-relative* imports
-   (`gg_ui/helpers/cn` → the user's `aliases.lib`); the `gg_base_ui` import is
-   left untouched. See [`config.md`](config.md) for the rules.
+   of copied files; the `gg_base_ui` imports (headless parts **and** `helpers/cn`)
+   are left untouched. See [`config.md`](config.md) for the rules.
 6. **Icons get rewritten** before writing — see [`icons.md`](icons.md).
 7. **Deps get installed** after all writes succeed — including
    `gleam add gg_base_ui` so the verbatim headless import resolves.
@@ -204,9 +207,10 @@ The registry items can be installed by hand:
 1. Read `gg_ui_registry/items/<name>.json`.
 2. Run `gleam add` for each `dependencies` entry — always including
    `gg_base_ui` (the headless package the copied file imports).
-3. Copy each thin `ui/<component>.gleam` (+ `helpers/cn`) into your `src/`.
-   Leave the `import gg_base_ui/...` line verbatim; rewrite only the
-   alias-relative imports per [`config.md`](config.md). Never copy the
+3. Copy each thin `ui/<component>.gleam` into your `src/`. Leave the
+   `import gg_base_ui/...` lines verbatim (both the headless part **and**
+   `import gg_base_ui/helpers/cn`); rewrite only the alias-relative imports per
+   [`config.md`](config.md). Never copy the
    headless layer.
 4. `@import` any `registry:theme` / `registry:style` fragments into your CSS
    entry (the one that imports Tailwind first), **plus `styles/motion.css`** (or

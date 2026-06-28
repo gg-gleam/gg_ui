@@ -4,4 +4,4 @@ title: gg_ui avatar badge — render
 file: ./test/avatar_test.gleam
 test_name: render_badge_test
 ---
-<span class="cn-avatar-badge" data-slot="avatar-badge"></span>
+<span class="cn-avatar-badge absolute right-0 bottom-0 z-10 inline-flex items-center justify-center rounded-full ring-2 select-none bg-primary text-primary-foreground" data-slot="avatar-badge"></span>

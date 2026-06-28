@@ -9,10 +9,10 @@
     "typecheck": "pnpm -r typecheck",
     "lint": "stylelint \"{apps,packages}/**/*.css\" && biome check .",
     "format": "pnpm format:gleam && stylelint --fix \"{apps,packages}/**/*.css\" && biome format --write .",
-    "format:gleam": "gleam format apps/storybook/src packages/gg_base_ui/src packages/gg_base_ui/test packages/gg_ui/src packages/gg_ui/test",
-    "format:check": "gleam format --check apps/storybook/src packages/gg_base_ui/src packages/gg_base_ui/test packages/gg_ui/src packages/gg_ui/test",
+    "format:gleam": "gleam format apps/storybook/src packages/gg_cn/src packages/gg_cn/test packages/gg_base_ui/src packages/gg_base_ui/test packages/gg_ui/src packages/gg_ui/test",
+    "format:check": "gleam format --check apps/storybook/src packages/gg_cn/src packages/gg_cn/test packages/gg_base_ui/src packages/gg_base_ui/test packages/gg_ui/src packages/gg_ui/test",
     "test": "pnpm test:gleam && pnpm test:stories",
-    "test:gleam": "(cd packages/gg_base_ui && gleam test) && (cd packages/gg_ui && gleam test)",
+    "test:gleam": "(cd packages/gg_cn && gleam test) && (cd packages/gg_base_ui && gleam test) && (cd packages/gg_ui && gleam test)",
     "test:stories": "pnpm --filter @gg_ui/storybook test:stories",
     "test:stories:coverage": "pnpm --filter @gg_ui/storybook coverage"
   },

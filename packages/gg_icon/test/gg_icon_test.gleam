@@ -16,12 +16,14 @@ fn render(el) -> String {
 
 pub fn svg_bakes_viewbox_defaults_and_base_class_test() {
   let html =
-    render(icon.svg(
-      view_box: "0 0 24 24",
-      defaults: [#("fill", "none"), #("stroke", "currentColor")],
-      attrs: [],
-      children: [svg.path([attribute.attribute("d", "m6 9 6 6 6-6")])],
-    ))
+    render(
+      icon.svg(
+        view_box: "0 0 24 24",
+        defaults: [#("fill", "none"), #("stroke", "currentColor")],
+        attrs: [],
+        children: [svg.path([attribute.attribute("d", "m6 9 6 6 6-6")])],
+      ),
+    )
 
   should.be_true(string.contains(html, "viewBox=\"0 0 24 24\""))
   should.be_true(string.contains(html, "class=\"cn-icon\""))
@@ -34,12 +36,14 @@ pub fn caller_attrs_win_test() {
   // attribute in markup — so a caller override (appended last) is serialised
   // *before* the baked default and wins in the browser.
   let html =
-    render(icon.svg(
-      view_box: "0 0 24 24",
-      defaults: [#("stroke-width", "2")],
-      attrs: [attribute.attribute("stroke-width", "1.5")],
-      children: [],
-    ))
+    render(
+      icon.svg(
+        view_box: "0 0 24 24",
+        defaults: [#("stroke-width", "2")],
+        attrs: [attribute.attribute("stroke-width", "1.5")],
+        children: [],
+      ),
+    )
 
   let assert Ok(#(before_default, _)) =
     string.split_once(html, "stroke-width=\"2\"")
@@ -50,12 +54,14 @@ pub fn class_attributes_merge_test() {
   // The base `cn-icon` class and a caller size class combine into one list, so
   // both reach the DOM (size wins via CSS source order, not attribute order).
   let html =
-    render(icon.svg(
-      view_box: "0 0 24 24",
-      defaults: [],
-      attrs: [icon.size(icon.Sm)],
-      children: [],
-    ))
+    render(
+      icon.svg(
+        view_box: "0 0 24 24",
+        defaults: [],
+        attrs: [icon.size(icon.Sm)],
+        children: [],
+      ),
+    )
 
   should.be_true(string.contains(html, "cn-icon"))
   should.be_true(string.contains(html, "cn-icon-size-sm"))
@@ -65,12 +71,14 @@ pub fn size_emits_token_carrying_class_test() {
   // Named sizes must contain the `size-` token so they defeat a container's
   // `[&_svg:not([class*='size-'])]` default.
   let html =
-    render(icon.svg(
-      view_box: "0 0 24 24",
-      defaults: [],
-      attrs: [icon.size(icon.Lg)],
-      children: [],
-    ))
+    render(
+      icon.svg(
+        view_box: "0 0 24 24",
+        defaults: [],
+        attrs: [icon.size(icon.Lg)],
+        children: [],
+      ),
+    )
 
   should.be_true(string.contains(html, "cn-icon-size-lg"))
 }

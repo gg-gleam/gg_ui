@@ -24,6 +24,7 @@ pub fn trigger_outline_medium_test() {
     handle(),
     variant: button.Outline,
     size: button.Medium,
+    attrs: [],
     children: [
       html.text("Open"),
     ],
@@ -37,6 +38,7 @@ pub fn trigger_destructive_lg_test() {
     handle(),
     variant: button.Destructive,
     size: button.Lg,
+    attrs: [],
     children: [
       html.text("Open"),
     ],
@@ -46,9 +48,15 @@ pub fn trigger_destructive_lg_test() {
 }
 
 pub fn trigger_ghost_sm_test() {
-  popover.trigger(handle(), variant: button.Ghost, size: button.Sm, children: [
-    html.text("Open"),
-  ])
+  popover.trigger(
+    handle(),
+    variant: button.Ghost,
+    size: button.Sm,
+    attrs: [],
+    children: [
+      html.text("Open"),
+    ],
+  )
   |> element.to_readable_string
   |> birdie.snap(title: "gg_ui popover trigger — ghost / sm")
 }
@@ -68,7 +76,8 @@ pub fn content_auto_dismiss_test() {
     dismiss: popover.Auto,
     arrow: False,
     on_toggle: None,
-    children: [popover.title(pop, [html.text("Title")])],
+    attrs: [],
+    children: [popover.title(pop, [], [html.text("Title")])],
   )
   |> element.to_readable_string
   |> birdie.snap(title: "gg_ui popover content — auto dismiss")
@@ -83,7 +92,8 @@ pub fn content_manual_dismiss_test() {
     dismiss: popover.Manual,
     arrow: False,
     on_toggle: None,
-    children: [popover.title(pop, [html.text("Title")])],
+    attrs: [],
+    children: [popover.title(pop, [], [html.text("Title")])],
   )
   |> element.to_readable_string
   |> birdie.snap(title: "gg_ui popover content — manual dismiss")
@@ -107,7 +117,8 @@ pub fn content_with_arrow_test() {
     dismiss: popover.Auto,
     arrow: True,
     on_toggle: None,
-    children: [popover.title(pop, [html.text("Title")])],
+    attrs: [],
+    children: [popover.title(pop, [], [html.text("Title")])],
   )
   |> element.to_readable_string
   |> birdie.snap(title: "gg_ui popover content — with arrow")
@@ -123,7 +134,7 @@ pub fn content_with_arrow_test() {
 pub fn terse_defaults_test() {
   popover.popover(
     options: popover.Options(..popover.options(), id: Some("demo")),
-    children: fn(pop) { [popover.title(pop, [html.text("Title")])] },
+    children: fn(pop) { [popover.title(pop, [], [html.text("Title")])] },
   )
   |> element.to_readable_string
   |> birdie.snap(title: "gg_ui popover terse — defaults (bottom/end, auto)")
@@ -138,7 +149,7 @@ pub fn terse_custom_trigger_test() {
       html.button(popover.trigger_attributes(pop), [html.text("Custom")])
     },
     options: popover.Options(..popover.options(), id: Some("demo")),
-    children: fn(pop) { [popover.title(pop, [html.text("Title")])] },
+    children: fn(pop) { [popover.title(pop, [], [html.text("Title")])] },
   )
   |> element.to_readable_string
   |> birdie.snap(title: "gg_ui popover terse — custom trigger callback")

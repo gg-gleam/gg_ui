@@ -240,9 +240,9 @@ fn view_terse(side: Side, align: Align, arrow: Bool) -> Element(msg) {
       ),
       children: fn(pop) {
         [
-          popover.header([
-            popover.title(pop, [html.text("Title")]),
-            popover.description(pop, [html.text("Description text here.")]),
+          popover.header([], [
+            popover.title(pop, [], [html.text("Title")]),
+            popover.description(pop, [], [html.text("Description text here.")]),
           ]),
         ]
       },
@@ -265,7 +265,7 @@ fn view_basic(
   // generated anatomy here is minted once and safe (see `id_gen` call-once).
   let pop = popover.anatomy()
   html.div([attribute.class("text-foreground")], [
-    popover.trigger(pop, variant:, size:, children: [
+    popover.trigger(pop, variant:, size:, attrs: [], children: [
       leading_icon(set, icon_variant, demo_icons.Settings),
       html.text("Open Popover"),
     ]),
@@ -276,10 +276,11 @@ fn view_basic(
       dismiss: popover.Auto,
       arrow: arrow,
       on_toggle: None,
+      attrs: [],
       children: [
-        popover.header([
-          popover.title(pop, [html.text("Title")]),
-          popover.description(pop, [html.text("Description text here.")]),
+        popover.header([], [
+          popover.title(pop, [], [html.text("Title")]),
+          popover.description(pop, [], [html.text("Description text here.")]),
         ]),
       ],
     ),
@@ -313,6 +314,7 @@ fn view_scroll_collision(
       pop,
       variant: button.Outline,
       size: button.Medium,
+      attrs: [],
       children: [
         leading_icon(set, icon_variant, demo_icons.Settings),
         html.text("Open popover"),
@@ -327,10 +329,11 @@ fn view_scroll_collision(
       dismiss: popover.Manual,
       arrow: arrow,
       on_toggle: None,
+      attrs: [],
       children: [
-        popover.header([
-          popover.title(pop, [html.text("Collision detection")]),
-          popover.description(pop, [
+        popover.header([], [
+          popover.title(pop, [], [html.text("Collision detection")]),
+          popover.description(pop, [], [
             html.text(
               "Scroll the canvas; this popup flips via "
               <> "`position-try-fallbacks` when it would overflow the iframe.",
@@ -338,7 +341,7 @@ fn view_scroll_collision(
           ]),
         ]),
         html.div([attribute.class("mt-3 flex justify-end")], [
-          popover.close(pop, [
+          popover.close(pop, attrs: [], children: [
             leading_icon(set, icon_variant, demo_icons.Close),
             html.text("Close"),
           ]),
@@ -378,6 +381,7 @@ fn view_imperative(
         pop,
         variant: button.Outline,
         size: button.Medium,
+        attrs: [],
         children: [
           leading_icon(set, icon_variant, demo_icons.Settings),
           html.text("Trigger"),
@@ -397,10 +401,11 @@ fn view_imperative(
         dismiss: popover.Auto,
         arrow: False,
         on_toggle: Some(PopoverOpenChanged),
+        attrs: [],
         children: [
-          popover.header([
-            popover.title(pop, [html.text("Imperative popover")]),
-            popover.description(pop, [
+          popover.header([], [
+            popover.title(pop, [], [html.text("Imperative popover")]),
+            popover.description(pop, [], [
               html.text(
                 "Drive it from the external buttons (command) or the trigger; "
                 <> "the label below mirrors the native toggle event (observe).",

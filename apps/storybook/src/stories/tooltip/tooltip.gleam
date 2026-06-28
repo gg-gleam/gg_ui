@@ -138,7 +138,7 @@ fn view_basic(
       ],
       children: [html.text("Hover me")],
     ),
-    tooltip.content(tip, side:, align:, arrow:, children: [
+    tooltip.content(tip, side:, align:, arrow:, attrs: [], children: [
       html.text("Add to library"),
     ]),
   ])
@@ -204,9 +204,16 @@ fn one_side(side: Side, label: String) -> Element(msg) {
       attrs: [],
       children: [html.text(label)],
     ),
-    tooltip.content(tip, side:, align: Center, arrow: True, children: [
-      html.text("On " <> label),
-    ]),
+    tooltip.content(
+      tip,
+      side:,
+      align: Center,
+      arrow: True,
+      attrs: [],
+      children: [
+        html.text("On " <> label),
+      ],
+    ),
   ])
 }
 

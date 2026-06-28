@@ -4,6 +4,6 @@ title: gg_ui input_group addon — inline-end
 file: ./test/input_group_test.gleam
 test_name: addon_align_inline_end_test
 ---
-<div class="cn-input-group-addon cn-input-group-addon-align-inline-end" data-align="inline-end" data-slot="input-group-addon" role="group">
+<div class="cn-input-group-addon cn-input-group-addon-align-inline-end flex cursor-text items-center justify-center" data-align="inline-end" data-slot="input-group-addon" role="group">
   x
 </div>

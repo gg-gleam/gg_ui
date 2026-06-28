@@ -4,11 +4,11 @@ title: gg_ui popover terse — defaults (bottom/end, auto)
 file: ./test/popover_test.gleam
 test_name: terse_defaults_test
 ---
-<button aria-expanded="false" aria-haspopup="dialog" class="cn-button cn-button-variant-outline cn-button-size-default" command="toggle-popover" commandfor="demo-content" data-slot="button" id="demo-anchor" style="anchor-name:--gg-demo-anchor;" type="button">
+<button aria-expanded="false" aria-haspopup="dialog" class="cn-button group/button inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-all outline-none select-none disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:shrink-0 cn-button-variant-outline cn-button-size-default" command="toggle-popover" commandfor="demo-content" data-slot="button" id="demo-anchor" style="anchor-name:--gg-demo-anchor;" type="button">
   Open
 </button>
 <div aria-describedby="demo-description" aria-labelledby="demo-title" class="cn-popover-positioner" data-align="end" data-side="bottom" id="demo-content" popover="auto" role="dialog" style="position-anchor:--gg-demo-anchor;position-area:block-end span-inline-start;inset:auto;position-try-fallbacks:flip-block, flip-inline, flip-block flip-inline;margin-inline:0;margin-block:8px;">
-  <div class="cn-popover">
+  <div class="cn-popover w-72">
     <h2 class="cn-popover-title" id="demo-title">
       Title
     </h2>

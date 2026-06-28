@@ -22,6 +22,7 @@ pub fn trigger_outline_medium_test() {
     handle(),
     variant: button.Outline,
     size: button.Medium,
+    attrs: [],
     children: [
       html.text("Open"),
     ],
@@ -35,6 +36,7 @@ pub fn trigger_destructive_lg_test() {
     handle(),
     variant: button.Destructive,
     size: button.Lg,
+    attrs: [],
     children: [html.text("Delete")],
   )
   |> element.to_readable_string
@@ -55,7 +57,7 @@ pub fn content_light_dismiss_test() {
     role: dialog.Standard,
     on_close: None,
     attrs: [],
-    children: [dialog.title(d, [html.text("Title")])],
+    children: [dialog.title(d, [], [html.text("Title")])],
   )
   |> element.to_readable_string
   |> birdie.snap(title: "gg_ui dialog content — light dismiss")
@@ -70,8 +72,8 @@ pub fn content_manual_alert_test() {
     on_close: None,
     attrs: [],
     children: [
-      dialog.title(d, [html.text("Delete file?")]),
-      dialog.description(d, [html.text("This cannot be undone.")]),
+      dialog.title(d, [], [html.text("Delete file?")]),
+      dialog.description(d, [], [html.text("This cannot be undone.")]),
     ],
   )
   |> element.to_readable_string
@@ -85,6 +87,7 @@ pub fn close_button_test() {
     handle(),
     variant: button.Outline,
     size: button.Medium,
+    attrs: [],
     children: [
       html.text("Cancel"),
     ],
@@ -111,8 +114,8 @@ pub fn terse_defaults_test() {
     children: fn(d) {
       [
         dialog.header([], [
-          dialog.title(d, [html.text("Title")]),
-          dialog.description(d, [html.text("Description text here.")]),
+          dialog.title(d, [], [html.text("Title")]),
+          dialog.description(d, [], [html.text("Description text here.")]),
         ]),
       ]
     },
@@ -137,7 +140,7 @@ pub fn terse_custom_trigger_no_close_test() {
       id: Some("demo"),
       close_button: False,
     ),
-    children: fn(d) { [dialog.title(d, [html.text("Title")])] },
+    children: fn(d) { [dialog.title(d, [], [html.text("Title")])] },
   )
   |> element.to_readable_string
   |> birdie.snap(title: "gg_ui dialog terse — custom trigger, no corner ✕")

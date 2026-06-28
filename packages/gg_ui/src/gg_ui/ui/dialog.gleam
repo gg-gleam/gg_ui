@@ -29,6 +29,7 @@
 //// utilities move to `cn-*` class names.
 
 import gg_base_ui/dialog/dialog as base_dialog
+import gg_base_ui/helpers/cn
 import gg_icon/icon
 import gg_icons_lucide/lucide/x as lu_x
 import gg_ui/ui/button
@@ -128,12 +129,15 @@ pub fn trigger(
   anatomy: Anatomy,
   variant variant: button.Variant,
   size size: button.Size,
+  attrs attrs: List(attribute.Attribute(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
+  // User attrs first, behaviour attrs last so the Invoker Command + aria wiring
+  // always wins a conflict; a caller `class` is merged by `button` itself.
   button.button(
     variant:,
     size:,
-    attrs: base_dialog.trigger_attributes(anatomy),
+    attrs: list.append(attrs, base_dialog.trigger_attributes(anatomy)),
     children:,
   )
 }
@@ -209,7 +213,9 @@ pub fn header(
   attrs: List(attribute.Attribute(msg)),
   children: List(Element(msg)),
 ) -> Element(msg) {
-  html.div([attribute.class("cn-dialog-header"), ..attrs], children)
+  // `flex flex-col` is raw (overridable); the themeable gap/alignment stays in
+  // the recipe. A caller's `class` folds in via cn.merge.
+  html.div(cn.merge(own: "cn-dialog-header flex flex-col", attrs:), children)
 }
 
 /// `DialogFooter`: the action row — stacked + reversed on narrow viewports,
@@ -220,22 +226,27 @@ pub fn footer(
   attrs: List(attribute.Attribute(msg)),
   children: List(Element(msg)),
 ) -> Element(msg) {
-  html.div([attribute.class("cn-dialog-footer"), ..attrs], children)
+  html.div(cn.merge(own: "cn-dialog-footer", attrs:), children)
 }
 
 /// `DialogTitle`: the accessible heading the content is labelled by.
-pub fn title(anatomy: Anatomy, children: List(Element(msg))) -> Element(msg) {
-  base_dialog.title(anatomy, [attribute.class("cn-dialog-title")], children)
+pub fn title(
+  anatomy: Anatomy,
+  attrs attrs: List(attribute.Attribute(msg)),
+  children children: List(Element(msg)),
+) -> Element(msg) {
+  base_dialog.title(anatomy, cn.merge(own: "cn-dialog-title", attrs:), children)
 }
 
 /// `DialogDescription`: muted supplementary text the content is described by.
 pub fn description(
   anatomy: Anatomy,
-  children: List(Element(msg)),
+  attrs attrs: List(attribute.Attribute(msg)),
+  children children: List(Element(msg)),
 ) -> Element(msg) {
   base_dialog.description(
     anatomy,
-    [attribute.class("cn-dialog-description")],
+    cn.merge(own: "cn-dialog-description", attrs:),
     children,
   )
 }
@@ -248,12 +259,13 @@ pub fn close(
   anatomy: Anatomy,
   variant variant: button.Variant,
   size size: button.Size,
+  attrs attrs: List(attribute.Attribute(msg)),
   children children: List(Element(msg)),
 ) -> Element(msg) {
   button.button(
     variant:,
     size:,
-    attrs: base_dialog.close_attributes(anatomy),
+    attrs: list.append(attrs, base_dialog.close_attributes(anatomy)),
     children:,
   )
 }
@@ -356,9 +368,13 @@ pub fn dialog(
 ) -> Element(msg) {
   dialog_with_trigger(
     trigger: fn(anatomy) {
-      trigger(anatomy, variant: options.variant, size: options.size, children: [
-        html.text(options.text),
-      ])
+      trigger(
+        anatomy,
+        variant: options.variant,
+        size: options.size,
+        attrs: [],
+        children: [html.text(options.text)],
+      )
     },
     options:,
     children:,

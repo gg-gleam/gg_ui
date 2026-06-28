@@ -56,7 +56,7 @@
 //// style, so neither do we (a style that restyles type adds a `.style-*`
 //// overlay, the exception).
 
-import gg_ui/helpers/cn
+import gg_base_ui/helpers/cn
 import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}

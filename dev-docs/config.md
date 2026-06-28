@@ -135,21 +135,21 @@ When the CLI writes a copied file, it rewrites the `import`s that point at
 ```gleam
 // in the registry source (the thin styled ui/button.gleam):
 import gg_base_ui/button/button as base_button
-import gg_ui/helpers/cn
+import gg_base_ui/helpers/cn
 
 // after `gg-ui add button` with aliases above:
 import gg_base_ui/button/button as base_button   // stays verbatim — Hex dependency
-import my_app/lib/utils as cn
+import gg_base_ui/helpers/cn                      // stays verbatim — Hex dependency
 ```
 
 The rewrite rules are mechanical:
 
 - `gg_ui/ui/<name>` → `<aliases.ui>/<name>`
-- `gg_ui/helpers/cn` → `<aliases.utils>`
 - `gg_ui/effects/<name>` → `<aliases.hooks>/<name>`
-- `gg_base_ui/...` — **left untouched.** The headless layer is a real Hex
-  dependency (the CLI runs `gleam add gg_base_ui`), imported not copied, exactly
-  like a Base UI import survives a shadcn eject.
+- `gg_base_ui/...` — **left untouched.** The headless layer **and the `cn`
+  helper** (`gg_base_ui/helpers/cn`) are a real Hex dependency (the CLI runs
+  `gleam add gg_base_ui`), imported not copied, exactly like a Base UI import
+  survives a shadcn eject. There is no ejected `utils` file to alias.
 - everything else (`lustre/...`, `gleam/...`) stays put
 
 ## Dropped fields (vs shadcn)
@@ -191,10 +191,10 @@ these aliases configured. That means:
    stays verbatim.
 2. **Use relative paths sparingly.** They survive the rewrite, but they're
    less readable. Prefer absolute module paths so the rewrite is uniform.
-3. **Don't assume `aliases.utils == "lib/utils"`.** Always import the helper
-   under whatever name `gg_ui/helpers/cn` resolves to.
+3. **Import `cn` from `gg_base_ui/helpers/cn`.** It's a Hex dependency, not a
+   copied/aliased file — there's no `aliases.utils` rewrite for it.
 
-The CLI enforces (1) and (3) by running the rewrite even when paths look
+The CLI enforces (1) by running the rewrite even when paths look
 "already right" — predictability over cleverness.
 
 ## Open questions
