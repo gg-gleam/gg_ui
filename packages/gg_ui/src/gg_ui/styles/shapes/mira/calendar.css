@@ -1,0 +1,30 @@
+/* mira · calendar — shape recipe, from shadcn style-base-mira. A fragment; no
+ * tailwind import. `relative` on `.cn-calendar-months` (inside root padding) so
+ * the absolute nav insets; months side-by-side at md+. Range is two layers: a
+ * muted track on the `.cn-calendar-day` cell (rounded per row segment via
+ * data-range-cap-*), a fully-rounded primary pill on the endpoint button; middle
+ * transparent. `today` lives on the cell (muted pill) so it never fights the
+ * selected pill text; the button has no hover:text override. Focus ring is
+ * `:focus`. The grid is a real <table>. */
+.style-mira {
+  /* Only the per-style root + the themeable day / day-button states live here;
+   * all constant layout is emitted raw in `ui/calendar.gleam` (rule 8, matching
+   * shadcn's inline calendar classNames). `cn-calendar-nav-button` stays a recipe
+   * because it must out-specify the `button` component's own recipe (a raw
+   * utility would lose the cascade to `.style-mira .cn-button-size-icon`). */
+  .cn-calendar {
+    @apply w-fit bg-background p-3 [--cell-radius:var(--radius-md)] [--cell-size:--spacing(6)] in-data-[slot=popover-content]:bg-transparent;
+  }
+
+  .cn-calendar-nav-button {
+    @apply size-(--cell-size) rounded-(--cell-radius) rtl:[&_svg]:-scale-x-100;
+  }
+
+  .cn-calendar-day {
+    @apply relative aspect-square h-full w-full flex-1 p-0 text-center select-none data-[today=true]:bg-muted data-[today-pill=true]:rounded-(--cell-radius) data-[range-start=true]:bg-muted data-[range-middle=true]:bg-muted data-[range-end=true]:bg-muted data-[range-cap-left=true]:rounded-l-(--cell-radius) data-[range-cap-right=true]:rounded-r-(--cell-radius) data-[booked=true]:[&>button]:line-through;
+  }
+
+  .cn-calendar-day-button {
+    @apply relative flex aspect-square w-full min-w-(--cell-size) flex-col items-center justify-center gap-1 rounded-(--cell-radius) border border-transparent text-sm leading-none font-normal text-foreground outline-none transition-colors select-none hover:bg-muted data-[outside=true]:text-muted-foreground data-[selected-single=true]:bg-primary data-[selected-single=true]:text-primary-foreground data-[selected-single=true]:hover:bg-primary data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground data-[range-start=true]:hover:bg-primary data-[range-end=true]:bg-primary data-[range-end=true]:text-primary-foreground data-[range-end=true]:hover:bg-primary data-[range-middle=true]:bg-transparent data-[range-middle=true]:text-foreground data-[range-middle=true]:hover:bg-transparent focus:relative focus:z-10 focus:border-ring focus:ring-3 focus:ring-ring/50 disabled:pointer-events-none disabled:text-muted-foreground disabled:opacity-50;
+  }
+}

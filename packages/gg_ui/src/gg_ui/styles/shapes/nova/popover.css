@@ -2,7 +2,11 @@
  * A fragment; no tailwind import. */
 .style-nova {
   .cn-popover {
-    @apply rounded-md border border-border bg-popover p-4 text-sm text-popover-foreground shadow-md;
+    @apply rounded-md border border-border bg-popover text-sm text-popover-foreground shadow-md;
+  }
+
+  .cn-popover-padded {
+    @apply w-72 p-4;
   }
 
   .cn-popover-positioner {

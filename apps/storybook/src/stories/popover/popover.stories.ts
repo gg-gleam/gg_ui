@@ -91,11 +91,13 @@ async function triggerExpanded(name: RegExp): Promise<boolean | undefined> {
 // `parse_placement` lowercases these back into `Side`/`Align`.
 const sides = ["top", "right", "bottom", "left"] as const
 const aligns = ["start", "center", "end"] as const
+const paddings = ["padded", "unpadded"] as const
 
 interface PopoverArgs {
   side: (typeof sides)[number]
   align: (typeof aligns)[number]
   arrow: boolean
+  padding: (typeof paddings)[number]
   variant: ButtonVariantArg
   size: ButtonSizeArg
 }
@@ -108,6 +110,7 @@ const meta: Meta<PopoverArgs> = {
     side: "bottom",
     align: "center",
     arrow: false,
+    padding: "padded",
     variant: "outline",
     size: "default",
   },
@@ -125,6 +128,14 @@ const meta: Meta<PopoverArgs> = {
     arrow: {
       control: { type: "boolean" },
       description: "Render the decorative arrow tail pointing at the trigger.",
+    },
+    padding: {
+      control: { type: "inline-radio" },
+      options: paddings,
+      description:
+        "Content box: `padded` (default text-popover width + padding) or " +
+        "`unpadded` (bare surface — auto width, no padding — for content that " +
+        "brings its own box, e.g. a calendar in the date picker).",
     },
     ...buttonVariantSizeArgTypes,
   },
@@ -167,7 +178,7 @@ function popup(canvasElement: HTMLElement): HTMLElement {
 
 /** Outline trigger + a header with title and description. */
 export const Basic: Story = {
-  render: ({ side, align, arrow, variant, size }, { globals }) => {
+  render: ({ side, align, arrow, padding, variant, size }, { globals }) => {
     const { iconSet, iconVariant } = globals as {
       iconSet: string
       iconVariant: string
@@ -178,6 +189,7 @@ export const Basic: Story = {
         side,
         align,
         arrow,
+        padding,
         variant,
         size,
         iconSet,
@@ -321,7 +333,7 @@ export const Imperative: Story = {
 export const WithArrow: Story = {
   args: { side: "top", arrow: true },
   parameters: { controls: { disable: true } },
-  render: ({ side, align, arrow, variant, size }, { globals }) => {
+  render: ({ side, align, arrow, padding, variant, size }, { globals }) => {
     const { iconSet, iconVariant } = globals as {
       iconSet: string
       iconVariant: string
@@ -332,6 +344,7 @@ export const WithArrow: Story = {
         side,
         align,
         arrow,
+        padding,
         variant,
         size,
         iconSet,

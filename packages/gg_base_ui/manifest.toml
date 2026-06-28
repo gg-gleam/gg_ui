@@ -35,5 +35,6 @@ packages = [
 birdie = { version = ">= 1.0.0 and < 2.0.0" }
 gg_cn = { path = "../gg_cn" }
 gleam_stdlib = { version = ">= 1.0.0 and < 2.0.0" }
+gleam_time = { version = ">= 1.8.0 and < 2.0.0" }
 gleeunit = { version = ">= 1.0.0 and < 2.0.0" }
 lustre = { version = ">= 5.7.0 and < 6.0.0" }

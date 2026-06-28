@@ -7,8 +7,8 @@ test_name: terse_custom_trigger_test
 <button aria-expanded="false" aria-haspopup="dialog" command="toggle-popover" commandfor="demo-content" id="demo-anchor" style="anchor-name:--gg-demo-anchor;">
   Custom
 </button>
-<div aria-describedby="demo-description" aria-labelledby="demo-title" class="cn-popover-positioner" data-align="end" data-side="bottom" id="demo-content" popover="auto" role="dialog" style="position-anchor:--gg-demo-anchor;position-area:block-end span-inline-start;inset:auto;position-try-fallbacks:flip-block, flip-inline, flip-block flip-inline;margin-inline:0;margin-block:8px;">
-  <div class="cn-popover w-72">
+<div aria-describedby="demo-description" aria-labelledby="demo-title" class="cn-popover-positioner" data-align="end" data-side="bottom" id="demo-content" popover="auto" role="dialog" style="position-anchor:--gg-demo-anchor;position-area:block-end span-inline-start;inset:auto;position-try-fallbacks:flip-block, flip-inline, flip-block flip-inline;margin-inline:0;margin-block:4px;">
+  <div class="cn-popover cn-popover-padded" data-slot="popover-content">
     <h2 class="cn-popover-title" id="demo-title">
       Title
     </h2>

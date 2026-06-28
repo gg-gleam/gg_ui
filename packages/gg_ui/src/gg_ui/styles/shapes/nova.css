@@ -1,8 +1,10 @@
 /* nova — shape fragment index: one import per component recipe.
  * A fragment; no tailwind import (the entry provides Tailwind). */
 @import "./nova/button.css";
+@import "./nova/calendar.css";
 @import "./nova/dialog.css";
 @import "./nova/input-group.css";
+@import "./nova/input.css";
 @import "./nova/popover.css";
 @import "./nova/combobox.css";
 @import "./nova/tooltip.css";

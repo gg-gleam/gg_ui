@@ -24,6 +24,7 @@ pub fn mount_basic(
   side: String,
   align: String,
   arrow: Bool,
+  padding: String,
   variant: String,
   size: String,
   icon_set: String,
@@ -35,6 +36,7 @@ pub fn mount_basic(
       parse_side(side),
       parse_align(align),
       arrow,
+      parse_padding(padding),
       parse_variant(variant),
       parse_size(size),
       demo_icons.parse_set(icon_set),
@@ -193,6 +195,15 @@ fn parse_variant(variant: String) -> button.Variant {
   }
 }
 
+/// Map the padding control string to the content's `Padding`. `Unpadded` is the
+/// bare surface (the date-picker case); anything else is the default text box.
+fn parse_padding(padding: String) -> popover.Padding {
+  case padding {
+    "unpadded" -> popover.Unpadded
+    _ -> popover.Padded
+  }
+}
+
 fn parse_size(size: String) -> button.Size {
   case size {
     "xs" -> button.Xs
@@ -256,6 +267,7 @@ fn view_basic(
   side: Side,
   align: Align,
   arrow: Bool,
+  padding: popover.Padding,
   variant: button.Variant,
   size: button.Size,
   set: IconSet,
@@ -273,6 +285,7 @@ fn view_basic(
       pop,
       side:,
       align:,
+      padding:,
       dismiss: popover.Auto,
       arrow: arrow,
       on_toggle: None,
@@ -326,6 +339,7 @@ fn view_scroll_collision(
       pop,
       side:,
       align:,
+      padding: popover.Padded,
       dismiss: popover.Manual,
       arrow: arrow,
       on_toggle: None,
@@ -398,6 +412,7 @@ fn view_imperative(
         pop,
         side:,
         align:,
+        padding: popover.Padded,
         dismiss: popover.Auto,
         arrow: False,
         on_toggle: Some(PopoverOpenChanged),
