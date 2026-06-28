@@ -43,21 +43,30 @@ pub fn main() {
 ```
 
 `new()` builds the class trie once — moderately expensive, so bind it once and
-reuse it on hot paths rather than rebuilding per merge. The configuration is the
-baked-in Tailwind v4 default; it is not (yet) configurable.
+reuse it on hot paths rather than rebuilding per merge. For render-time use,
+prefer `gg_cn.default()` — a process-global `Merger` built once (persistent_term
+on the BEAM, a singleton on JS). The configuration is the baked-in Tailwind v4
+default; it is not (yet) configurable.
+
+`tw_merge` also memoizes by input string: a whole-string result LRU (size 500,
+two-generation), **JS only** — that's where the same class strings get merged
+repeatedly (a Lustre `view` re-running). On the BEAM it recomputes (SSR renders
+once). Because the cache only changes speed, JS-cached and BEAM-uncached emit
+identical bytes, so it stays dual-target-safe.
 
 ## What was ported, and what was not
 
 Ported: the full `clsx`/`twJoin` join, the class-name parser, modifier sorting,
-the class-group trie + conflict tables, and the complete Tailwind v4 default
-config (theme scales, ~300 class groups, conflict maps). Behaviour is verified
-against the upstream `tailwind-merge` parity suite (see `test/`).
+the class-group trie + conflict tables, the complete Tailwind v4 default config
+(theme scales, ~300 class groups, conflict maps), and a whole-string result LRU
+(JS only — see above). Behaviour is verified against the upstream
+`tailwind-merge` parity suite (see `test/`).
 
-Not ported (out of scope): cnfast's `cnfast migrate` CLI and its V8-specific
-performance layers (the tagged-template identity cache, integer interning of
-conflict keys, monomorphic-shape and LRU micro-optimizations). Those are
-JS-engine tuning that has no meaning in a pure dual-target Gleam library; the
-merge result is identical without them.
+Not ported (out of scope): cnfast's `cnfast migrate` CLI and its remaining
+V8-specific micro-optimizations (the tagged-template identity cache, integer
+interning of conflict keys, monomorphic-shape factories). Those are JS-engine
+tuning with no meaning in a pure dual-target Gleam library; the merge result is
+identical without them.
 
 ## Development
 

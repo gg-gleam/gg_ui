@@ -29,6 +29,7 @@ import gleam/list
 import gleam/string
 import global_value
 
+import gg_cn/internal/cache
 import gg_cn/internal/config
 import gg_cn/internal/merge
 import gg_cn/internal/validators
@@ -91,8 +92,14 @@ fn resolve_value(value: ClassValue) -> String {
 // --- twMerge ------------------------------------------------------------------
 
 /// Merge an already-joined, space-separated class string, resolving conflicts.
+///
+/// The result is memoized by input string (JS only; the BEAM recomputes — see
+/// `internal/cache`). Output depends solely on the input (single baked config),
+/// so the cache never changes results, only speed.
 pub fn tw_merge(merger: Merger, class_list: String) -> String {
-  merge.merge_class_list(merger.engine, class_list)
+  cache.cached(class_list, fn() {
+    merge.merge_class_list(merger.engine, class_list)
+  })
 }
 
 /// `clsx` + `twMerge` in one — the shadcn `cn` helper. Joins the class values,

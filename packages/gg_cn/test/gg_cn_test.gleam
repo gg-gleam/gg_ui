@@ -633,3 +633,20 @@ pub fn cn_test() {
   ])
   |> should.equal("py-1 px-4")
 }
+
+// The result cache (JS) must never change output: repeated merges of the same
+// input — and the `default()` merger that backs gg_ui — return the same result
+// as a fresh merge. (On the BEAM the cache is a no-op; this just confirms
+// correctness is preserved on both.)
+pub fn cache_is_transparent_test() {
+  let input = "px-2 px-4 flex justify-center justify-between"
+  let expected = "px-4 flex justify-between"
+
+  let m = gg_cn.new()
+  gg_cn.tw_merge(m, input) |> should.equal(expected)
+  // second call hits the cache on JS
+  gg_cn.tw_merge(m, input) |> should.equal(expected)
+  // the process-global default merger resolves identically
+  gg_cn.tw_merge(gg_cn.default(), input) |> should.equal(expected)
+  gg_cn.tw_merge(gg_cn.default(), input) |> should.equal(expected)
+}
